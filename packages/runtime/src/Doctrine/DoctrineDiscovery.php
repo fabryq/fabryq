@@ -3,7 +3,7 @@
 /**
  * Doctrine integration discovery for app entities and migrations.
  *
- * @package Fabryq\Runtime\Doctrine
+ * @package   Fabryq\Runtime\Doctrine
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,7 +16,7 @@ use Fabryq\Runtime\Registry\AppRegistry;
 /**
  * Discovers Doctrine mapping and migration paths from app components.
  */
-final class DoctrineDiscovery
+final readonly class DoctrineDiscovery
 {
     /**
      * @param AppRegistry $appRegistry Registry of discovered applications.
@@ -27,10 +27,8 @@ final class DoctrineDiscovery
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry
-    )
-    {
-    }
+        private AppRegistry $appRegistry
+    ) {}
 
     /**
      * Build Doctrine ORM mapping configuration for entity directories.
@@ -43,7 +41,7 @@ final class DoctrineDiscovery
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
-                $entityDir = $component->path.'/Entity';
+                $entityDir = $component->path . '/Entity';
                 if (!is_dir($entityDir)) {
                     continue;
                 }
@@ -73,7 +71,7 @@ final class DoctrineDiscovery
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
-                $migrationDir = $component->path.'/Resources/migrations';
+                $migrationDir = $component->path . '/Resources/migrations';
                 if (!is_dir($migrationDir)) {
                     continue;
                 }

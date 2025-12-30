@@ -3,7 +3,7 @@
 /**
  * Capability provider for HTTP client access.
  *
- * @package Fabryq\Provider\HttpClient
+ * @package   Fabryq\Provider\HttpClient
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -18,7 +18,7 @@ use Fabryq\Contracts\Capability\HttpClientInterface;
 /**
  * Exposes an HTTP client capability to the registry.
  */
-final class HttpClientProvider implements CapabilityProviderInterface
+final readonly class HttpClientProvider implements CapabilityProviderInterface
 {
     /**
      * @param HttpClientInterface $client Concrete HTTP client implementation.
@@ -29,10 +29,8 @@ final class HttpClientProvider implements CapabilityProviderInterface
          *
          * @var HttpClientInterface
          */
-        private readonly HttpClientInterface $client
-    )
-    {
-    }
+        private HttpClientInterface $client
+    ) {}
 
     /**
      * {@inheritDoc}

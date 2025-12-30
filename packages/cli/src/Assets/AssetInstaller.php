@@ -3,7 +3,7 @@
 /**
  * Asset installer that publishes app and component assets.
  *
- * @package Fabryq\Cli\Assets
+ * @package   Fabryq\Cli\Assets
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,11 +16,11 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Publishes assets from app/component resource directories.
  */
-final class AssetInstaller
+final readonly class AssetInstaller
 {
     /**
-     * @param Filesystem $filesystem Filesystem abstraction for publishing assets.
-     * @param AssetScanner $scanner Asset scanner for asset sources and targets.
+     * @param Filesystem   $filesystem Filesystem abstraction for publishing assets.
+     * @param AssetScanner $scanner    Asset scanner for asset sources and targets.
      */
     public function __construct(
         /**
@@ -28,15 +28,14 @@ final class AssetInstaller
          *
          * @var Filesystem
          */
-        private readonly Filesystem $filesystem,
+        private Filesystem   $filesystem,
         /**
          * Scanner that discovers assets and collisions.
          *
          * @var AssetScanner
          */
-        private readonly AssetScanner $scanner,
-    ) {
-    }
+        private AssetScanner $scanner,
+    ) {}
 
     /**
      * Install assets into the public directory.
@@ -44,9 +43,9 @@ final class AssetInstaller
      * Side effects:
      * - Creates directories, symlinks, or copies assets to public targets.
      *
+     * @return AssetInstallResult Published entries and collisions.
      * @throws \Symfony\Component\Filesystem\Exception\IOExceptionInterface When filesystem operations fail.
      *
-     * @return AssetInstallResult Published entries and collisions.
      */
     public function install(): AssetInstallResult
     {
@@ -77,9 +76,9 @@ final class AssetInstaller
      * @param string $source Source path on disk.
      * @param string $target Target path on disk.
      *
+     * @return string Publication method used ("symlink" or "copy").
      * @throws \Symfony\Component\Filesystem\Exception\IOExceptionInterface When filesystem operations fail.
      *
-     * @return string Publication method used ("symlink" or "copy").
      */
     private function publish(string $source, string $target): string
     {

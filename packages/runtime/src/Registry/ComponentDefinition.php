@@ -3,7 +3,7 @@
 /**
  * Registry entry representing a discovered component.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,7 +14,7 @@ namespace Fabryq\Runtime\Registry;
 /**
  * Immutable definition of a component within an application.
  */
-final class ComponentDefinition
+final readonly class ComponentDefinition
 {
     /**
      * @param string $name Component folder name.
@@ -27,19 +27,18 @@ final class ComponentDefinition
          *
          * @var string
          */
-        public readonly string $name,
+        public string $name,
         /**
          * Normalized slug for routing and identifiers.
          *
          * @var string
          */
-        public readonly string $slug,
+        public string $slug,
         /**
          * Absolute path to the component directory.
          *
          * @var string
          */
-        public readonly string $path,
-    ) {
-    }
+        public string $path,
+    ) {}
 }

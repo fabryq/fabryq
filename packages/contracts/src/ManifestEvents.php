@@ -3,7 +3,7 @@
 /**
  * Value object for manifest event publish/subscribe declarations.
  *
- * @package Fabryq\Contracts
+ * @package   Fabryq\Contracts
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -17,10 +17,10 @@ namespace Fabryq\Contracts;
  * Responsibilities:
  * - Track event names the app publishes and subscribes to.
  */
-final class ManifestEvents
+final readonly class ManifestEvents
 {
     /**
-     * @param string[] $publishes Event names this app publishes.
+     * @param string[] $publishes  Event names this app publishes.
      * @param string[] $subscribes Event names this app subscribes to.
      */
     public function __construct(
@@ -29,15 +29,14 @@ final class ManifestEvents
          *
          * @var string[]
          */
-        public readonly array $publishes,
+        public array $publishes,
         /**
          * Event names the app listens for.
          *
          * @var string[]
          */
-        public readonly array $subscribes,
-    ) {
-    }
+        public array $subscribes,
+    ) {}
 
     /**
      * Build an instance from a manifest array.

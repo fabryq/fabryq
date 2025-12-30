@@ -3,7 +3,7 @@
 /**
  * Component discovery for applications.
  *
- * @package Fabryq\Runtime\Discovery
+ * @package   Fabryq\Runtime\Discovery
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -17,7 +17,7 @@ use Fabryq\Runtime\Util\ComponentSlugger;
 /**
  * Discovers components under an application path.
  */
-final class ComponentDiscovery
+final readonly class ComponentDiscovery
 {
     /**
      * @param ComponentSlugger $slugger Slug generator for component names.
@@ -28,10 +28,8 @@ final class ComponentDiscovery
          *
          * @var ComponentSlugger
          */
-        private readonly ComponentSlugger $slugger
-    )
-    {
-    }
+        private ComponentSlugger $slugger
+    ) {}
 
     /**
      * Discover components under an application directory.

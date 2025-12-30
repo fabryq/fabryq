@@ -6,5 +6,5 @@ namespace Fabryq\Contracts\Capability;
 
 final class CapabilityIds
 {
-    public const FABRYQ_CLIENT_HTTP = 'fabryq.client.http';
+    public const string FABRYQ_CLIENT_HTTP = 'fabryq.client.http';
 }

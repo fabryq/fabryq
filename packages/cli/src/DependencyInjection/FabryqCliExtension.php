@@ -3,7 +3,7 @@
 /**
  * Symfony DI extension for the Fabryq CLI bundle.
  *
- * @package Fabryq\Cli\DependencyInjection
+ * @package   Fabryq\Cli\DependencyInjection
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\DependencyInjection;
 
+use Exception;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -27,10 +28,12 @@ final class FabryqCliExtension extends Extension
      * Loads CLI services configuration.
      *
      * @param array<int, array<string, mixed>> $configs Bundle configuration arrays.
+     *
+     * @throws Exception
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.php');
     }
 }

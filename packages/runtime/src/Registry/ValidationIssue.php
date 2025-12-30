@@ -3,7 +3,7 @@
 /**
  * Validation issue captured during discovery or registry building.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,14 +14,14 @@ namespace Fabryq\Runtime\Registry;
 /**
  * Immutable validation issue with optional source metadata.
  */
-final class ValidationIssue
+final readonly class ValidationIssue
 {
     /**
-     * @param string $ruleKey Validation rule identifier.
-     * @param string $message Human-readable issue description.
-     * @param string|null $file [Optional] Source file path when available.
-     * @param int|null $line [Optional] Source line number when available.
-     * @param string|null $symbol [Optional] Affected symbol when available.
+     * @param string      $ruleKey Validation rule identifier.
+     * @param string      $message Human-readable issue description.
+     * @param string|null $file    [Optional] Source file path when available.
+     * @param int|null    $line    [Optional] Source line number when available.
+     * @param string|null $symbol  [Optional] Affected symbol when available.
      */
     public function __construct(
         /**
@@ -29,31 +29,30 @@ final class ValidationIssue
          *
          * @var string
          */
-        public readonly string $ruleKey,
+        public string  $ruleKey,
         /**
          * Human-readable message describing the issue.
          *
          * @var string
          */
-        public readonly string $message,
+        public string  $message,
         /**
          * Source file path, if known.
          *
          * @var string|null
          */
-        public readonly ?string $file = null,
+        public ?string $file = null,
         /**
          * Source line number, if known.
          *
          * @var int|null
          */
-        public readonly ?int $line = null,
+        public ?int    $line = null,
         /**
          * Source symbol, if known.
          *
          * @var string|null
          */
-        public readonly ?string $symbol = null,
-    ) {
-    }
+        public ?string $symbol = null,
+    ) {}
 }

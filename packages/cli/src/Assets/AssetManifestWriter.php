@@ -3,7 +3,7 @@
 /**
  * Writer for asset installation manifests.
  *
- * @package Fabryq\Cli\Assets
+ * @package   Fabryq\Cli\Assets
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,11 +16,11 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Writes asset manifests to JSON and Markdown files.
  */
-final class AssetManifestWriter
+final readonly class AssetManifestWriter
 {
     /**
      * @param Filesystem $filesystem Filesystem abstraction for writing manifests.
-     * @param string $projectDir Absolute project directory.
+     * @param string     $projectDir Absolute project directory.
      */
     public function __construct(
         /**
@@ -28,15 +28,14 @@ final class AssetManifestWriter
          *
          * @var Filesystem
          */
-        private readonly Filesystem $filesystem,
+        private Filesystem $filesystem,
         /**
          * Absolute project directory.
          *
          * @var string
          */
-        private readonly string $projectDir,
-    ) {
-    }
+        private string     $projectDir,
+    ) {}
 
     /**
      * Write the asset manifest files to disk.
@@ -56,8 +55,8 @@ final class AssetManifestWriter
             'collisions' => $result->collisions,
         ];
 
-        $jsonPath = $this->projectDir.'/state/assets/manifest.json';
-        $mdPath = $this->projectDir.'/state/assets/latest.md';
+        $jsonPath = $this->projectDir . '/state/assets/manifest.json';
+        $mdPath = $this->projectDir . '/state/assets/latest.md';
 
         $this->filesystem->mkdir(dirname($jsonPath));
         $this->filesystem->mkdir(dirname($mdPath));
@@ -78,16 +77,16 @@ final class AssetManifestWriter
         $lines = [];
         $lines[] = '# Fabryq Assets Manifest';
         $lines[] = '';
-        $lines[] = 'Generated: '.$payload['generatedAt'];
+        $lines[] = 'Generated: ' . $payload['generatedAt'];
         $lines[] = '';
 
         if ($payload['collisions'] !== []) {
             $lines[] = '## Collisions';
             $lines[] = '';
             foreach ($payload['collisions'] as $collision) {
-                $lines[] = '- '.$collision['target'];
+                $lines[] = '- ' . $collision['target'];
                 foreach ($collision['sources'] as $source) {
-                    $lines[] = '  - '.$source;
+                    $lines[] = '  - ' . $source;
                 }
             }
             $lines[] = '';

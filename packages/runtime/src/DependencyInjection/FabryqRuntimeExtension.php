@@ -3,7 +3,7 @@
 /**
  * Symfony DI extension for the Fabryq runtime bundle.
  *
- * @package Fabryq\Runtime\DependencyInjection
+ * @package   Fabryq\Runtime\DependencyInjection
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Runtime\DependencyInjection;
 
+use Exception;
 use Fabryq\Runtime\Discovery\ComponentDiscovery;
 use Fabryq\Runtime\Discovery\ManifestDiscovery;
 use Fabryq\Runtime\Doctrine\DoctrineDiscovery;
@@ -35,13 +36,15 @@ final class FabryqRuntimeExtension extends Extension
      * - Prepends Doctrine, Twig, and translation configuration.
      *
      * @param array<int, array<string, mixed>> $configs Bundle configuration arrays.
+     *
+     * @throws Exception
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.php');
 
-        $projectDir = (string) $container->getParameter('kernel.project_dir');
+        $projectDir = (string)$container->getParameter('kernel.project_dir');
         $slugger = new ComponentSlugger();
         $manifestDiscovery = new ManifestDiscovery();
         $componentDiscovery = new ComponentDiscovery($slugger);
@@ -51,36 +54,44 @@ final class FabryqRuntimeExtension extends Extension
         $doctrineDiscovery = new DoctrineDiscovery($appRegistry);
         $entityMappings = $doctrineDiscovery->getEntityMappings();
         if ($entityMappings !== []) {
-            $container->prependExtensionConfig('doctrine', [
+            $container->prependExtensionConfig(
+                'doctrine', [
                 'orm' => [
                     'mappings' => $entityMappings,
                 ],
-            ]);
+            ]
+            );
         }
 
         $migrationPaths = $doctrineDiscovery->getMigrationPaths();
         if ($migrationPaths !== []) {
-            $container->prependExtensionConfig('doctrine_migrations', [
+            $container->prependExtensionConfig(
+                'doctrine_migrations', [
                 'migrations_paths' => $migrationPaths,
-            ]);
+            ]
+            );
         }
 
         $resourceRegistry = new ResourceRegistry($appRegistry);
         $templatePaths = $resourceRegistry->getTemplatePaths();
         if ($templatePaths !== []) {
             $twigPaths = array_fill_keys($templatePaths, null);
-            $container->prependExtensionConfig('twig', [
+            $container->prependExtensionConfig(
+                'twig', [
                 'paths' => $twigPaths,
-            ]);
+            ]
+            );
         }
 
         $translationPaths = $resourceRegistry->getTranslationPaths();
         if ($translationPaths !== []) {
-            $container->prependExtensionConfig('framework', [
+            $container->prependExtensionConfig(
+                'framework', [
                 'translator' => [
                     'paths' => $translationPaths,
                 ],
-            ]);
+            ]
+            );
         }
     }
 }

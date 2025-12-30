@@ -3,7 +3,7 @@
 /**
  * Registry entry representing a discovered application.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,13 +16,13 @@ use Fabryq\Contracts\Manifest;
 /**
  * Immutable definition of an application and its components.
  */
-final class AppDefinition
+final readonly class AppDefinition
 {
     /**
-     * @param Manifest $manifest Parsed application manifest.
-     * @param string $path Absolute application path.
-     * @param string $manifestPath Absolute manifest file path.
-     * @param ComponentDefinition[] $components Discovered component definitions.
+     * @param Manifest              $manifest     Parsed application manifest.
+     * @param string                $path         Absolute application path.
+     * @param string                $manifestPath Absolute manifest file path.
+     * @param ComponentDefinition[] $components   Discovered component definitions.
      */
     public function __construct(
         /**
@@ -30,25 +30,24 @@ final class AppDefinition
          *
          * @var Manifest
          */
-        public readonly Manifest $manifest,
+        public Manifest $manifest,
         /**
          * Absolute path to the application root directory.
          *
          * @var string
          */
-        public readonly string $path,
+        public string   $path,
         /**
          * Absolute path to the manifest file.
          *
          * @var string
          */
-        public readonly string $manifestPath,
+        public string   $manifestPath,
         /**
          * Components discovered under the application.
          *
          * @var ComponentDefinition[]
          */
-        public readonly array $components,
-    ) {
-    }
+        public array    $components,
+    ) {}
 }

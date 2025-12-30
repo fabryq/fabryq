@@ -51,4 +51,10 @@ final class HelloWorldController
     {
         return new Response('Hello Fabryq');
     }
+
+    #[Route('/hello', name: 'hello')]
+    public function sss(): Response
+    {
+        return new Response('Hello Fabryq');
+    }
 }

@@ -3,7 +3,7 @@
 /**
  * Resource registry for application configuration, templates, and translations.
  *
- * @package Fabryq\Runtime\Resources
+ * @package   Fabryq\Runtime\Resources
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -23,7 +23,7 @@ final class ResourceRegistry
      *
      * @var string[]
      */
-    private const CONFIG_ALLOWLIST = [
+    private const array CONFIG_ALLOWLIST = [
         'services.yaml',
         'services.yml',
         'services.php',
@@ -42,9 +42,7 @@ final class ResourceRegistry
          * @var AppRegistry
          */
         private readonly AppRegistry $appRegistry
-    )
-    {
-    }
+    ) {}
 
     /**
      * Collect configuration files from app and component resource folders.
@@ -55,9 +53,9 @@ final class ResourceRegistry
     {
         $files = [];
         foreach ($this->appRegistry->getApps() as $app) {
-            $files = array_merge($files, $this->collectConfigFiles($app->path.'/Resources/config'));
+            $files = array_merge($files, $this->collectConfigFiles($app->path . '/Resources/config'));
             foreach ($app->components as $component) {
-                $files = array_merge($files, $this->collectConfigFiles($component->path.'/Resources/config'));
+                $files = array_merge($files, $this->collectConfigFiles($component->path . '/Resources/config'));
             }
         }
 
@@ -73,9 +71,9 @@ final class ResourceRegistry
     {
         $paths = [];
         foreach ($this->appRegistry->getApps() as $app) {
-            $paths[] = $app->path.'/Resources/templates';
+            $paths[] = $app->path . '/Resources/templates';
             foreach ($app->components as $component) {
-                $paths[] = $component->path.'/Resources/templates';
+                $paths[] = $component->path . '/Resources/templates';
             }
         }
 
@@ -91,9 +89,9 @@ final class ResourceRegistry
     {
         $paths = [];
         foreach ($this->appRegistry->getApps() as $app) {
-            $paths[] = $app->path.'/Resources/translations';
+            $paths[] = $app->path . '/Resources/translations';
             foreach ($app->components as $component) {
-                $paths[] = $component->path.'/Resources/translations';
+                $paths[] = $component->path . '/Resources/translations';
             }
         }
 
@@ -115,7 +113,7 @@ final class ResourceRegistry
 
         $files = [];
         foreach (self::CONFIG_ALLOWLIST as $filename) {
-            $path = $configDir.'/'.$filename;
+            $path = $configDir . '/' . $filename;
             if (is_file($path)) {
                 $files[] = $path;
             }

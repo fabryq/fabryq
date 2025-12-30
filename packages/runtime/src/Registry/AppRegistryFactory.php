@@ -3,7 +3,7 @@
 /**
  * Factory for building application registries from discovery services.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -17,10 +17,10 @@ use Fabryq\Runtime\Discovery\ManifestDiscovery;
 /**
  * Builds registries by discovering app manifests and components.
  */
-final class AppRegistryFactory
+final readonly class AppRegistryFactory
 {
     /**
-     * @param ManifestDiscovery $manifestDiscovery Manifest discovery service.
+     * @param ManifestDiscovery  $manifestDiscovery  Manifest discovery service.
      * @param ComponentDiscovery $componentDiscovery Component discovery service.
      */
     public function __construct(
@@ -29,15 +29,14 @@ final class AppRegistryFactory
          *
          * @var ManifestDiscovery
          */
-        private readonly ManifestDiscovery $manifestDiscovery,
+        private ManifestDiscovery  $manifestDiscovery,
         /**
          * Service for discovering components within an app.
          *
          * @var ComponentDiscovery
          */
-        private readonly ComponentDiscovery $componentDiscovery,
-    ) {
-    }
+        private ComponentDiscovery $componentDiscovery,
+    ) {}
 
     /**
      * Build an application registry for the given project directory.

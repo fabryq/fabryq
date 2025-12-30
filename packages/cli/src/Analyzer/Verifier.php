@@ -3,7 +3,7 @@
 /**
  * Analyzer that runs verification gates for Fabryq projects.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -22,15 +22,15 @@ use Fabryq\Runtime\Util\ComponentSlugger;
 /**
  * Aggregates verification checks and returns findings.
  */
-final class Verifier
+final readonly class Verifier
 {
     /**
-     * @param AppRegistry $appRegistry Registry of discovered apps.
+     * @param AppRegistry                $appRegistry      Registry of discovered apps.
      * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
-     * @param ComponentSlugger $slugger Slug generator for component names.
-     * @param AssetScanner $assetScanner Scanner for asset collisions.
-     * @param CrossAppReferenceScanner $crossAppScanner Scanner for cross-app references.
-     * @param DoctrineGate $doctrineGate Doctrine validation gate.
+     * @param ComponentSlugger           $slugger          Slug generator for component names.
+     * @param AssetScanner               $assetScanner     Scanner for asset collisions.
+     * @param CrossAppReferenceScanner   $crossAppScanner  Scanner for cross-app references.
+     * @param DoctrineGate               $doctrineGate     Doctrine validation gate.
      */
     public function __construct(
         /**
@@ -38,39 +38,38 @@ final class Verifier
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry,
+        private AppRegistry                $appRegistry,
         /**
          * Registry of capability providers.
          *
          * @var CapabilityProviderRegistry
          */
-        private readonly CapabilityProviderRegistry $providerRegistry,
+        private CapabilityProviderRegistry $providerRegistry,
         /**
          * Slug generator used for component validation.
          *
          * @var ComponentSlugger
          */
-        private readonly ComponentSlugger $slugger,
+        private ComponentSlugger           $slugger,
         /**
          * Scanner for asset collisions.
          *
          * @var AssetScanner
          */
-        private readonly AssetScanner $assetScanner,
+        private AssetScanner               $assetScanner,
         /**
          * Scanner for invalid cross-app references.
          *
          * @var CrossAppReferenceScanner
          */
-        private readonly CrossAppReferenceScanner $crossAppScanner,
+        private CrossAppReferenceScanner   $crossAppScanner,
         /**
          * Doctrine validation gate.
          *
          * @var DoctrineGate
          */
-        private readonly DoctrineGate $doctrineGate,
-    ) {
-    }
+        private DoctrineGate               $doctrineGate,
+    ) {}
 
     /**
      * Run all verification checks for the project.
@@ -102,6 +101,69 @@ final class Verifier
         $findings = array_merge($findings, $this->checkAssetCollisions());
         $findings = array_merge($findings, $this->doctrineGate->check($projectDir));
         $findings = array_merge($findings, $this->checkProviders());
+
+        return $findings;
+    }
+
+    /**
+     * Validate asset targets for collisions.
+     *
+     * @return Finding[]
+     */
+    private function checkAssetCollisions(): array
+    {
+        $findings = [];
+        $result = $this->assetScanner->scan();
+
+        foreach ($result->collisions as $collision) {
+            $findings[] = new Finding(
+                'FABRYQ.PUBLIC.COLLISION',
+                'BLOCKER',
+                sprintf('Asset target "%s" has multiple sources: %s', $collision['target'], implode(', ', $collision['sources'])),
+                new FindingLocation($collision['target'], null, implode(', ', $collision['sources']))
+            );
+        }
+
+        return $findings;
+    }
+
+    /**
+     * Validate capability identifiers for manifests and providers.
+     *
+     * @return Finding[]
+     */
+    private function checkCapabilityIds(): array
+    {
+        $findings = [];
+        $pattern = '/^[a-z0-9]+(?:\\.[a-z0-9]+)+$/';
+
+        foreach ($this->appRegistry->getApps() as $app) {
+            foreach ($app->manifest->consumes as $consume) {
+                if (preg_match($pattern, $consume->capabilityId)) {
+                    continue;
+                }
+
+                $findings[] = new Finding(
+                    'FABRYQ.CAPABILITY.ID.INVALID',
+                    'WARNING',
+                    sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $consume->capabilityId),
+                    new FindingLocation($app->manifestPath, null, $consume->capabilityId)
+                );
+            }
+        }
+
+        foreach ($this->providerRegistry->getProviders() as $provider) {
+            if (preg_match($pattern, $provider->capabilityId)) {
+                continue;
+            }
+
+            $findings[] = new Finding(
+                'FABRYQ.CAPABILITY.ID.INVALID',
+                'WARNING',
+                sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $provider->capabilityId),
+                new FindingLocation(null, null, $provider->className)
+            );
+        }
 
         return $findings;
     }
@@ -156,13 +218,13 @@ final class Verifier
     private function checkGlobalComponentSlugs(string $projectDir): array
     {
         $findings = [];
-        $componentsDir = $projectDir.'/src/Components';
+        $componentsDir = $projectDir . '/src/Components';
         if (!is_dir($componentsDir)) {
             return $findings;
         }
 
         $seen = [];
-        foreach (glob($componentsDir.'/*', GLOB_ONLYDIR) ?: [] as $componentPath) {
+        foreach (glob($componentsDir . '/*', GLOB_ONLYDIR) ?: [] as $componentPath) {
             $name = basename($componentPath);
             $slug = $this->slugger->slug($name);
             if ($slug === '' || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
@@ -185,69 +247,6 @@ final class Verifier
                     new FindingLocation($componentsDir, null, $slug)
                 );
             }
-        }
-
-        return $findings;
-    }
-
-    /**
-     * Validate capability identifiers for manifests and providers.
-     *
-     * @return Finding[]
-     */
-    private function checkCapabilityIds(): array
-    {
-        $findings = [];
-        $pattern = '/^[a-z0-9]+(?:\\.[a-z0-9]+)+$/';
-
-        foreach ($this->appRegistry->getApps() as $app) {
-            foreach ($app->manifest->consumes as $consume) {
-                if (preg_match($pattern, $consume->capabilityId)) {
-                    continue;
-                }
-
-                $findings[] = new Finding(
-                    'FABRYQ.CAPABILITY.ID.INVALID',
-                    'WARNING',
-                    sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $consume->capabilityId),
-                    new FindingLocation($app->manifestPath, null, $consume->capabilityId)
-                );
-            }
-        }
-
-        foreach ($this->providerRegistry->getProviders() as $provider) {
-            if (preg_match($pattern, $provider->capabilityId)) {
-                continue;
-            }
-
-            $findings[] = new Finding(
-                'FABRYQ.CAPABILITY.ID.INVALID',
-                'WARNING',
-                sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $provider->capabilityId),
-                new FindingLocation(null, null, $provider->className)
-            );
-        }
-
-        return $findings;
-    }
-
-    /**
-     * Validate asset targets for collisions.
-     *
-     * @return Finding[]
-     */
-    private function checkAssetCollisions(): array
-    {
-        $findings = [];
-        $result = $this->assetScanner->scan();
-
-        foreach ($result->collisions as $collision) {
-            $findings[] = new Finding(
-                'FABRYQ.PUBLIC.COLLISION',
-                'BLOCKER',
-                sprintf('Asset target "%s" has multiple sources: %s', $collision['target'], implode(', ', $collision['sources'])),
-                new FindingLocation($collision['target'], null, implode(', ', $collision['sources']))
-            );
         }
 
         return $findings;

@@ -3,7 +3,7 @@
 /**
  * Report writer for JSON and Markdown outputs.
  *
- * @package Fabryq\Cli\Report
+ * @package   Fabryq\Cli\Report
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,11 +16,11 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Writes findings to disk in multiple formats.
  */
-final class ReportWriter
+final readonly class ReportWriter
 {
     /**
      * @param Filesystem $filesystem Filesystem abstraction for writing reports.
-     * @param string $version [Optional] Report schema version identifier.
+     * @param string     $version    [Optional] Report schema version identifier.
      */
     public function __construct(
         /**
@@ -28,15 +28,14 @@ final class ReportWriter
          *
          * @var Filesystem
          */
-        private readonly Filesystem $filesystem,
+        private Filesystem $filesystem,
         /**
          * Report schema version.
          *
          * @var string
          */
-        private readonly string $version = '0.1'
-    ) {
-    }
+        private string     $version = '0.1'
+    ) {}
 
     /**
      * Write report data to JSON and Markdown files.
@@ -44,12 +43,12 @@ final class ReportWriter
      * Side effects:
      * - Writes files to disk and creates directories as needed.
      *
-     * @param string $tool Tool name used in the report header.
-     * @param Finding[] $findings Findings to include in the report.
-     * @param string $jsonPath Absolute path to the JSON report file.
-     * @param string $mdPath Absolute path to the Markdown report file.
-     * @param array<string, mixed> $extra [Optional] Additional payload data.
-     * @param string|null $markdownAppendix [Optional] Extra Markdown appended to the report.
+     * @param string               $tool             Tool name used in the report header.
+     * @param Finding[]            $findings         Findings to include in the report.
+     * @param string               $jsonPath         Absolute path to the JSON report file.
+     * @param string               $mdPath           Absolute path to the Markdown report file.
+     * @param array<string, mixed> $extra            [Optional] Additional payload data.
+     * @param string|null          $markdownAppendix [Optional] Extra Markdown appended to the report.
      */
     public function write(string $tool, array $findings, string $jsonPath, string $mdPath, array $extra = [], ?string $markdownAppendix = null): void
     {
@@ -64,19 +63,21 @@ final class ReportWriter
         }
 
         $result = $blockers > 0 ? 'blocked' : 'ok';
-        $payload = array_merge([
-            'header' => [
-                'tool' => $tool,
-                'version' => $this->version,
-                'generatedAt' => date('c'),
-                'result' => $result,
-                'summary' => [
-                    'blockers' => $blockers,
-                    'warnings' => $warnings,
+        $payload = array_merge(
+            [
+                'header' => [
+                    'tool' => $tool,
+                    'version' => $this->version,
+                    'generatedAt' => date('c'),
+                    'result' => $result,
+                    'summary' => [
+                        'blockers' => $blockers,
+                        'warnings' => $warnings,
+                    ],
                 ],
-            ],
-            'findings' => array_map(static fn (Finding $finding) => $finding->toArray(), $findings),
-        ], $extra);
+                'findings' => array_map(static fn(Finding $finding) => $finding->toArray(), $findings),
+            ], $extra
+        );
 
         $this->filesystem->mkdir(dirname($jsonPath));
         $this->filesystem->mkdir(dirname($mdPath));
@@ -88,9 +89,9 @@ final class ReportWriter
     /**
      * Render a Markdown report from the payload data.
      *
-     * @param string $tool Tool name displayed in the report.
-     * @param array<string, mixed> $payload Normalized report payload.
-     * @param string|null $markdownAppendix [Optional] Additional Markdown appended to the report.
+     * @param string               $tool             Tool name displayed in the report.
+     * @param array<string, mixed> $payload          Normalized report payload.
+     * @param string|null          $markdownAppendix [Optional] Additional Markdown appended to the report.
      *
      * @return string Markdown document contents.
      */
@@ -98,10 +99,10 @@ final class ReportWriter
     {
         $header = $payload['header'];
         $lines = [];
-        $lines[] = '# Fabryq '.$tool.' Report';
+        $lines[] = '# Fabryq ' . $tool . ' Report';
         $lines[] = '';
-        $lines[] = 'Generated: '.$header['generatedAt'];
-        $lines[] = 'Result: '.$header['result'];
+        $lines[] = 'Generated: ' . $header['generatedAt'];
+        $lines[] = 'Result: ' . $header['result'];
         $lines[] = sprintf('Summary: %d blockers, %d warnings', $header['summary']['blockers'], $header['summary']['warnings']);
         $lines[] = '';
         $lines[] = '## Findings';
@@ -123,13 +124,13 @@ final class ReportWriter
         foreach ($payload['findings'] as $finding) {
             $location = $finding['location']['file'] ?? '';
             if (!empty($finding['location']['line'])) {
-                $location .= ':'.$finding['location']['line'];
+                $location .= ':' . $finding['location']['line'];
             }
             $lines[] = sprintf(
                 '| %s | %s | %s | %s |',
                 $finding['severity'],
                 $finding['ruleKey'],
-                str_replace("|", "\\|", (string) $finding['message']),
+                str_replace("|", "\\|", (string)$finding['message']),
                 $location
             );
         }

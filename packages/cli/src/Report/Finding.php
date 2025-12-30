@@ -3,7 +3,7 @@
 /**
  * Report finding emitted by analysis or verification tools.
  *
- * @package Fabryq\Cli\Report
+ * @package   Fabryq\Cli\Report
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,15 +14,15 @@ namespace Fabryq\Cli\Report;
 /**
  * Immutable representation of a single finding.
  */
-final class Finding
+final readonly class Finding
 {
     /**
-     * @param string $ruleKey Rule identifier for the finding.
-     * @param string $severity Severity label such as BLOCKER or WARNING.
-     * @param string $message Human-readable description of the finding.
-     * @param FindingLocation|null $location [Optional] Source location metadata.
-     * @param string|null $hint [Optional] Suggested remediation hint.
-     * @param bool $autofixAvailable [Optional] Whether an automatic fix is available.
+     * @param string               $ruleKey          Rule identifier for the finding.
+     * @param string               $severity         Severity label such as BLOCKER or WARNING.
+     * @param string               $message          Human-readable description of the finding.
+     * @param FindingLocation|null $location         [Optional] Source location metadata.
+     * @param string|null          $hint             [Optional] Suggested remediation hint.
+     * @param bool                 $autofixAvailable [Optional] Whether an automatic fix is available.
      */
     public function __construct(
         /**
@@ -30,39 +30,38 @@ final class Finding
          *
          * @var string
          */
-        public readonly string $ruleKey,
+        public string           $ruleKey,
         /**
          * Severity level for the finding.
          *
          * @var string
          */
-        public readonly string $severity,
+        public string           $severity,
         /**
          * Human-readable message describing the issue.
          *
          * @var string
          */
-        public readonly string $message,
+        public string           $message,
         /**
          * Source location details, if known.
          *
          * @var FindingLocation|null
          */
-        public readonly ?FindingLocation $location = null,
+        public ?FindingLocation $location = null,
         /**
          * Optional hint for resolving the finding.
          *
          * @var string|null
          */
-        public readonly ?string $hint = null,
+        public ?string          $hint = null,
         /**
          * Whether an automated fix is available.
          *
          * @var bool
          */
-        public readonly bool $autofixAvailable = false,
-    ) {
-    }
+        public bool             $autofixAvailable = false,
+    ) {}
 
     /**
      * Convert the finding to a serializable array.

@@ -3,7 +3,7 @@
 /**
  * Result container for the doctor analyzer.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -16,11 +16,11 @@ use Fabryq\Cli\Report\Finding;
 /**
  * Holds app status details and findings from a doctor run.
  */
-final class DoctorResult
+final readonly class DoctorResult
 {
     /**
      * @param array<string, array<string, mixed>> $appStatuses Per-app status data.
-     * @param Finding[] $findings Findings emitted by the doctor checks.
+     * @param Finding[]                           $findings    Findings emitted by the doctor checks.
      */
     public function __construct(
         /**
@@ -28,13 +28,12 @@ final class DoctorResult
          *
          * @var array<string, array<string, mixed>>
          */
-        public readonly array $appStatuses,
+        public array $appStatuses,
         /**
          * Findings emitted during analysis.
          *
          * @var Finding[]
          */
-        public readonly array $findings,
-    ) {
-    }
+        public array $findings,
+    ) {}
 }

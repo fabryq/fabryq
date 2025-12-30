@@ -23,7 +23,7 @@ use Symfony\Component\Finder\Finder;
 /**
  * Enforces Doctrine entity and migration conventions.
  */
-final class DoctrineGate
+final readonly class DoctrineGate
 {
     /**
      * @param AppRegistry      $appRegistry Registry of discovered apps.
@@ -35,13 +35,13 @@ final class DoctrineGate
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry      $appRegistry,
+        private AppRegistry      $appRegistry,
         /**
          * Slug generator for naming conventions.
          *
          * @var ComponentSlugger
          */
-        private readonly ComponentSlugger $slugger,
+        private ComponentSlugger $slugger,
     ) {}
 
     /**
@@ -83,7 +83,7 @@ final class DoctrineGate
             }
 
             // Check if table name is prefixed with app_id_
-            $expectedPrefix = $appId . '_';
+            $expectedPrefix = 'app_' . $appId . '_';
             if (!str_starts_with($table, $expectedPrefix)) {
                 $findings[] = new Finding(
                     'FABRYQ.DOCTRINE.TABLE_PREFIX',

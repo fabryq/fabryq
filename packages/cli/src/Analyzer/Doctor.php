@@ -3,7 +3,7 @@
 /**
  * Analyzer that reports missing capability providers per app.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -19,10 +19,10 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 /**
  * Evaluates provider wiring and emits findings with per-app status.
  */
-final class Doctor
+final readonly class Doctor
 {
     /**
-     * @param AppRegistry $appRegistry Registry of discovered apps.
+     * @param AppRegistry                $appRegistry      Registry of discovered apps.
      * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
      */
     public function __construct(
@@ -31,15 +31,14 @@ final class Doctor
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry,
+        private AppRegistry                $appRegistry,
         /**
          * Registry of capability providers and validation issues.
          *
          * @var CapabilityProviderRegistry
          */
-        private readonly CapabilityProviderRegistry $providerRegistry,
-    ) {
-    }
+        private CapabilityProviderRegistry $providerRegistry,
+    ) {}
 
     /**
      * Run the doctor checks and aggregate findings and app status.

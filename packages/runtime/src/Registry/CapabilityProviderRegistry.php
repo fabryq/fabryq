@@ -3,7 +3,7 @@
 /**
  * Registry container for capability providers and validation issues.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,11 +14,11 @@ namespace Fabryq\Runtime\Registry;
 /**
  * Holds capability provider definitions and related validation issues.
  */
-final class CapabilityProviderRegistry
+final readonly class CapabilityProviderRegistry
 {
     /**
      * @param CapabilityProviderDefinition[] $providers Provider definitions.
-     * @param ValidationIssue[] $issues Validation issues collected during discovery.
+     * @param ValidationIssue[]              $issues    Validation issues collected during discovery.
      */
     public function __construct(
         /**
@@ -26,35 +26,14 @@ final class CapabilityProviderRegistry
          *
          * @var CapabilityProviderDefinition[]
          */
-        private readonly array $providers,
+        private array $providers,
         /**
          * Validation issues encountered while collecting providers.
          *
          * @var ValidationIssue[]
          */
-        private readonly array $issues,
-    ) {
-    }
-
-    /**
-     * Return all registered capability provider definitions.
-     *
-     * @return CapabilityProviderDefinition[]
-     */
-    public function getProviders(): array
-    {
-        return $this->providers;
-    }
-
-    /**
-     * Return validation issues discovered during provider registration.
-     *
-     * @return ValidationIssue[]
-     */
-    public function getIssues(): array
-    {
-        return $this->issues;
-    }
+        private array $issues,
+    ) {}
 
     /**
      * Find a provider by capability identifier.
@@ -72,5 +51,25 @@ final class CapabilityProviderRegistry
         }
 
         return null;
+    }
+
+    /**
+     * Return validation issues discovered during provider registration.
+     *
+     * @return ValidationIssue[]
+     */
+    public function getIssues(): array
+    {
+        return $this->issues;
+    }
+
+    /**
+     * Return all registered capability provider definitions.
+     *
+     * @return CapabilityProviderDefinition[]
+     */
+    public function getProviders(): array
+    {
+        return $this->providers;
     }
 }

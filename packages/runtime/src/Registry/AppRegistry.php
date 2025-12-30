@@ -3,7 +3,7 @@
 /**
  * Registry container for discovered applications and validation issues.
  *
- * @package Fabryq\Runtime\Registry
+ * @package   Fabryq\Runtime\Registry
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,10 +14,10 @@ namespace Fabryq\Runtime\Registry;
 /**
  * Holds application definitions and related validation issues.
  */
-final class AppRegistry
+final readonly class AppRegistry
 {
     /**
-     * @param AppDefinition[] $apps Application definitions.
+     * @param AppDefinition[]   $apps   Application definitions.
      * @param ValidationIssue[] $issues Validation issues collected during discovery.
      */
     public function __construct(
@@ -26,14 +26,31 @@ final class AppRegistry
          *
          * @var AppDefinition[]
          */
-        private readonly array $apps,
+        private array $apps,
         /**
          * Validation issues encountered during discovery.
          *
          * @var ValidationIssue[]
          */
-        private readonly array $issues,
-    ) {
+        private array $issues,
+    ) {}
+
+    /**
+     * Find an application by its manifest appId.
+     *
+     * @param string $appId Manifest application identifier.
+     *
+     * @return AppDefinition|null Matching application or null when not found.
+     */
+    public function findById(string $appId): ?AppDefinition
+    {
+        foreach ($this->apps as $app) {
+            if ($app->manifest->appId === $appId) {
+                return $app;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -54,23 +71,5 @@ final class AppRegistry
     public function getIssues(): array
     {
         return $this->issues;
-    }
-
-    /**
-     * Find an application by its manifest appId.
-     *
-     * @param string $appId Manifest application identifier.
-     *
-     * @return AppDefinition|null Matching application or null when not found.
-     */
-    public function findById(string $appId): ?AppDefinition
-    {
-        foreach ($this->apps as $app) {
-            if ($app->manifest->appId === $appId) {
-                return $app;
-            }
-        }
-
-        return null;
     }
 }

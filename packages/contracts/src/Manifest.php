@@ -3,7 +3,7 @@
 /**
  * Value object for an application manifest definition.
  *
- * @package Fabryq\Contracts
+ * @package   Fabryq\Contracts
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -20,14 +20,14 @@ use Fabryq\Contracts\Exception\InvalidManifestException;
  * - Hold normalized manifest metadata.
  * - Provide construction from array data with validation.
  */
-final class Manifest
+final readonly class Manifest
 {
     /**
-     * @param string $appId Application identifier used as a stable key.
-     * @param string $name Human-readable application name.
-     * @param string|null $mountpoint [Optional] Mountpoint path or null when not mounted.
-     * @param ConsumesCapability[] $consumes Declared capability requirements.
-     * @param ManifestEvents|null $events [Optional] Event publication/subscription metadata.
+     * @param string               $appId      Application identifier used as a stable key.
+     * @param string               $name       Human-readable application name.
+     * @param string|null          $mountpoint [Optional] Mountpoint path or null when not mounted.
+     * @param ConsumesCapability[] $consumes   Declared capability requirements.
+     * @param ManifestEvents|null  $events     [Optional] Event publication/subscription metadata.
      */
     public function __construct(
         /**
@@ -35,42 +35,41 @@ final class Manifest
          *
          * @var string
          */
-        public readonly string $appId,
+        public string          $appId,
         /**
          * Display name of the application.
          *
          * @var string
          */
-        public readonly string $name,
+        public string          $name,
         /**
          * Mountpoint path, or null when the app does not provide one.
          *
          * @var string|null
          */
-        public readonly ?string $mountpoint,
+        public ?string         $mountpoint,
         /**
          * Capabilities consumed by the application.
          *
          * @var ConsumesCapability[]
          */
-        public readonly array $consumes,
+        public array           $consumes,
         /**
          * Event declarations for the application, when provided.
          *
          * @var ManifestEvents|null
          */
-        public readonly ?ManifestEvents $events,
-    ) {
-    }
+        public ?ManifestEvents $events,
+    ) {}
 
     /**
      * Create a manifest from a normalized array payload.
      *
      * @param array<string, mixed> $data Manifest data including required keys.
      *
+     * @return self Fully constructed manifest value object.
      * @throws InvalidManifestException When required keys are missing or values are invalid.
      *
-     * @return self Fully constructed manifest value object.
      */
     public static function fromArray(array $data): self
     {
@@ -95,9 +94,9 @@ final class Manifest
         }
 
         return new self(
-            (string) $data['appId'],
-            (string) $data['name'],
-            $data['mountpoint'] === null ? null : (string) $data['mountpoint'],
+            (string)$data['appId'],
+            (string)$data['name'],
+            $data['mountpoint'] === null ? null : (string)$data['mountpoint'],
             $consumes,
             $events,
         );

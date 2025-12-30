@@ -3,7 +3,7 @@
 /**
  * Route loader for Fabryq application components.
  *
- * @package Fabryq\Runtime\Routing
+ * @package   Fabryq\Runtime\Routing
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -29,7 +29,7 @@ final class FabryqRouteLoader extends Loader
     private bool $loaded = false;
 
     /**
-     * @param AppRegistry $appRegistry Registry of discovered applications.
+     * @param AppRegistry              $appRegistry              Registry of discovered applications.
      * @param AttributeDirectoryLoader $attributeDirectoryLoader Loader for attribute-based routes.
      */
     public function __construct(
@@ -38,7 +38,7 @@ final class FabryqRouteLoader extends Loader
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry,
+        private readonly AppRegistry              $appRegistry,
         /**
          * Loader that scans directories for route attributes.
          *
@@ -46,6 +46,7 @@ final class FabryqRouteLoader extends Loader
          */
         private readonly AttributeDirectoryLoader $attributeDirectoryLoader,
     ) {
+        parent::__construct();
     }
 
     /**
@@ -54,8 +55,8 @@ final class FabryqRouteLoader extends Loader
      * Side effects:
      * - Marks the loader as loaded to prevent duplicate registration.
      *
-     * @param mixed $resource Ignored by this loader.
-     * @param string|null $type [Optional] Loader type hint.
+     * @param mixed       $resource Ignored by this loader.
+     * @param string|null $type     [Optional] Loader type hint.
      *
      * @throws \RuntimeException When routes are loaded more than once.
      */
@@ -75,14 +76,14 @@ final class FabryqRouteLoader extends Loader
             }
 
             foreach ($app->components as $component) {
-                $controllerDir = $component->path.'/Controller';
+                $controllerDir = $component->path . '/Controller';
                 if (!is_dir($controllerDir)) {
                     continue;
                 }
 
                 $routes = $this->attributeDirectoryLoader->load($controllerDir, 'attribute');
                 $routes->addPrefix($mountpoint);
-                $routes->addNamePrefix($app->manifest->appId.'.'.$component->slug.'.');
+                $routes->addNamePrefix($app->manifest->appId . '.' . $component->slug . '.');
 
                 $collection->addCollection($routes);
             }
@@ -94,8 +95,8 @@ final class FabryqRouteLoader extends Loader
     /**
      * {@inheritDoc}
      *
-     * @param mixed $resource Ignored by this loader.
-     * @param string|null $type [Optional] Loader type hint.
+     * @param mixed       $resource Ignored by this loader.
+     * @param string|null $type     [Optional] Loader type hint.
      */
     public function supports(mixed $resource, ?string $type = null): bool
     {

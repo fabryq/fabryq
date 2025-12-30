@@ -3,7 +3,7 @@
 /**
  * Analyzer that builds capability graphs for applications.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -17,10 +17,10 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 /**
  * Builds a graph of consumed and provided capabilities per app.
  */
-final class GraphBuilder
+final readonly class GraphBuilder
 {
     /**
-     * @param AppRegistry $appRegistry Registry of discovered apps.
+     * @param AppRegistry                $appRegistry      Registry of discovered apps.
      * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
      */
     public function __construct(
@@ -29,15 +29,14 @@ final class GraphBuilder
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry,
+        private AppRegistry                $appRegistry,
         /**
          * Registry of capability providers.
          *
          * @var CapabilityProviderRegistry
          */
-        private readonly CapabilityProviderRegistry $providerRegistry,
-    ) {
-    }
+        private CapabilityProviderRegistry $providerRegistry,
+    ) {}
 
     /**
      * Build a capability graph for all discovered apps.
