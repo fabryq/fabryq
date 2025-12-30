@@ -3,7 +3,7 @@
 /**
  * Demo controller returning a simple greeting response.
  *
- * @package App\Test\HelloWorld\Controller
+ * @package   App\Test\HelloWorld\Controller
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -14,7 +14,8 @@ namespace App\Test\HelloWorld\Controller;
 use App\Other\Ghost;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+
 
 /**
  * Handles the HelloWorld demo endpoint.
@@ -32,15 +33,15 @@ final class HelloWorldController
         summary: 'Return a greeting message.',
         responses: [
             new OA\Response(
-                response: Response::HTTP_OK,
+                response:    Response::HTTP_OK,
                 description: 'Greeting returned as plain text.',
-                content: new OA\MediaType(
-                    mediaType: 'text/plain',
-                    schema: new OA\Schema(type: 'string')
-                )
+                content:     new OA\MediaType(
+                                 mediaType: 'text/plain',
+                                 schema:    new OA\Schema(type: 'string')
+                             )
             ),
             new OA\Response(
-                response: Response::HTTP_INTERNAL_SERVER_ERROR,
+                response:    Response::HTTP_INTERNAL_SERVER_ERROR,
                 description: 'Unexpected server error.'
             ),
         ]

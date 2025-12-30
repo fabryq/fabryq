@@ -3,7 +3,7 @@
 /**
  * Console command that runs verification gates.
  *
- * @package Fabryq\Cli\Command
+ * @package   Fabryq\Cli\Command
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -13,56 +13,32 @@ namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Report\ReportWriter;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Runs the verifier and writes verification reports.
  */
+#[AsCommand(
+    name: 'fabryq:verify',
+    description: 'Run fabryq verification gates.'
+)]
 final class VerifyCommand extends Command
 {
     /**
-     * Default command name registered with Symfony.
-     *
-     * @var string
-     */
-    protected static string $defaultName = 'verify';
-
-    /**
-     * @param Verifier $verifier Verification analyzer.
+     * @param Verifier     $verifier     Verification analyzer.
      * @param ReportWriter $reportWriter Report writer for JSON/Markdown output.
-     * @param string $projectDir Absolute project directory.
+     * @param string       $projectDir   Absolute project directory.
      */
     public function __construct(
-        /**
-         * Verification analyzer.
-         *
-         * @var Verifier
-         */
-        private readonly Verifier $verifier,
-        /**
-         * Report writer used to persist findings.
-         *
-         * @var ReportWriter
-         */
+        private readonly Verifier     $verifier,
         private readonly ReportWriter $reportWriter,
-        /**
-         * Absolute project directory.
-         *
-         * @var string
-         */
-        private readonly string $projectDir,
+        private readonly string       $projectDir,
     ) {
         parent::__construct();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function configure(): void
-    {
-        $this->setDescription('Run fabryq verification gates.');
     }
 
     /**
@@ -73,17 +49,48 @@ final class VerifyCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $io = new SymfonyStyle($input, $output);
+        $io->title('Fabryq Verification');
+
+        // 1. Verifizierung ausführen
         $findings = $this->verifier->verify($this->projectDir);
 
+        // 2. Bericht auf Festplatte schreiben
         $this->reportWriter->write(
             'verify',
             $findings,
-            $this->projectDir.'/state/reports/verify/latest.json',
-            $this->projectDir.'/state/reports/verify/latest.md'
+            $this->projectDir . '/state/reports/verify/latest.json',
+            $this->projectDir . '/state/reports/verify/latest.md'
         );
 
-        $blockers = array_filter($findings, static fn ($finding) => $finding->severity === 'BLOCKER');
+        // 3. Ergebnisse auf dem Bildschirm ausgeben (Das fehlte vorher)
+        if ($findings === []) {
+            $io->success('No issues found.');
+            return Command::SUCCESS;
+        }
 
-        return $blockers === [] ? Command::SUCCESS : Command::FAILURE;
+        foreach ($findings as $finding) {
+            $type = $finding->severity === 'BLOCKER' ? 'error' : 'warning';
+
+            $io->section(sprintf('[%s] %s', $finding->type, $finding->severity));
+            $io->text($finding->message);
+
+            if ($finding->location) {
+                $io->text(sprintf('File: %s', $finding->location->file));
+                if ($finding->location->line) {
+                    $io->text(sprintf('Line: %d', $finding->location->line));
+                }
+            }
+        }
+
+        $blockers = array_filter($findings, static fn($finding) => $finding->severity === 'BLOCKER');
+
+        if ($blockers !== []) {
+            $io->error(sprintf('Found %d blockers.', count($blockers)));
+            return Command::FAILURE;
+        }
+
+        $io->success('Verification passed (with warnings).');
+        return Command::SUCCESS;
     }
 }

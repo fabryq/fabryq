@@ -48,6 +48,7 @@ return static function (ContainerConfigurator $configurator): void {
     $services->set(DoctrineDiscovery::class);
 
     $services->set(FabryqRouteLoader::class)
+        ->arg('$attributeDirectoryLoader', service('routing.loader.attribute.directory'))
         ->tag('routing.loader');
 
     $services->set(CapabilityProviderRegistryFactory::class);

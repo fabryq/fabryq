@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Analyzer\Doctor;
 use Fabryq\Cli\Report\ReportWriter;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,15 +21,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Evaluates provider wiring and writes doctor reports.
  */
+#[AsCommand(
+    name: 'fabryq:doctor',
+    description: 'Run fabryq doctor checks.'
+)]
 final class DoctorCommand extends Command
 {
-    /**
-     * Default command name registered with Symfony.
-     *
-     * @var string
-     */
-    protected static string $defaultName = 'doctor';
-
     /**
      * @param Doctor $doctor Doctor analyzer.
      * @param ReportWriter $reportWriter Report writer for JSON/Markdown output.

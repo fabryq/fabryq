@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Assets\AssetInstaller;
 use Fabryq\Cli\Assets\AssetManifestWriter;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,15 +21,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Installs assets and writes the asset manifest.
  */
+#[AsCommand(
+    name: 'fabryq:assets:install',
+    description: 'Publish Fabryq assets to public/fabryq.'
+)]
 final class AssetsInstallCommand extends Command
 {
-    /**
-     * Default command name registered with Symfony.
-     *
-     * @var string
-     */
-    protected static string $defaultName = 'assets:install';
-
     /**
      * @param AssetInstaller $assetInstaller Asset installer service.
      * @param AssetManifestWriter $manifestWriter Asset manifest writer service.

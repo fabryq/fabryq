@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Analyzer\GraphBuilder;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,15 +21,12 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Builds and writes the capability graph to disk.
  */
+#[AsCommand(
+    name: 'fabryq:graph',
+    description: 'Export fabryq capability graph.'
+)]
 final class GraphCommand extends Command
 {
-    /**
-     * Default command name registered with Symfony.
-     *
-     * @var string
-     */
-    protected static string $defaultName = 'graph';
-
     /**
      * @param GraphBuilder $graphBuilder Graph builder service.
      * @param Filesystem $filesystem Filesystem abstraction for writing outputs.

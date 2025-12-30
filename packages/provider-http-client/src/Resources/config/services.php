@@ -29,8 +29,8 @@ return static function (ContainerConfigurator $configurator): void {
         ->autoconfigure();
 
     $services->set(SimpleHttpClient::class);
-    $services->set(HttpClientInterface::class)
-        ->alias(SimpleHttpClient::class);
+
+    $services->alias(HttpClientInterface::class, SimpleHttpClient::class);
 
     $services->set(HttpClientProvider::class)
         ->tag('fabryq.capability_provider', [

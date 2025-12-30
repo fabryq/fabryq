@@ -3,7 +3,7 @@
 /**
  * Analyzer that detects cross-app references in source code.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -39,16 +39,17 @@ final class CrossAppReferenceScanner
     public function scan(string $projectDir): array
     {
         $findings = [];
-        $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+        // KORREKTUR 1: Verwenden Sie createForNewestSupportedVersion() für Kompatibilität
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         $finder = new Finder();
         $paths = [];
 
-        $appsDir = $projectDir.'/src/Apps';
+        $appsDir = $projectDir . '/src/Apps';
         if (is_dir($appsDir)) {
             $paths[] = $appsDir;
         }
 
-        $componentsDir = $projectDir.'/src/Components';
+        $componentsDir = $projectDir . '/src/Components';
         if (is_dir($componentsDir)) {
             $paths[] = $componentsDir;
         }
@@ -86,13 +87,23 @@ final class CrossAppReferenceScanner
             }
 
             foreach ($nodeFinder->findInstanceOf($ast, Node\Name::class) as $nameNode) {
+                // Ignore the namespace declaration itself
                 if ($nameNode->getAttribute('parent') instanceof Node\Stmt\Namespace_) {
                     continue;
                 }
 
                 $resolved = $nameNode->getAttribute('resolvedName');
+
+                // KORREKTUR 2: Fallback für use-Statements
+                // Wenn resolvedName fehlt, prüfen wir, ob es sich um einen Import handelt.
                 if (!$resolved instanceof Node\Name) {
-                    continue;
+                    $parent = $nameNode->getAttribute('parent');
+                    if ($parent instanceof Node\Stmt\UseUse || $parent instanceof Node\Stmt\GroupUse) {
+                        // In use-Statements ist der Name selbst der aufgelöste Name
+                        $resolved = $nameNode;
+                    } else {
+                        continue;
+                    }
                 }
 
                 $fqcn = $resolved->toString();
@@ -135,7 +146,7 @@ final class CrossAppReferenceScanner
      * Resolve the context (app or global) for a file path.
      *
      * @param string $projectDir Absolute project directory.
-     * @param string $path Absolute file path.
+     * @param string $path       Absolute file path.
      *
      * @return array{type: 'app', app: string}|array{type: 'global'}|null
      */

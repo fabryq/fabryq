@@ -1,3 +1,5 @@
 /.idea
 /examples/demo/vendor
 /examples/demo/var
+/examples/demo/state
+/examples/demo/composer.lock

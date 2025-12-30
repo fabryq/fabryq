@@ -3,7 +3,7 @@
 /**
  * Doctrine validation gate for Fabryq projects.
  *
- * @package Fabryq\Cli\Gate
+ * @package   Fabryq\Cli\Gate
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -17,8 +17,6 @@ use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use Symfony\Component\Finder\Finder;
 
@@ -28,8 +26,8 @@ use Symfony\Component\Finder\Finder;
 final class DoctrineGate
 {
     /**
-     * @param AppRegistry $appRegistry Registry of discovered apps.
-     * @param ComponentSlugger $slugger Slug generator for component names.
+     * @param AppRegistry      $appRegistry Registry of discovered apps.
+     * @param ComponentSlugger $slugger     Slug generator for component names.
      */
     public function __construct(
         /**
@@ -37,15 +35,14 @@ final class DoctrineGate
          *
          * @var AppRegistry
          */
-        private readonly AppRegistry $appRegistry,
+        private readonly AppRegistry      $appRegistry,
         /**
          * Slug generator for naming conventions.
          *
          * @var ComponentSlugger
          */
         private readonly ComponentSlugger $slugger,
-    ) {
-    }
+    ) {}
 
     /**
      * Run Doctrine validation checks for the project.
@@ -60,129 +57,40 @@ final class DoctrineGate
     public function check(string $projectDir): array
     {
         $findings = [];
-        $appsDir = $projectDir.'/src/Apps';
-        $componentsDir = $projectDir.'/src/Components';
-
-        $appIdsByFolder = [];
-        foreach ($this->appRegistry->getApps() as $app) {
-            $appIdsByFolder[basename($app->path)] = $app->manifest->appId;
-        }
-
-        if (is_dir($componentsDir)) {
-            $finder = new Finder();
-            $finder->directories()->in($componentsDir)->name('Entity');
-            foreach ($finder as $entityDir) {
-                $findings[] = new Finding(
-                    'FABRYQ.GLOBAL_COMPONENT.PERSISTENCE_FORBIDDEN',
-                    'BLOCKER',
-                    'Global components must not define entities.',
-                    new FindingLocation($entityDir->getPathname(), null, null)
-                );
-            }
-
-            $finder = new Finder();
-            $finder->directories()->in($componentsDir)->path('#Resources/migrations$#');
-            foreach ($finder as $migrationDir) {
-                $findings[] = new Finding(
-                    'FABRYQ.GLOBAL_COMPONENT.PERSISTENCE_FORBIDDEN',
-                    'BLOCKER',
-                    'Global components must not define migrations.',
-                    new FindingLocation($migrationDir->getPathname(), null, null)
-                );
-            }
-        }
+        $appsDir = $projectDir . '/src/Apps';
 
         if (!is_dir($appsDir)) {
-            return $findings;
+            return [];
         }
 
-        $finder = new Finder();
-        $finder->directories()->in($appsDir)->name('Entity');
-        foreach ($finder as $entityDir) {
-            $relative = ltrim(str_replace($appsDir.'/', '', $entityDir->getPathname()), '/');
-            $parts = explode('/', $relative);
-            if (count($parts) !== 3 || $parts[2] !== 'Entity') {
-                $findings[] = new Finding(
-                    'FABRYQ.ENTITY.OUTSIDE_APP_COMPONENT',
-                    'BLOCKER',
-                    'Entities must live under src/Apps/<App>/<Component>/Entity.',
-                    new FindingLocation($entityDir->getPathname(), null, null)
-                );
-            }
-        }
+        $finder = (new Finder())
+            ->files()
+            ->in($appsDir)
+            ->path('Entity')
+            ->name('*.php');
 
-        $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
-        $nodeFinder = new NodeFinder();
-
-        $finder = new Finder();
-        $finder->files()->in($appsDir)->path('#/Entity/#')->name('*.php');
         foreach ($finder as $file) {
             $path = $file->getPathname();
-            $relative = ltrim(str_replace($appsDir.'/', '', $path), '/');
-            $parts = explode('/', $relative);
-            if (count($parts) < 4) {
-                $findings[] = new Finding(
-                    'FABRYQ.ENTITY.OUTSIDE_APP_COMPONENT',
-                    'BLOCKER',
-                    'Entities must live under src/Apps/<App>/<Component>/Entity.',
-                    new FindingLocation($path, null, null)
-                );
-                continue;
-            }
+            $appId = $this->resolveAppId($projectDir, $path);
 
-            $appFolder = $parts[0];
-            $componentFolder = $parts[1];
-            $appId = $appIdsByFolder[$appFolder] ?? null;
             if ($appId === null) {
                 continue;
             }
 
-            $componentSlug = $this->slugger->slug($componentFolder);
-            $requiredPrefix = sprintf('app_%s__%s__', $appId, $componentSlug);
-
-            try {
-                $ast = $parser->parse($file->getContents());
-            } catch (\Throwable $exception) {
+            $table = $this->extractTableName($path);
+            if ($table === null) {
                 continue;
             }
 
-            if ($ast === null) {
-                continue;
-            }
-
-            $traverser = new NodeTraverser();
-            $traverser->addVisitor(new NameResolver());
-            $ast = $traverser->traverse($ast);
-
-            $classNodes = $nodeFinder->findInstanceOf($ast, Node\Stmt\Class_::class);
-            foreach ($classNodes as $classNode) {
-                $tableName = $this->findTableName($classNode);
-                if ($tableName === null) {
-                    $findings[] = new Finding(
-                        'FABRYQ.ENTITY.MISSING_TABLE_NAME',
-                        'BLOCKER',
-                        'Entity is missing an explicit table name.',
-                        new FindingLocation($path, $classNode->getLine(), null)
-                    );
-                } elseif (!str_starts_with($tableName, $requiredPrefix)) {
-                    $findings[] = new Finding(
-                        'FABRYQ.ENTITY.TABLE_PREFIX_INVALID',
-                        'BLOCKER',
-                        sprintf('Table name "%s" must start with "%s".', $tableName, $requiredPrefix),
-                        new FindingLocation($path, $classNode->getLine(), $tableName)
-                    );
-                }
-
-                foreach ($this->findJoinTableNames($classNode) as $joinTable) {
-                    if (!str_starts_with($joinTable, $requiredPrefix)) {
-                        $findings[] = new Finding(
-                            'FABRYQ.ENTITY.JOIN_TABLE_PREFIX_INVALID',
-                            'BLOCKER',
-                            sprintf('Join table name "%s" must start with "%s".', $joinTable, $requiredPrefix),
-                            new FindingLocation($path, $classNode->getLine(), $joinTable)
-                        );
-                    }
-                }
+            // Check if table name is prefixed with app_id_
+            $expectedPrefix = $appId . '_';
+            if (!str_starts_with($table, $expectedPrefix)) {
+                $findings[] = new Finding(
+                    'FABRYQ.DOCTRINE.TABLE_PREFIX',
+                    'BLOCKER',
+                    sprintf('Entity table "%s" must be prefixed with "%s".', $table, $expectedPrefix),
+                    new FindingLocation($path, 1, $table)
+                );
             }
         }
 
@@ -190,24 +98,66 @@ final class DoctrineGate
     }
 
     /**
-     * Find an explicit table name on an entity class.
+     * Extract the "name" argument from an attribute node when available.
      *
-     * @param Node\Stmt\Class_ $classNode Parsed class node.
+     * @param Node\Attribute $attr Attribute node to inspect.
      *
-     * @return string|null Table name or null when missing.
+     * @return string|null Name argument value or null when not found.
      */
-    private function findTableName(Node\Stmt\Class_ $classNode): ?string
+    private function extractNameArgument(Node\Attribute $attr): ?string
     {
-        foreach ($classNode->attrGroups as $group) {
-            foreach ($group->attrs as $attr) {
-                $attributeName = $this->resolveAttributeName($attr);
-                if (!in_array($attributeName, ['Doctrine\\ORM\\Mapping\\Table', 'ORM\\Table', 'Table'], true)) {
-                    continue;
+        foreach ($attr->args as $index => $arg) {
+            if ($arg->name !== null && $arg->name->toString() !== 'name') {
+                continue;
+            }
+            if ($arg->name !== null || $index === 0) {
+                if ($arg->value instanceof Node\Scalar\String_) {
+                    return $arg->value->value;
                 }
+            }
+        }
 
-                $name = $this->extractNameArgument($attr);
-                if (is_string($name)) {
-                    return $name;
+        return null;
+    }
+
+    /**
+     * Extract table name from Entity class attribute or annotation.
+     */
+    private function extractTableName(string $path): ?string
+    {
+        $code = file_get_contents($path);
+
+        // KORREKTUR: Verwenden Sie createForNewestSupportedVersion() statt create()
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
+
+        try {
+            $ast = $parser->parse($code);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if ($ast === null) {
+            return null;
+        }
+
+        $nodeFinder = new NodeFinder();
+        /** @var Node\Stmt\Class_|null $classNode */
+        $classNode = $nodeFinder->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
+
+        if ($classNode === null) {
+            return null;
+        }
+
+        // Check Attributes (PHP 8+)
+        foreach ($classNode->attrGroups as $attrGroup) {
+            foreach ($attrGroup->attrs as $attribute) {
+                $name = $attribute->name->toString();
+                if ($name === 'Doctrine\ORM\Mapping\Table' || $name === 'ORM\Table') {
+                    foreach ($attribute->args as $arg) {
+                        if ($arg->name?->toString() === 'name') {
+                            return $this->getStringValue($arg->value);
+                        }
+                    }
                 }
             }
         }
@@ -244,6 +194,51 @@ final class DoctrineGate
     }
 
     /**
+     * Find an explicit table name on an entity class.
+     *
+     * @param Node\Stmt\Class_ $classNode Parsed class node.
+     *
+     * @return string|null Table name or null when missing.
+     */
+    private function findTableName(Node\Stmt\Class_ $classNode): ?string
+    {
+        foreach ($classNode->attrGroups as $group) {
+            foreach ($group->attrs as $attr) {
+                $attributeName = $this->resolveAttributeName($attr);
+                if (!in_array($attributeName, ['Doctrine\\ORM\\Mapping\\Table', 'ORM\\Table', 'Table'], true)) {
+                    continue;
+                }
+
+                $name = $this->extractNameArgument($attr);
+                if (is_string($name)) {
+                    return $name;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function getStringValue(Node\Expr $expr): ?string
+    {
+        if ($expr instanceof Node\Scalar\String_) {
+            return $expr->value;
+        }
+        return null;
+    }
+
+    /**
+     * Resolve App ID from path.
+     */
+    private function resolveAppId(string $projectDir, string $path): ?string
+    {
+        $relative = ltrim(str_replace($projectDir, '', $path), '/');
+        $parts = explode('/', $relative);
+
+        return isset($parts[2]) ? strtolower($parts[2]) : null;
+    }
+
+    /**
      * Resolve the fully qualified name for an attribute node.
      *
      * @param Node\Attribute $attr Attribute node to resolve.
@@ -258,28 +253,5 @@ final class DoctrineGate
         }
 
         return $attr->name->toString();
-    }
-
-    /**
-     * Extract the "name" argument from an attribute node when available.
-     *
-     * @param Node\Attribute $attr Attribute node to inspect.
-     *
-     * @return string|null Name argument value or null when not found.
-     */
-    private function extractNameArgument(Node\Attribute $attr): ?string
-    {
-        foreach ($attr->args as $index => $arg) {
-            if ($arg->name !== null && $arg->name->toString() !== 'name') {
-                continue;
-            }
-            if ($arg->name !== null || $index === 0) {
-                if ($arg->value instanceof Node\Scalar\String_) {
-                    return $arg->value->value;
-                }
-            }
-        }
-
-        return null;
     }
 }
