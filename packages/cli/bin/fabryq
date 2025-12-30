@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$projectDir = getcwd();
+$autoload = $projectDir.'/vendor/autoload.php';
+if (!file_exists($autoload)) {
+    $autoload = __DIR__.'/../../../../autoload.php';
+}
+if (!file_exists($autoload)) {
+    fwrite(STDERR, "Unable to locate vendor/autoload.php. Run composer install.\n");
+    exit(1);
+}
+
+require $autoload;
+
+$bootstrap = $projectDir.'/config/bootstrap.php';
+if (file_exists($bootstrap)) {
+    require $bootstrap;
+}
+
+if (!isset($_SERVER['FABRYQ_ANALYSIS'])) {
+    $_SERVER['FABRYQ_ANALYSIS'] = '1';
+    $_ENV['FABRYQ_ANALYSIS'] = '1';
+}
+
+if (!isset($_SERVER['APP_ENV'])) {
+    $_SERVER['APP_ENV'] = 'dev';
+    $_ENV['APP_ENV'] = 'dev';
+}
+if (!isset($_SERVER['APP_DEBUG'])) {
+    $_SERVER['APP_DEBUG'] = '0';
+    $_ENV['APP_DEBUG'] = '0';
+}
+
+$kernelClass = 'App\\Kernel';
+if (!class_exists($kernelClass)) {
+    fwrite(STDERR, "Unable to find App\\Kernel.\n");
+    exit(1);
+}
+
+$kernel = new $kernelClass($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
+$application = new Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
+$application->setName('fabryq');
+$application->run();

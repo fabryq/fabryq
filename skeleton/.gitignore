@@ -1,0 +1,8 @@
+/.idea/
+/.vscode/
+/vendor/
+/var/
+/state/
+/public/fabryq/
+/.env.local
+/.env.*.local

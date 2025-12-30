@@ -1,0 +1,3 @@
+fabryq:
+  resource: .
+  type: fabryq

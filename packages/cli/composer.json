@@ -1,0 +1,25 @@
+{
+  "name": "fabryq/cli",
+  "description": "Fabryq CLI bundle",
+  "license": "proprietary",
+  "type": "symfony-bundle",
+  "version": "0.1.0",
+  "require": {
+    "php": ">=8.1",
+    "fabryq/contracts": "*",
+    "fabryq/runtime": "*",
+    "symfony/framework-bundle": "^6.4 || ^7.0",
+    "symfony/console": "^6.4 || ^7.0",
+    "symfony/filesystem": "^6.4 || ^7.0",
+    "symfony/finder": "^6.4 || ^7.0",
+    "nikic/php-parser": "^4.18 || ^5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Fabryq\\Cli\\": "src/"
+    }
+  },
+  "bin": [
+    "bin/fabryq"
+  ]
+}

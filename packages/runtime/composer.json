@@ -1,0 +1,25 @@
+{
+  "name": "fabryq/runtime",
+  "description": "Fabryq runtime bundle",
+  "license": "proprietary",
+  "type": "symfony-bundle",
+  "version": "0.1.0",
+  "require": {
+    "php": ">=8.1",
+    "fabryq/contracts": "*",
+    "symfony/framework-bundle": "^6.4 || ^7.0",
+    "symfony/config": "^6.4 || ^7.0",
+    "symfony/dependency-injection": "^6.4 || ^7.0",
+    "symfony/http-kernel": "^6.4 || ^7.0",
+    "symfony/routing": "^6.4 || ^7.0",
+    "symfony/finder": "^6.4 || ^7.0",
+    "symfony/filesystem": "^6.4 || ^7.0",
+    "doctrine/doctrine-bundle": "^2.11",
+    "doctrine/doctrine-migrations-bundle": "^3.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Fabryq\\Runtime\\": "src/"
+    }
+  }
+}

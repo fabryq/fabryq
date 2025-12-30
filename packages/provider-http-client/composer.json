@@ -1,0 +1,17 @@
+{
+  "name": "fabryq/provider-http-client",
+  "description": "Fabryq HTTP client provider",
+  "license": "proprietary",
+  "type": "symfony-bundle",
+  "version": "0.1.0",
+  "require": {
+    "php": ">=8.1",
+    "fabryq/contracts": "*",
+    "symfony/framework-bundle": "^6.4 || ^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Fabryq\\Provider\\HttpClient\\": "src/"
+    }
+  }
+}
