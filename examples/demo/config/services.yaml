@@ -17,4 +17,3 @@ services:
       - '../src/Components/**/Entity/'
       - '../src/Components/**/Resources/'
       - '../src/Components/**/Migrations/'
-      - '../src/Apps/**/manifest.php'

@@ -3,7 +3,7 @@
   "description": "Fabryq CLI bundle",
   "license": "proprietary",
   "type": "symfony-bundle",
-  "version": "0.1.0",
+  "version": "0.2.5",
   "require": {
     "php": ">=8.1",
     "fabryq/contracts": "*",

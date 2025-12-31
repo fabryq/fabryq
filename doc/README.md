@@ -14,9 +14,13 @@
 
 ## Specs
 - doc/spec/apps.md
+- doc/spec/base-layers.md
 - doc/spec/components.md
 - doc/spec/bridges.md
+- doc/spec/context.md
+- doc/spec/entities.md
 - doc/spec/providers.md
 - doc/spec/reports.md
 - doc/spec/finding-ids.md
 - doc/spec/fix-logging.md
+- doc/spec/rules/service-locator-forbidden.md

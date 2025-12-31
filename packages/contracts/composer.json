@@ -3,7 +3,7 @@
   "description": "Fabryq contracts",
   "license": "proprietary",
   "type": "library",
-  "version": "0.1.0",
+  "version": "0.2.5",
   "require": {
     "php": ">=8.1"
   },

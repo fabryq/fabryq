@@ -27,3 +27,4 @@ vendor/bin/fabryq verify
 - Cross-app references
 - Asset collisions
 - Provider issues
+- Service locator/container usage in app or component code

@@ -3,7 +3,7 @@
   "description": "Fabryq demo project",
   "type": "project",
   "license": "proprietary",
-  "version": "0.1.0",
+  "version": "0.2.5",
   "require": {
     "php": ">=8.1",
     "symfony/framework-bundle": "^6.4 || ^7.0",

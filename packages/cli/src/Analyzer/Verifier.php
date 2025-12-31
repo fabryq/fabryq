@@ -24,14 +24,15 @@ use Fabryq\Runtime\Util\ComponentSlugger;
  */
 final readonly class Verifier
 {
-    /**
+     /**
      * @param AppRegistry                $appRegistry      Registry of discovered apps.
      * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
      * @param ComponentSlugger           $slugger          Slug generator for component names.
      * @param AssetScanner               $assetScanner     Scanner for asset collisions.
      * @param CrossAppReferenceScanner   $crossAppScanner  Scanner for cross-app references.
+     * @param ServiceLocatorScanner      $serviceLocatorScanner Scanner for service locator usage.
      * @param DoctrineGate               $doctrineGate     Doctrine validation gate.
-     */
+ */
     public function __construct(
         /**
          * Registry of applications.
@@ -63,6 +64,12 @@ final readonly class Verifier
          * @var CrossAppReferenceScanner
          */
         private CrossAppReferenceScanner   $crossAppScanner,
+        /**
+         * Scanner for forbidden service locator usage.
+         *
+         * @var ServiceLocatorScanner
+         */
+        private ServiceLocatorScanner      $serviceLocatorScanner,
         /**
          * Doctrine validation gate.
          *
@@ -98,6 +105,7 @@ final readonly class Verifier
         $findings = array_merge($findings, $this->checkGlobalComponentSlugs($projectDir));
         $findings = array_merge($findings, $this->checkCapabilityIds());
         $findings = array_merge($findings, $this->crossAppScanner->scan($projectDir));
+        $findings = array_merge($findings, $this->serviceLocatorScanner->scan($projectDir));
         $findings = array_merge($findings, $this->checkAssetCollisions($projectDir));
         $findings = array_merge($findings, $this->doctrineGate->check($projectDir));
         $findings = array_merge($findings, $this->checkProviders());
