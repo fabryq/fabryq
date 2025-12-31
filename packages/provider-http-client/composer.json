@@ -6,7 +6,7 @@
   "version": "0.2.5",
   "require": {
     "php": ">=8.1",
-    "fabryq/contracts": "*",
+    "fabryq/contracts": "^0.2",
     "symfony/framework-bundle": "^6.4 || ^7.0"
   },
   "autoload": {

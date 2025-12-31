@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ac53f743486dd39ec06f3f96202e9a57",
+    "content-hash": "50a3d521da90617aa14a48829daabf87",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -1330,11 +1330,11 @@
         },
         {
             "name": "fabryq/cli",
-            "version": "0.1.0",
+            "version": "0.2.5",
             "dist": {
                 "type": "path",
                 "url": "../../packages/cli",
-                "reference": "1d860a2f0a1cae52f302453955cc542100d995ea"
+                "reference": "786fd309147d35299f39aca1aaa70b93d717ec2a"
             },
             "require": {
                 "fabryq/contracts": "*",
@@ -1366,11 +1366,11 @@
         },
         {
             "name": "fabryq/contracts",
-            "version": "0.1.0",
+            "version": "0.2.5",
             "dist": {
                 "type": "path",
                 "url": "../../packages/contracts",
-                "reference": "74ef822a35cb48822a9b8900b1be59cd04a34864"
+                "reference": "5398c1f4569b5dbb83208887e1dcb62584dbd9ce"
             },
             "require": {
                 "php": ">=8.1"
@@ -1392,14 +1392,14 @@
         },
         {
             "name": "fabryq/provider-http-client",
-            "version": "0.1.0",
+            "version": "0.2.5",
             "dist": {
                 "type": "path",
                 "url": "../../packages/provider-http-client",
-                "reference": "8001e3ce54030908dc1e3f0e3e83be069c0a5d59"
+                "reference": "63293852b1274f71ebf79ffebb108249026784a5"
             },
             "require": {
-                "fabryq/contracts": "*",
+                "fabryq/contracts": "^0.2",
                 "php": ">=8.1",
                 "symfony/framework-bundle": "^6.4 || ^7.0"
             },
@@ -1420,11 +1420,11 @@
         },
         {
             "name": "fabryq/runtime",
-            "version": "0.1.0",
+            "version": "0.2.5",
             "dist": {
                 "type": "path",
                 "url": "../../packages/runtime",
-                "reference": "08186fb95410cc0ad3da7cc13bfbc79b8641a1aa"
+                "reference": "c580bb1a949fa83e210ad79792af175326be56e7"
             },
             "require": {
                 "doctrine/doctrine-bundle": "^2.11",
@@ -1438,6 +1438,7 @@
                 "symfony/framework-bundle": "^6.4 || ^7.0",
                 "symfony/http-kernel": "^6.4 || ^7.0",
                 "symfony/routing": "^6.4 || ^7.0",
+                "symfony/serializer": "^6.4 || ^7.0",
                 "symfony/uid": "^6.4 || ^7.0"
             },
             "type": "symfony-bundle",
@@ -4011,6 +4012,109 @@
                 }
             ],
             "time": "2025-12-19T10:00:43+00:00"
+        },
+        {
+            "name": "symfony/serializer",
+            "version": "v7.4.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/serializer.git",
+                "reference": "af01e99d6fc63549063fb9e849ce1240cfef5c4a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/serializer/zipball/af01e99d6fc63549063fb9e849ce1240cfef5c4a",
+                "reference": "af01e99d6fc63549063fb9e849ce1240cfef5c4a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/deprecation-contracts": "^2.5|^3",
+                "symfony/polyfill-ctype": "~1.8",
+                "symfony/polyfill-php84": "^1.30"
+            },
+            "conflict": {
+                "phpdocumentor/reflection-docblock": "<3.2.2",
+                "phpdocumentor/type-resolver": "<1.4.0",
+                "symfony/dependency-injection": "<6.4",
+                "symfony/property-access": "<6.4",
+                "symfony/property-info": "<6.4",
+                "symfony/uid": "<6.4",
+                "symfony/validator": "<6.4",
+                "symfony/yaml": "<6.4"
+            },
+            "require-dev": {
+                "phpdocumentor/reflection-docblock": "^3.2|^4.0|^5.0",
+                "phpstan/phpdoc-parser": "^1.0|^2.0",
+                "seld/jsonlint": "^1.10",
+                "symfony/cache": "^6.4|^7.0|^8.0",
+                "symfony/config": "^6.4|^7.0|^8.0",
+                "symfony/console": "^6.4|^7.0|^8.0",
+                "symfony/dependency-injection": "^7.2|^8.0",
+                "symfony/error-handler": "^6.4|^7.0|^8.0",
+                "symfony/filesystem": "^6.4|^7.0|^8.0",
+                "symfony/form": "^6.4|^7.0|^8.0",
+                "symfony/http-foundation": "^6.4|^7.0|^8.0",
+                "symfony/http-kernel": "^6.4|^7.0|^8.0",
+                "symfony/messenger": "^6.4|^7.0|^8.0",
+                "symfony/mime": "^6.4|^7.0|^8.0",
+                "symfony/property-access": "^6.4|^7.0|^8.0",
+                "symfony/property-info": "^6.4|^7.0|^8.0",
+                "symfony/translation-contracts": "^2.5|^3",
+                "symfony/type-info": "^7.1.8|^8.0",
+                "symfony/uid": "^6.4|^7.0|^8.0",
+                "symfony/validator": "^6.4|^7.0|^8.0",
+                "symfony/var-dumper": "^6.4|^7.0|^8.0",
+                "symfony/var-exporter": "^6.4|^7.0|^8.0",
+                "symfony/yaml": "^6.4|^7.0|^8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Serializer\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Handles serializing and deserializing data structures, including object graphs, into array structures or other formats like XML and JSON.",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/serializer/tree/v7.4.3"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-12-23T14:50:43+00:00"
         },
         {
             "name": "symfony/service-contracts",

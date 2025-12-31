@@ -15,9 +15,9 @@
     "doctrine/doctrine-bundle": "^2.11",
     "doctrine/doctrine-migrations-bundle": "^3.3",
     "zircote/swagger-php": "^5.7.6",
-    "fabryq/runtime": "^0.1",
-    "fabryq/cli": "^0.1",
-    "fabryq/provider-http-client": "^0.1"
+    "fabryq/runtime": "^0.2",
+    "fabryq/cli": "^0.2",
+    "fabryq/provider-http-client": "^0.2"
   },
   "repositories": [
     {

@@ -12,6 +12,10 @@ declare(strict_types=1);
 namespace Fabryq\Runtime\Entity;
 
 use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Ulid;
 
 /**
  * Provides a minimal ID accessor for entities.
@@ -19,28 +23,36 @@ use DateTimeImmutable;
 abstract class AbstractFabryqEntity implements FabryqEntityInterface
 {
     /**
-     * @var string
+     * @var Ulid
      */
-    protected string $id;
+    protected Ulid $id;
 
     /**
      * @var DateTimeImmutable|null
      */
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: false, options: ["default" => "CURRENT_TIMESTAMP"])]
+    #[Groups(["all", "default", "status"])]
     protected ?DateTimeImmutable $createdAt = null;
 
     /**
      * @var DateTimeImmutable|null
      */
+    #[ORM\Column(name: 'deleted_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     protected ?DateTimeImmutable $deletedAt = null;
 
     /**
      * @var DateTimeImmutable|null
      */
+    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE, nullable: false, options: ["default" => "CURRENT_TIMESTAMP"])]
+    #[Groups(["all", "default", "status"])]
     protected ?DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
+        $this->deletedAt = null;
+        $this->id = new Ulid();
     }
 
     /**
@@ -48,7 +60,7 @@ abstract class AbstractFabryqEntity implements FabryqEntityInterface
      */
     final public function getId(): string
     {
-        return $this->id;
+        return $this->id->toRfc4122();
     }
 
     /**
