@@ -11,32 +11,17 @@ Provide optional base classes that expose FabryqContext in common entrypoints.
 - AbstractFabryqCommand
 - AbstractFabryqUseCase
 
+## Behavior
+- Base classes expose FabryqContext as $ctx
+- Use cases are optional; controllers/commands may extend base or inject context directly
+
 ## Flags
 - N/A
 
 ## Examples
-```php
-use Fabryq\Runtime\Controller\AbstractFabryqController;
-
-final class InvoiceController extends AbstractFabryqController
-{
-    public function index(): Response
-    {
-        $this->ctx->logger->info('index');
-        // ...
-    }
-}
-```
-
-```php
-use Fabryq\Runtime\Command\AbstractFabryqCommand;
-use Symfony\Component\Console\Attribute\AsCommand;
-
-#[AsCommand(name: 'app:demo')]
-final class DemoCommand extends AbstractFabryqCommand
-{
-    // ...
-}
+```bash
+vendor/bin/fabryq app:create billing --mount=/billing
+vendor/bin/fabryq component:create billing Invoices
 ```
 
 ## Exit Codes

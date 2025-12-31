@@ -28,3 +28,4 @@ vendor/bin/fabryq verify
 - Asset collisions
 - Provider issues
 - Service locator/container usage in app or component code
+- Doctrine entities missing the Fabryq entity base

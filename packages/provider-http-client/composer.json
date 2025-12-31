@@ -3,9 +3,9 @@
   "description": "Fabryq HTTP client provider",
   "license": "proprietary",
   "type": "symfony-bundle",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "require": {
-    "php": ">=8.1",
+    "php": ">=8.2",
     "fabryq/contracts": "^0.2",
     "symfony/framework-bundle": "^6.4 || ^7.0"
   },

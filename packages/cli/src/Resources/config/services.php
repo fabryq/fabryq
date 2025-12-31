@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 use Fabryq\Cli\Analyzer\CrossAppReferenceScanner;
 use Fabryq\Cli\Analyzer\Doctor;
+use Fabryq\Cli\Analyzer\EntityBaseScanner;
 use Fabryq\Cli\Analyzer\GraphBuilder;
 use Fabryq\Cli\Analyzer\ServiceLocatorScanner;
 use Fabryq\Cli\Analyzer\Verifier;
@@ -61,6 +62,7 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(Filesystem::class), service(FindingIdGenerator::class)]);
 
     $services->set(CrossAppReferenceScanner::class);
+    $services->set(EntityBaseScanner::class);
     $services->set(ServiceLocatorScanner::class);
     $services->set(DoctrineGate::class);
     $services->set(Verifier::class);

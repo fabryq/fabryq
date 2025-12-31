@@ -32,19 +32,8 @@ Calls:
 - Fabryq runtime internals only (fabryq/runtime). App and component code has no exceptions.
 
 ## Examples
-```php
-use Psr\Container\ContainerInterface;
-
-final class BadService
-{
-    public function __construct(private readonly ContainerInterface $container)
-    {
-    }
-}
-```
-
-```php
-$this->container->get('service.id');
+```bash
+vendor/bin/fabryq verify
 ```
 
 ## Exit Codes

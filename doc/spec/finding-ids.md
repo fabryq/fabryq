@@ -13,18 +13,16 @@ Define deterministic finding IDs for reports and fixes.
 ## Outputs
 - id: F-XXXXXXXX (Crockford Base32)
 
+## Behavior
+- IDs are derived from ruleKey, file, symbol, and details.primary
+- IDs appear in state/reports/verify/latest.json and state/reports/review/latest.md
+
 ## Flags
 - N/A
 
 ## Examples
-Fingerprint:
-```
-FABRYQ.APP.CROSSING|src/Apps/Billing/Service/Foo.php|App\\Other\\Foo|App\\Other\\Foo|typehint
-```
-
-ID format:
-```
-F-1A2B3C4D
+```bash
+vendor/bin/fabryq verify
 ```
 
 ## Exit Codes

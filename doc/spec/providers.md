@@ -15,15 +15,9 @@ Define runtime provider metadata, tagging, priorities, and winner resolution.
 - N/A
 
 ## Examples
-```php
-#[FabryqProvider(
-    capability: 'fabryq.bridge.billing.invoice-processor',
-    contract: App\Components\BridgeBilling\Contract\InvoiceProcessorInterface::class,
-    priority: 0
-)]
-final class InvoiceProcessorAdapter implements InvoiceProcessorInterface
-{
-}
+```bash
+vendor/bin/fabryq verify
+vendor/bin/fabryq doctor
 ```
 
 ## Exit Codes

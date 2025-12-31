@@ -24,3 +24,7 @@
 - doc/spec/finding-ids.md
 - doc/spec/fix-logging.md
 - doc/spec/rules/service-locator-forbidden.md
+- doc/spec/rules/entity-base-required.md
+
+## Development
+- doc/tests.md

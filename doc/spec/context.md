@@ -11,26 +11,18 @@ Provide a minimal, stable set of shared utilities without acting as a container.
 ## Outputs
 - FabryqContext service (autowireable)
 
+## Behavior
+- Provides logger, clock, and ULID factory only
+- No service lookup or get() method
+- Use constructor injection when needed
+
 ## Flags
 - N/A
 
 ## Examples
-```php
-use Fabryq\Runtime\Context\FabryqContext;
-
-final class InvoiceService
-{
-    public function __construct(private readonly FabryqContext $ctx)
-    {
-    }
-
-    public function handle(): void
-    {
-        $this->ctx->logger->info('start');
-        $now = $this->ctx->clock->now();
-        $id = $this->ctx->ulids->create()->toRfc4122();
-    }
-}
+```bash
+vendor/bin/fabryq app:create billing --mount=/billing
+vendor/bin/fabryq component:create billing Invoices
 ```
 
 ## Exit Codes

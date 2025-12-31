@@ -22,29 +22,8 @@ Define application layout and manifest fields for Fabryq apps.
 - N/A
 
 ## Examples
-```php
-return [
-    'appId' => 'billing',
-    'name' => 'Billing',
-    'mountpoint' => '/billing',
-    'provides' => [
-        [
-            'capabilityId' => 'fabryq.bridge.billing.invoice-processor',
-            'contract' => 'App\\Components\\BridgeBilling\\Contract\\InvoiceProcessorInterface',
-        ],
-    ],
-    'consumes' => [
-        [
-            'capabilityId' => 'fabryq.bridge.core.http-client',
-            'required' => true,
-            'contract' => 'Fabryq\\Contracts\\Capability\\HttpClientInterface',
-        ],
-    ],
-    'events' => [
-        'publishes' => [],
-        'subscribes' => [],
-    ],
-];
+```bash
+vendor/bin/fabryq app:create billing --mount=/billing
 ```
 
 ## Exit Codes
@@ -54,3 +33,4 @@ return [
 - appId not matching ^[a-z0-9]+(?:-[a-z0-9]+)*$
 - mountpoint invalid or colliding with another app
 - manifest missing required keys
+- composer.json missing autoload.psr-4 mapping for src/Apps/

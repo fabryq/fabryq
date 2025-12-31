@@ -21,10 +21,8 @@ Describe bridge layout, contracts, DTOs, and NoOp providers created for app cros
 - N/A
 
 ## Examples
-```text
-src/Components/BridgeBilling/Contract/InvoiceProcessorInterface.php
-src/Components/BridgeBilling/NoOp/InvoiceProcessorInterfaceNoOp.php
-src/Apps/Billing/Service/Bridge/InvoiceProcessorInterfaceAdapter.php
+```bash
+vendor/bin/fabryq fix crossing --dry-run
 ```
 
 ## Exit Codes

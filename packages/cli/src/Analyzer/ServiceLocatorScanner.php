@@ -86,10 +86,7 @@ final class ServiceLocatorScanner
 
             foreach ($nodeFinder->findInstanceOf($ast, Node\Name::class) as $nameNode) {
                 $resolved = $nameNode->getAttribute('resolvedName');
-                if (!$resolved instanceof Node\Name) {
-                    continue;
-                }
-                $fqcn = $resolved->toString();
+                $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $nameNode->toString();
                 if (!in_array($fqcn, self::FORBIDDEN_FQCNS, true)) {
                     continue;
                 }

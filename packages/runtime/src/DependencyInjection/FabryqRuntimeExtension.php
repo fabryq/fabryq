@@ -64,7 +64,7 @@ final class FabryqRuntimeExtension extends Extension
         $appRegistryFactory = new AppRegistryFactory($manifestDiscovery, $componentDiscovery);
         $appRegistry = $appRegistryFactory->build($projectDir);
 
-        $doctrineDiscovery = new DoctrineDiscovery($appRegistry);
+        $doctrineDiscovery = new DoctrineDiscovery($appRegistry, $projectDir);
         $entityMappings = $doctrineDiscovery->getEntityMappings();
         if ($entityMappings !== []) {
             $container->prependExtensionConfig(

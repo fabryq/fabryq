@@ -15,39 +15,9 @@ Define report schemas for verify and review outputs.
 - N/A
 
 ## Examples
-```json
-{
-  "header": {
-    "tool": "verify",
-    "version": "0.2",
-    "generatedAt": "2025-01-01T00:00:00+00:00",
-    "result": "ok",
-    "summary": {
-      "blockers": 0,
-      "warnings": 1
-    }
-  },
-  "findings": [
-    {
-      "id": "F-1A2B3C4D",
-      "ruleKey": "FABRYQ.APP.CROSSING",
-      "severity": "BLOCKER",
-      "message": "App Billing references App.Other.Foo.",
-      "location": {
-        "file": "src/Apps/Billing/Invoice/Service/Foo.php",
-        "line": 12,
-        "symbol": "App\\Other\\Foo"
-      },
-      "details": {
-        "primary": "App\\Other\\Foo|typehint"
-      },
-      "autofix": {
-        "available": true,
-        "fixer": "crossing"
-      }
-    }
-  ]
-}
+```bash
+vendor/bin/fabryq verify
+vendor/bin/fabryq review
 ```
 
 ## Exit Codes

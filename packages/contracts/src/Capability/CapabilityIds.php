@@ -25,5 +25,5 @@ final class CapabilityIds
      *
      * Stable identifier used by providers and consumers.
      */
-    public const string FABRYQ_CLIENT_HTTP = 'fabryq.bridge.core.http-client';
+    public const FABRYQ_CLIENT_HTTP = 'fabryq.bridge.core.http-client';
 }

@@ -19,10 +19,8 @@ Define component layout for app-local and global components.
 - N/A
 
 ## Examples
-```text
-src/Apps/Billing/Invoices/Controller/
-src/Apps/Billing/Invoices/Service/
-src/Apps/Billing/Invoices/Resources/config/
+```bash
+vendor/bin/fabryq component:create billing Invoices
 ```
 
 ## Exit Codes
