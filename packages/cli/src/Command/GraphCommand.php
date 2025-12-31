@@ -15,6 +15,7 @@ use Fabryq\Cli\Analyzer\GraphBuilder;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -60,7 +61,10 @@ final class GraphCommand extends Command
      */
     protected function configure(): void
     {
-        $this->setDescription('Export fabryq capability graph.');
+        $this
+            ->addOption('json', null, InputOption::VALUE_NONE, 'Write JSON output to state/graph/latest.json.')
+            ->addOption('mermaid', null, InputOption::VALUE_NONE, 'Include Mermaid graph in Markdown output.')
+            ->setDescription('Export fabryq capability graph.');
     }
 
     /**
@@ -73,20 +77,44 @@ final class GraphCommand extends Command
     {
         $graph = $this->graphBuilder->build();
         $payload = [
-            'generatedAt' => date('c'),
             'apps' => $graph,
         ];
 
         $jsonPath = $this->projectDir.'/state/graph/latest.json';
         $mdPath = $this->projectDir.'/state/graph/latest.md';
 
-        $this->filesystem->mkdir(dirname($jsonPath));
         $this->filesystem->mkdir(dirname($mdPath));
 
-        file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        file_put_contents($mdPath, $this->renderMarkdown($payload));
+        if ($input->getOption('json')) {
+            $this->filesystem->mkdir(dirname($jsonPath));
+            file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
 
-        return Command::SUCCESS;
+        file_put_contents($mdPath, $this->renderMarkdown($payload, (bool) $input->getOption('mermaid')));
+
+        $hasMissing = false;
+        $hasDegraded = false;
+
+        foreach ($graph as $app) {
+            foreach ($app['consumes'] as $consume) {
+                if ($consume['winner'] === null) {
+                    $hasMissing = true;
+                }
+                if (!empty($consume['degraded'])) {
+                    $hasDegraded = true;
+                }
+            }
+        }
+
+        if ($hasMissing) {
+            return 20;
+        }
+
+        if ($hasDegraded) {
+            return 10;
+        }
+
+        return 0;
     }
 
     /**
@@ -96,12 +124,10 @@ final class GraphCommand extends Command
      *
      * @return string Markdown document contents.
      */
-    private function renderMarkdown(array $payload): string
+    private function renderMarkdown(array $payload, bool $includeMermaid): string
     {
         $lines = [];
         $lines[] = '# Fabryq Graph';
-        $lines[] = '';
-        $lines[] = 'Generated: '.$payload['generatedAt'];
         $lines[] = '';
 
         if ($payload['apps'] === []) {
@@ -119,21 +145,63 @@ final class GraphCommand extends Command
             } else {
                 foreach ($app['consumes'] as $consume) {
                     $required = $consume['required'] ? 'required' : 'optional';
-                    $lines[] = sprintf('- %s (%s)', $consume['capabilityId'], $required);
-                }
-            }
-            $lines[] = '';
-            $lines[] = 'Provides:';
-            if ($app['provides'] === []) {
-                $lines[] = '- none';
-            } else {
-                foreach ($app['provides'] as $provide) {
-                    $lines[] = sprintf('- %s via %s', $provide['capabilityId'], $provide['provider']);
+                    $degraded = !empty($consume['degraded']) ? ' degraded' : '';
+                    $lines[] = sprintf('- %s (%s%s)', $consume['capabilityId'], $required, $degraded);
+                    if (!empty($consume['contract'])) {
+                        $lines[] = '  Contract: '.$consume['contract'];
+                    }
+                    if ($consume['winner'] !== null) {
+                        $lines[] = '  Winner: '.$consume['winner']['className'];
+                    } else {
+                        $lines[] = '  Winner: missing';
+                    }
+                    if ($consume['providers'] !== []) {
+                        $lines[] = '  Providers:';
+                        foreach ($consume['providers'] as $provider) {
+                            $winnerFlag = !empty($provider['winner']) ? ' (winner)' : '';
+                            $lines[] = sprintf('    - %s (priority %d)%s', $provider['className'], (int) $provider['priority'], $winnerFlag);
+                        }
+                    }
                 }
             }
             $lines[] = '';
         }
 
+        if ($includeMermaid) {
+            $lines[] = '## Mermaid';
+            $lines[] = '';
+            $lines[] = '```mermaid';
+            $lines[] = 'graph TD';
+            foreach ($payload['apps'] as $appId => $app) {
+                foreach ($app['consumes'] as $consume) {
+                    $capability = $consume['capabilityId'];
+                    $winner = $consume['winner']['className'] ?? 'missing';
+                    $lines[] = sprintf('  %s --> %s', $this->slug($appId), $this->slug($capability));
+                    $lines[] = sprintf('  %s --> %s', $this->slug($capability), $this->slug($winner));
+                }
+            }
+            $lines[] = '```';
+            $lines[] = '';
+        }
+
         return implode("\n", $lines);
+    }
+
+    /**
+     * Normalize a string for Mermaid node ids.
+     *
+     * @param string $value Value to normalize.
+     *
+     * @return string Normalized node id.
+     */
+    private function slug(string $value): string
+    {
+        $slug = preg_replace('/[^A-Za-z0-9]+/', '_', $value) ?? $value;
+        $slug = trim($slug, '_');
+        if ($slug === '') {
+            return 'node';
+        }
+
+        return $slug;
     }
 }

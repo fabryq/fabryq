@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Application kernel for the skeleton project.
+ *
+ * @package App
+ * @copyright Copyright (c) 2025 Fabryq
+ */
+
 declare(strict_types=1);
 
 namespace App;
@@ -9,10 +16,16 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
+/**
+ * Configures services and routes for the skeleton application.
+ */
 final class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
 
+    /**
+     * {@inheritDoc}
+     */
     protected function configureContainer(ContainerConfigurator $container): void
     {
         $container->import('../config/packages/*.yaml');
@@ -20,6 +33,9 @@ final class Kernel extends BaseKernel
         $container->import('../config/services.yaml');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
         $routes->import('../config/routes/*.yaml');

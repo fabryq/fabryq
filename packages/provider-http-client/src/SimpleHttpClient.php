@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Fabryq\Provider\HttpClient;
 
+use Fabryq\Contracts\Capability\CapabilityIds;
 use Fabryq\Contracts\Capability\HttpClientInterface;
+use Fabryq\Runtime\Attribute\FabryqProvider;
 
 /**
  * Minimal HTTP client that formats requests instead of sending them.
@@ -19,6 +21,11 @@ use Fabryq\Contracts\Capability\HttpClientInterface;
  * Responsibilities:
  * - Provide a deterministic string output for request inputs.
  */
+#[FabryqProvider(
+    capability: CapabilityIds::FABRYQ_CLIENT_HTTP,
+    contract: HttpClientInterface::class,
+    priority: 0
+)]
 final class SimpleHttpClient implements HttpClientInterface
 {
     /**

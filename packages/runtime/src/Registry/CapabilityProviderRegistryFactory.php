@@ -19,7 +19,7 @@ final class CapabilityProviderRegistryFactory
     /**
      * Build a capability provider registry from raw provider and issue data.
      *
-     * @param array<int, array<string, string>> $providers Provider payloads containing capability metadata.
+     * @param array<int, array<string, mixed>> $providers Provider payloads containing capability metadata.
      * @param array<int, array<string, mixed>> $issues Issue payloads collected during discovery.
      *
      * @return CapabilityProviderRegistry Normalized registry with providers and validation issues.
@@ -29,8 +29,9 @@ final class CapabilityProviderRegistryFactory
         $definitions = [];
         foreach ($providers as $provider) {
             $definitions[] = new CapabilityProviderDefinition(
-                $provider['capabilityId'],
+                $provider['capability'],
                 $provider['contract'],
+                (int) ($provider['priority'] ?? 0),
                 $provider['serviceId'],
                 $provider['className']
             );

@@ -38,19 +38,31 @@ final readonly class CapabilityProviderRegistry
     /**
      * Find a provider by capability identifier.
      *
+     * @param string $capability Capability identifier to look up.
+     *
+     * @return CapabilityProviderDefinition|null Matching provider or null when none exists.
+     */
+    public function findByCapability(string $capability): ?CapabilityProviderDefinition
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->capability === $capability) {
+                return $provider;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Backwards-compatible lookup by capability identifier.
+     *
      * @param string $capabilityId Capability identifier to look up.
      *
      * @return CapabilityProviderDefinition|null Matching provider or null when none exists.
      */
     public function findByCapabilityId(string $capabilityId): ?CapabilityProviderDefinition
     {
-        foreach ($this->providers as $provider) {
-            if ($provider->capabilityId === $capabilityId) {
-                return $provider;
-            }
-        }
-
-        return null;
+        return $this->findByCapability($capabilityId);
     }
 
     /**

@@ -98,7 +98,7 @@ final readonly class Verifier
         $findings = array_merge($findings, $this->checkGlobalComponentSlugs($projectDir));
         $findings = array_merge($findings, $this->checkCapabilityIds());
         $findings = array_merge($findings, $this->crossAppScanner->scan($projectDir));
-        $findings = array_merge($findings, $this->checkAssetCollisions());
+        $findings = array_merge($findings, $this->checkAssetCollisions($projectDir));
         $findings = array_merge($findings, $this->doctrineGate->check($projectDir));
         $findings = array_merge($findings, $this->checkProviders());
 
@@ -110,21 +110,47 @@ final readonly class Verifier
      *
      * @return Finding[]
      */
-    private function checkAssetCollisions(): array
+    private function checkAssetCollisions(string $projectDir): array
     {
         $findings = [];
         $result = $this->assetScanner->scan();
 
         foreach ($result->collisions as $collision) {
+            $target = $this->normalizePath($collision['target'], $projectDir);
+            $sources = array_map(
+                fn(string $source) => $this->normalizePath($source, $projectDir),
+                $collision['sources']
+            );
+
             $findings[] = new Finding(
                 'FABRYQ.PUBLIC.COLLISION',
                 'BLOCKER',
-                sprintf('Asset target "%s" has multiple sources: %s', $collision['target'], implode(', ', $collision['sources'])),
-                new FindingLocation($collision['target'], null, implode(', ', $collision['sources']))
+                sprintf('Asset target "%s" has multiple sources: %s', $target, implode(', ', $sources)),
+                new FindingLocation($target, null, implode(', ', $sources)),
+                ['primary' => $target]
             );
         }
 
         return $findings;
+    }
+
+    /**
+     * Normalize a path relative to the project directory.
+     *
+     * @param string $path       Absolute path.
+     * @param string $projectDir Project root path.
+     *
+     * @return string Normalized relative path.
+     */
+    private function normalizePath(string $path, string $projectDir): string
+    {
+        $normalized = str_replace('\\\\', '/', $path);
+        $projectDir = str_replace('\\\\', '/', $projectDir);
+        if (str_starts_with($normalized, $projectDir . '/')) {
+            $normalized = substr($normalized, strlen($projectDir) + 1);
+        }
+
+        return ltrim($normalized, '/');
     }
 
     /**
@@ -135,7 +161,7 @@ final readonly class Verifier
     private function checkCapabilityIds(): array
     {
         $findings = [];
-        $pattern = '/^[a-z0-9]+(?:\\.[a-z0-9]+)+$/';
+        $pattern = '/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)+$/';
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->manifest->consumes as $consume) {
@@ -146,21 +172,21 @@ final readonly class Verifier
                 $findings[] = new Finding(
                     'FABRYQ.CAPABILITY.ID.INVALID',
                     'WARNING',
-                    sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $consume->capabilityId),
+                    sprintf('Capability id "%s" must be namespaced (example: fabryq.bridge.core.http-client).', $consume->capabilityId),
                     new FindingLocation($app->manifestPath, null, $consume->capabilityId)
                 );
             }
         }
 
         foreach ($this->providerRegistry->getProviders() as $provider) {
-            if (preg_match($pattern, $provider->capabilityId)) {
+            if (preg_match($pattern, $provider->capability)) {
                 continue;
             }
 
             $findings[] = new Finding(
                 'FABRYQ.CAPABILITY.ID.INVALID',
                 'WARNING',
-                sprintf('Capability id "%s" must be namespaced (example: fabryq.client.http).', $provider->capabilityId),
+                sprintf('Capability id "%s" must be namespaced (example: fabryq.bridge.core.http-client).', $provider->capability),
                 new FindingLocation(null, null, $provider->className)
             );
         }
@@ -276,7 +302,7 @@ final readonly class Verifier
                     continue;
                 }
 
-                if ($this->providerRegistry->findByCapabilityId($consume->capabilityId) !== null) {
+                if ($this->providerRegistry->findByCapability($consume->capabilityId) !== null) {
                     continue;
                 }
 

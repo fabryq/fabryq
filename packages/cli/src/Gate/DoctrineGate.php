@@ -121,13 +121,21 @@ final readonly class DoctrineGate
     }
 
     /**
-     * Extract table name from Entity class attribute or annotation.
+     * Extract the table name from an entity class attribute.
+     *
+     * Side effects:
+     * - Reads the file contents from disk.
+     * - Parses PHP source into an AST.
+     *
+     * @param string $path Absolute path to the entity PHP file.
+     *
+     * @return string|null Table name or null when unavailable.
      */
     private function extractTableName(string $path): ?string
     {
         $code = file_get_contents($path);
 
-        // KORREKTUR: Verwenden Sie createForNewestSupportedVersion() statt create()
+        // Use createForNewestSupportedVersion() to support modern syntax.
         $parser = (new ParserFactory())->createForNewestSupportedVersion();
 
         try {
@@ -219,6 +227,13 @@ final readonly class DoctrineGate
         return null;
     }
 
+    /**
+     * Extract a string scalar value from an expression node.
+     *
+     * @param Node\Expr $expr Expression node to inspect.
+     *
+     * @return string|null String literal value or null when not a string.
+     */
     private function getStringValue(Node\Expr $expr): ?string
     {
         if ($expr instanceof Node\Scalar\String_) {
@@ -228,7 +243,12 @@ final readonly class DoctrineGate
     }
 
     /**
-     * Resolve App ID from path.
+     * Resolve the application ID based on a source path.
+     *
+     * @param string $projectDir Absolute project directory.
+     * @param string $path       Absolute file path within the project.
+     *
+     * @return string|null App ID or null when the path does not match the expected layout.
      */
     private function resolveAppId(string $projectDir, string $path): ?string
     {

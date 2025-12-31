@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Runtime\Registry\AppRegistry;
-use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 
 /**
  * Builds a graph of consumed and provided capabilities per app.
@@ -20,8 +19,8 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 final readonly class GraphBuilder
 {
     /**
-     * @param AppRegistry                $appRegistry      Registry of discovered apps.
-     * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
+     * @param AppRegistry          $appRegistry   Registry of discovered apps.
+     * @param array<string, mixed> $capabilityMap Capability resolver map.
      */
     public function __construct(
         /**
@@ -29,13 +28,13 @@ final readonly class GraphBuilder
          *
          * @var AppRegistry
          */
-        private AppRegistry                $appRegistry,
+        private AppRegistry          $appRegistry,
         /**
-         * Registry of capability providers.
+         * Capability resolver map.
          *
-         * @var CapabilityProviderRegistry
+         * @var array<string, mixed>
          */
-        private CapabilityProviderRegistry $providerRegistry,
+        private array                $capabilityMap,
     ) {}
 
     /**
@@ -49,29 +48,24 @@ final readonly class GraphBuilder
 
         foreach ($this->appRegistry->getApps() as $app) {
             $consumes = [];
-            $provides = [];
-
             foreach ($app->manifest->consumes as $consume) {
-                $provider = $this->providerRegistry->findByCapabilityId($consume->capabilityId);
+                $entry = $this->capabilityMap[$consume->capabilityId] ?? null;
+                $winner = is_array($entry) ? ($entry['winner'] ?? null) : null;
+                $providers = is_array($entry) ? ($entry['providers'] ?? []) : [];
+                $contract = $consume->contract ?? ($entry['contract'] ?? null);
+                $degraded = is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === -1000;
                 $consumes[] = [
                     'capabilityId' => $consume->capabilityId,
                     'required' => $consume->required,
-                    'contract' => $consume->contract,
-                    'provider' => $provider?->className,
+                    'contract' => $contract,
+                    'providers' => $providers,
+                    'winner' => $winner,
+                    'degraded' => $degraded,
                 ];
-
-                if ($provider !== null) {
-                    $provides[$provider->capabilityId] = [
-                        'capabilityId' => $provider->capabilityId,
-                        'contract' => $provider->contract,
-                        'provider' => $provider->className,
-                    ];
-                }
             }
 
             $graph[$app->manifest->appId] = [
                 'consumes' => $consumes,
-                'provides' => array_values($provides),
             ];
         }
 

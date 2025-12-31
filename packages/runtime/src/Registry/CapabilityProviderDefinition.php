@@ -17,10 +17,11 @@ namespace Fabryq\Runtime\Registry;
 final readonly class CapabilityProviderDefinition
 {
     /**
-     * @param string $capabilityId Capability identifier.
-     * @param string $contract     Contract class or interface name.
-     * @param string $serviceId    Service identifier in the container.
-     * @param string $className    Class name implementing the provider.
+     * @param string $capability Capability identifier.
+     * @param string $contract   Contract class or interface name.
+     * @param int    $priority   Provider priority.
+     * @param string $serviceId  Service identifier in the container.
+     * @param string $className  Class name implementing the provider.
      */
     public function __construct(
         /**
@@ -28,13 +29,19 @@ final readonly class CapabilityProviderDefinition
          *
          * @var string
          */
-        public string $capabilityId,
+        public string $capability,
         /**
          * Fully qualified contract class or interface.
          *
          * @var string
          */
         public string $contract,
+        /**
+         * Provider priority used for winner selection.
+         *
+         * @var int
+         */
+        public int $priority,
         /**
          * Service ID registered in the container.
          *

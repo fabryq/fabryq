@@ -21,8 +21,10 @@ final readonly class Finding
      * @param string               $severity         Severity label such as BLOCKER or WARNING.
      * @param string               $message          Human-readable description of the finding.
      * @param FindingLocation|null $location         [Optional] Source location metadata.
+     * @param array<string, mixed> $details          [Optional] Structured detail payload (must include primary).
      * @param string|null          $hint             [Optional] Suggested remediation hint.
      * @param bool                 $autofixAvailable [Optional] Whether an automatic fix is available.
+     * @param string|null          $autofixFixer     [Optional] Fixer key when an autofix is available.
      */
     public function __construct(
         /**
@@ -50,6 +52,12 @@ final readonly class Finding
          */
         public ?FindingLocation $location = null,
         /**
+         * Structured details used for fingerprinting and rendering.
+         *
+         * @var array<string, mixed>
+         */
+        public array            $details = [],
+        /**
          * Optional hint for resolving the finding.
          *
          * @var string|null
@@ -61,26 +69,39 @@ final readonly class Finding
          * @var bool
          */
         public bool             $autofixAvailable = false,
-    ) {}
+        /**
+         * Fixer key used for autofix when available.
+         *
+         * @var string|null
+         */
+        public ?string          $autofixFixer = null,
+    ) {
+        if (!array_key_exists('primary', $this->details)) {
+            $this->details['primary'] = $this->message;
+        }
+    }
 
     /**
      * Convert the finding to a serializable array.
      *
      * @return array<string, mixed>
      */
-    public function toArray(): array
+    public function toArray(FindingIdGenerator $idGenerator): array
     {
+        $location = $idGenerator->normalizeLocation($this->location);
+        $autofix = ['available' => $this->autofixAvailable];
+        if ($this->autofixAvailable && $this->autofixFixer !== null) {
+            $autofix['fixer'] = $this->autofixFixer;
+        }
+
         return [
+            'id' => $idGenerator->generate($this),
             'ruleKey' => $this->ruleKey,
             'severity' => $this->severity,
             'message' => $this->message,
-            'location' => [
-                'file' => $this->location?->file,
-                'line' => $this->location?->line,
-                'symbol' => $this->location?->symbol,
-            ],
-            'hint' => $this->hint,
-            'autofixAvailable' => $this->autofixAvailable,
+            'location' => $location,
+            'details' => $this->details,
+            'autofix' => $autofix,
         ];
     }
 }

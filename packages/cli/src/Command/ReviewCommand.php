@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Analyzer\Verifier;
-use Fabryq\Cli\Report\ReportWriter;
+use Fabryq\Cli\Report\ReviewWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,10 +28,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ReviewCommand extends Command
 {
     /**
-     * @param Verifier $verifier Verification analyzer.
-     * @param ReportWriter $reportWriter Report writer for JSON/Markdown output.
-     * @param string $projectDir Absolute project directory.
-     */
+ * @param Verifier $verifier Verification analyzer.
+ * @param ReviewWriter $reviewWriter Review writer for Markdown output.
+ * @param string $projectDir Absolute project directory.
+ */
     public function __construct(
         /**
          * Verification analyzer.
@@ -40,11 +40,11 @@ final class ReviewCommand extends Command
          */
         private readonly Verifier $verifier,
         /**
-         * Report writer used to persist findings.
+         * Review writer used to persist findings.
          *
-         * @var ReportWriter
+         * @var ReviewWriter
          */
-        private readonly ReportWriter $reportWriter,
+        private readonly ReviewWriter $reviewWriter,
         /**
          * Absolute project directory.
          *
@@ -73,17 +73,8 @@ final class ReviewCommand extends Command
     {
         $findings = $this->verifier->verify($this->projectDir);
 
-        $this->reportWriter->write(
-            'verify',
+        $this->reviewWriter->write(
             $findings,
-            $this->projectDir.'/state/reports/verify/latest.json',
-            $this->projectDir.'/state/reports/verify/latest.md'
-        );
-
-        $this->reportWriter->write(
-            'review',
-            $findings,
-            $this->projectDir.'/state/reports/review/latest.json',
             $this->projectDir.'/state/reports/review/latest.md'
         );
 

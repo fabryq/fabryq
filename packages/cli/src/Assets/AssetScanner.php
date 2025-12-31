@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Asset scanner for Fabryq applications and components.
+ *
+ * @package   Fabryq\Cli\Assets
+ * @copyright Copyright (c) 2025 Fabryq
+ */
+
 declare(strict_types=1);
 
 namespace Fabryq\Cli\Assets;
@@ -7,14 +14,49 @@ namespace Fabryq\Cli\Assets;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 
+/**
+ * Discovers asset directories for apps and components in the project.
+ *
+ * Responsibilities:
+ * - Build a list of asset sources and their target publish locations.
+ * - Detect collisions where multiple sources map to the same target.
+ */
 final readonly class AssetScanner
 {
+    /**
+     * @param AppRegistry      $appRegistry Registry of discovered applications.
+     * @param ComponentSlugger $slugger     Slug generator for component names.
+     * @param string           $projectDir  Absolute project directory.
+     */
     public function __construct(
+        /**
+         * Registry of applications discovered by the runtime.
+         *
+         * @var AppRegistry
+         */
         private AppRegistry      $appRegistry,
+        /**
+         * Slug generator used to normalize component names.
+         *
+         * @var ComponentSlugger
+         */
         private ComponentSlugger $slugger,
+        /**
+         * Absolute project directory used to resolve asset paths.
+         *
+         * @var string
+         */
         private string           $projectDir,
     ) {}
 
+    /**
+     * Scan the project for application and component asset directories.
+     *
+     * Side effects:
+     * - Reads the filesystem to detect asset directories.
+     *
+     * @return AssetScanResult Asset entries and collision details.
+     */
     public function scan(): AssetScanResult
     {
         $entries = [];
@@ -70,7 +112,15 @@ final readonly class AssetScanner
     }
 
     /**
-     * @return array<string, string>
+     * Build a normalized asset entry payload.
+     *
+     * @param string      $type          Asset type identifier.
+     * @param string|null $appId         [Optional] Application identifier, if scoped to an app.
+     * @param string|null $componentSlug [Optional] Component slug when scoped to a component.
+     * @param string      $source        Absolute source directory path.
+     * @param string      $target        Absolute target directory path.
+     *
+     * @return array<string, string> Asset entry payload.
      */
     private function buildEntry(string $type, ?string $appId, ?string $componentSlug, string $source, string $target): array
     {

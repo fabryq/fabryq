@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Front controller for the skeleton application.
+ *
+ * @package   App
+ * @copyright Copyright (c) 2025 Fabryq
+ */
+
 declare(strict_types=1);
 
 use App\Kernel;

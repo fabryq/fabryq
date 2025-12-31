@@ -71,7 +71,12 @@ final class DoctorCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $result = $this->doctor->run();
+        try {
+            $result = $this->doctor->run();
+        } catch (\Throwable $exception) {
+            return 30;
+        }
+
         $markdownAppendix = $this->renderAppStatusTable($result->appStatuses);
 
         $this->reportWriter->write(
@@ -83,9 +88,25 @@ final class DoctorCommand extends Command
             $markdownAppendix
         );
 
-        $blockers = array_filter($result->findings, static fn ($finding) => $finding->severity === 'BLOCKER');
+        $hasBlockers = array_filter($result->findings, static fn ($finding) => $finding->severity === 'BLOCKER');
+        $hasUnhealthy = array_filter(
+            $result->appStatuses,
+            static fn (array $status) => $status['status'] === 'UNHEALTHY'
+        );
+        $hasDegraded = array_filter(
+            $result->appStatuses,
+            static fn (array $status) => $status['status'] === 'DEGRADED'
+        );
 
-        return $blockers === [] ? Command::SUCCESS : Command::FAILURE;
+        if ($hasBlockers !== [] || $hasUnhealthy !== []) {
+            return 20;
+        }
+
+        if ($hasDegraded !== []) {
+            return 10;
+        }
+
+        return 0;
     }
 
     /**
@@ -106,15 +127,16 @@ final class DoctorCommand extends Command
             return implode("\n", $lines);
         }
 
-        $lines[] = '| App | Status | Missing Required | Missing Optional |';
-        $lines[] = '| --- | --- | --- | --- |';
+        $lines[] = '| App | Status | Missing Required | Missing Optional | Degraded |';
+        $lines[] = '| --- | --- | --- | --- | --- |';
         foreach ($appStatuses as $appId => $status) {
             $lines[] = sprintf(
-                '| %s | %s | %s | %s |',
+                '| %s | %s | %s | %s | %s |',
                 $appId,
                 $status['status'],
                 implode(', ', $status['missingRequired']),
-                implode(', ', $status['missingOptional'])
+                implode(', ', $status['missingOptional']),
+                implode(', ', $status['degraded'] ?? [])
             );
         }
         $lines[] = '';

@@ -19,8 +19,9 @@ use Symfony\Component\Filesystem\Filesystem;
 final readonly class ReportWriter
 {
     /**
-     * @param Filesystem $filesystem Filesystem abstraction for writing reports.
-     * @param string     $version    [Optional] Report schema version identifier.
+     * @param Filesystem         $filesystem   Filesystem abstraction for writing reports.
+     * @param FindingIdGenerator $idGenerator  Finding ID generator.
+     * @param string             $version      [Optional] Report schema version identifier.
      */
     public function __construct(
         /**
@@ -28,13 +29,19 @@ final readonly class ReportWriter
          *
          * @var Filesystem
          */
-        private Filesystem $filesystem,
+        private Filesystem         $filesystem,
+        /**
+         * Finding ID generator and normalizer.
+         *
+         * @var FindingIdGenerator
+         */
+        private FindingIdGenerator $idGenerator,
         /**
          * Report schema version.
          *
          * @var string
          */
-        private string     $version = '0.1'
+        private string             $version = '0.2'
     ) {}
 
     /**
@@ -75,7 +82,7 @@ final readonly class ReportWriter
                         'warnings' => $warnings,
                     ],
                 ],
-                'findings' => array_map(static fn(Finding $finding) => $finding->toArray(), $findings),
+                'findings' => array_map(fn(Finding $finding) => $finding->toArray($this->idGenerator), $findings),
             ], $extra
         );
 
@@ -118,8 +125,8 @@ final readonly class ReportWriter
         }
 
         $lines[] = '';
-        $lines[] = '| Severity | Rule | Message | Location |';
-        $lines[] = '| --- | --- | --- | --- |';
+        $lines[] = '| Id | Severity | Rule | Message | Location |';
+        $lines[] = '| --- | --- | --- | --- | --- |';
 
         foreach ($payload['findings'] as $finding) {
             $location = $finding['location']['file'] ?? '';
@@ -127,7 +134,8 @@ final readonly class ReportWriter
                 $location .= ':' . $finding['location']['line'];
             }
             $lines[] = sprintf(
-                '| %s | %s | %s | %s |',
+                '| %s | %s | %s | %s | %s |',
+                $finding['id'] ?? '',
                 $finding['severity'],
                 $finding['ruleKey'],
                 str_replace("|", "\\|", (string)$finding['message']),

@@ -39,7 +39,7 @@ final class CrossAppReferenceScanner
     public function scan(string $projectDir): array
     {
         $findings = [];
-        // KORREKTUR 1: Verwenden Sie createForNewestSupportedVersion() für Kompatibilität
+        // Use createForNewestSupportedVersion() for modern syntax compatibility.
         $parser = new ParserFactory()->createForNewestSupportedVersion();
         $finder = new Finder();
         $paths = [];
@@ -94,12 +94,12 @@ final class CrossAppReferenceScanner
 
                 $resolved = $nameNode->getAttribute('resolvedName');
 
-                // KORREKTUR 2: Fallback für use-Statements
-                // Wenn resolvedName fehlt, prüfen wir, ob es sich um einen Import handelt.
+                // Fallback for use statements when resolvedName is unavailable.
+                // If resolvedName is missing, check whether this is an import.
                 if (!$resolved instanceof Node\Name) {
                     $parent = $nameNode->getAttribute('parent');
                     if ($parent instanceof Node\Stmt\UseUse || $parent instanceof Node\Stmt\GroupUse) {
-                        // In use-Statements ist der Name selbst der aufgelöste Name
+                        // In use statements, the name itself is the resolved name.
                         $resolved = $nameNode;
                     } else {
                         continue;
@@ -111,6 +111,7 @@ final class CrossAppReferenceScanner
                     continue;
                 }
 
+                $referenceKind = $this->resolveReferenceKind($nameNode);
                 $parts = explode('\\', $fqcn);
                 $segment = $parts[1] ?? '';
                 if ($segment === 'Components') {
@@ -126,14 +127,19 @@ final class CrossAppReferenceScanner
                         'FABRYQ.APP.CROSSING',
                         'BLOCKER',
                         sprintf('App %s references %s.', $context['app'], $fqcn),
-                        new FindingLocation($path, $nameNode->getLine(), $fqcn)
+                        new FindingLocation($path, $nameNode->getLine(), $fqcn),
+                        ['primary' => $fqcn.'|'.$referenceKind],
+                        null,
+                        in_array($referenceKind, ['use', 'typehint', 'new'], true),
+                        in_array($referenceKind, ['use', 'typehint', 'new'], true) ? 'crossing' : null
                     );
                 } else {
                     $findings[] = new Finding(
                         'FABRYQ.GLOBAL_COMPONENT.REFERENCES_APP',
                         'BLOCKER',
                         sprintf('Global component references %s.', $fqcn),
-                        new FindingLocation($path, $nameNode->getLine(), $fqcn)
+                        new FindingLocation($path, $nameNode->getLine(), $fqcn),
+                        ['primary' => $fqcn]
                     );
                 }
             }
@@ -167,5 +173,91 @@ final class CrossAppReferenceScanner
         }
 
         return null;
+    }
+
+    /**
+     * Resolve the reference kind for a Name node.
+     *
+     * @param Node\Name $nameNode Name node with parent attributes.
+     *
+     * @return string Reference kind label.
+     */
+    private function resolveReferenceKind(Node\Name $nameNode): string
+    {
+        $parent = $nameNode->getAttribute('parent');
+
+        if ($parent instanceof Node\Stmt\UseUse || $parent instanceof Node\Stmt\GroupUse) {
+            return 'use';
+        }
+
+        if ($parent instanceof Node\Expr\New_ && $parent->class === $nameNode) {
+            return 'new';
+        }
+
+        if ($parent instanceof Node\Expr\StaticCall || $parent instanceof Node\Expr\ClassConstFetch || $parent instanceof Node\Expr\StaticPropertyFetch) {
+            return 'static';
+        }
+
+        if ($parent instanceof Node\Stmt\Class_ && $parent->extends === $nameNode) {
+            return 'extends';
+        }
+
+        if ($parent instanceof Node\Stmt\Class_ && in_array($nameNode, $parent->implements, true)) {
+            return 'implements';
+        }
+
+        if ($parent instanceof Node\Stmt\TraitUse && in_array($nameNode, $parent->traits, true)) {
+            return 'trait';
+        }
+
+        if ($parent instanceof Node\Stmt\Catch_) {
+            return 'catch';
+        }
+
+        if ($parent instanceof Node\Attribute) {
+            return 'attribute';
+        }
+
+        if ($parent instanceof Node\Expr\Instanceof_) {
+            return 'instanceof';
+        }
+
+        if ($this->isTypeHint($nameNode)) {
+            return 'typehint';
+        }
+
+        return 'reference';
+    }
+
+    /**
+     * Check if a Name node is used as a type hint.
+     *
+     * @param Node\Name $nameNode Name node to inspect.
+     *
+     * @return bool True if used as a type hint.
+     */
+    private function isTypeHint(Node\Name $nameNode): bool
+    {
+        $node = $nameNode;
+        $parent = $node->getAttribute('parent');
+
+        if ($parent instanceof Node\NullableType || $parent instanceof Node\UnionType || $parent instanceof Node\IntersectionType) {
+            $node = $parent;
+            $parent = $node->getAttribute('parent');
+        }
+
+        if ($parent instanceof Node\Param) {
+            return $parent->type === $node;
+        }
+
+        if ($parent instanceof Node\Stmt\Property) {
+            return $parent->type === $node;
+        }
+
+        if ($parent instanceof Node\FunctionLike) {
+            return $parent->getReturnType() === $node;
+        }
+
+        return false;
     }
 }

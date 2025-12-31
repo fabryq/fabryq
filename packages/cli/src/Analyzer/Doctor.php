@@ -22,9 +22,10 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 final readonly class Doctor
 {
     /**
-     * @param AppRegistry                $appRegistry      Registry of discovered apps.
-     * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
-     */
+ * @param AppRegistry                $appRegistry      Registry of discovered apps.
+ * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
+ * @param array<string, mixed>       $capabilityMap    Capability resolver map.
+ */
     public function __construct(
         /**
          * Registry of application definitions.
@@ -38,6 +39,12 @@ final readonly class Doctor
          * @var CapabilityProviderRegistry
          */
         private CapabilityProviderRegistry $providerRegistry,
+        /**
+         * Capability resolver map from the container.
+         *
+         * @var array<string, mixed>
+         */
+        private array                      $capabilityMap,
     ) {}
 
     /**
@@ -59,39 +66,54 @@ final readonly class Doctor
             );
         }
 
+        if ($this->capabilityMap === [] && $this->appRegistry->getApps() !== []) {
+            $findings[] = new Finding(
+                'FABRYQ.CAPABILITY.MAP.MISSING',
+                'BLOCKER',
+                'Capability resolver map is missing.',
+                null
+            );
+        }
+
         foreach ($this->appRegistry->getApps() as $app) {
             $missingRequired = [];
             $missingOptional = [];
+            $degraded = [];
 
             foreach ($app->manifest->consumes as $consume) {
-                $provider = $this->providerRegistry->findByCapabilityId($consume->capabilityId);
-                if ($provider !== null) {
+                $entry = $this->capabilityMap[$consume->capabilityId] ?? null;
+                $winner = is_array($entry) ? ($entry['winner'] ?? null) : null;
+
+                if ($winner === null) {
+                    if ($consume->required) {
+                        $missingRequired[] = $consume->capabilityId;
+                        $findings[] = new Finding(
+                            'FABRYQ.CONSUME.REQUIRED.MISSING_PROVIDER',
+                            'BLOCKER',
+                            sprintf('Required capability "%s" has no provider.', $consume->capabilityId),
+                            new FindingLocation($app->manifestPath, null, $consume->capabilityId)
+                        );
+                    } else {
+                        $missingOptional[] = $consume->capabilityId;
+                        $findings[] = new Finding(
+                            'FABRYQ.CONSUME.OPTIONAL.MISSING_PROVIDER',
+                            'WARNING',
+                            sprintf('Optional capability "%s" has no provider.', $consume->capabilityId),
+                            new FindingLocation($app->manifestPath, null, $consume->capabilityId)
+                        );
+                    }
                     continue;
                 }
 
-                if ($consume->required) {
-                    $missingRequired[] = $consume->capabilityId;
-                    $findings[] = new Finding(
-                        'FABRYQ.CONSUME.REQUIRED.MISSING_PROVIDER',
-                        'BLOCKER',
-                        sprintf('Required capability "%s" has no provider.', $consume->capabilityId),
-                        new FindingLocation($app->manifestPath, null, $consume->capabilityId)
-                    );
-                } else {
-                    $missingOptional[] = $consume->capabilityId;
-                    $findings[] = new Finding(
-                        'FABRYQ.CONSUME.OPTIONAL.MISSING_PROVIDER',
-                        'WARNING',
-                        sprintf('Optional capability "%s" has no provider.', $consume->capabilityId),
-                        new FindingLocation($app->manifestPath, null, $consume->capabilityId)
-                    );
+                if (is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === -1000) {
+                    $degraded[] = $consume->capabilityId;
                 }
             }
 
-            $status = 'OK';
-            if ($missingRequired !== []) {
-                $status = 'SAFE_MODE';
-            } elseif ($missingOptional !== []) {
+            $status = 'HEALTHY';
+            if ($missingRequired !== [] || $missingOptional !== []) {
+                $status = 'UNHEALTHY';
+            } elseif ($degraded !== []) {
                 $status = 'DEGRADED';
             }
 
@@ -99,6 +121,7 @@ final readonly class Doctor
                 'status' => $status,
                 'missingRequired' => $missingRequired,
                 'missingOptional' => $missingOptional,
+                'degraded' => $degraded,
             ];
         }
 

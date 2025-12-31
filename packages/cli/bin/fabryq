@@ -3,44 +3,107 @@
 
 declare(strict_types=1);
 
-$projectDir = getcwd();
-$autoload = $projectDir.'/vendor/autoload.php';
-if (!file_exists($autoload)) {
-    $autoload = __DIR__.'/../../../../autoload.php';
+const FABRYQ_ROOT_MAX_DEPTH = 6;
+
+$aliases = [
+    'verify' => 'fabryq:verify',
+    'review' => 'fabryq:review',
+    'doctor' => 'fabryq:doctor',
+    'graph' => 'fabryq:graph',
+    'assets:install' => 'fabryq:assets:install',
+    'app:create' => 'fabryq:app:create',
+    'component:create' => 'fabryq:component:create',
+    'fix' => 'fabryq:fix',
+];
+
+$argv = $_SERVER['argv'] ?? [];
+array_shift($argv);
+
+$shouldShowHelp = $argv === [] || in_array('--help', $argv, true);
+
+if ($shouldShowHelp) {
+    $lines = [];
+    $lines[] = 'Fabryq CLI wrapper';
+    $lines[] = '';
+    $lines[] = 'Usage:';
+    $lines[] = '  vendor/bin/fabryq <alias> [args...]';
+    $lines[] = '';
+    $lines[] = 'Aliases:';
+    $lines[] = '  verify            -> fabryq:verify';
+    $lines[] = '  review            -> fabryq:review';
+    $lines[] = '  doctor            -> fabryq:doctor';
+    $lines[] = '  graph             -> fabryq:graph';
+    $lines[] = '  assets:install    -> fabryq:assets:install';
+    $lines[] = '  app:create        -> fabryq:app:create';
+    $lines[] = '  component:create  -> fabryq:component:create';
+    $lines[] = '  fix               -> fabryq:fix';
+    $lines[] = '  fix assets        -> fabryq:fix:assets';
+    $lines[] = '  fix crossing      -> fabryq:fix:crossing';
+    $lines[] = '';
+    $lines[] = 'Examples:';
+    $lines[] = '  vendor/bin/fabryq verify';
+    $lines[] = '  vendor/bin/fabryq app:create Demo --mount=/demo';
+    $lines[] = '  vendor/bin/fabryq fix crossing --dry-run';
+    $lines[] = '';
+    $lines[] = 'Root detection:';
+    $lines[] = '  Searches upwards for composer.json + bin/console (max depth '.FABRYQ_ROOT_MAX_DEPTH.').';
+    fwrite(STDOUT, implode("\n", $lines) . "\n");
+    exit($argv === [] ? 0 : 0);
 }
-if (!file_exists($autoload)) {
-    fwrite(STDERR, "Unable to locate vendor/autoload.php. Run composer install.\n");
+
+$command = $argv[0] ?? '';
+$extraArgs = array_slice($argv, 1);
+
+if ($command === 'fix' && isset($argv[1])) {
+    if ($argv[1] === 'assets') {
+        $command = 'fix assets';
+        $extraArgs = array_slice($argv, 2);
+    } elseif ($argv[1] === 'crossing') {
+        $command = 'fix crossing';
+        $extraArgs = array_slice($argv, 2);
+    }
+}
+
+if (str_starts_with($command, 'fabryq:')) {
+    $mapped = $command;
+} elseif (isset($aliases[$command])) {
+    $mapped = $aliases[$command];
+} elseif ($command === 'fix assets') {
+    $mapped = 'fabryq:fix:assets';
+} elseif ($command === 'fix crossing') {
+    $mapped = 'fabryq:fix:crossing';
+} else {
+    fwrite(STDERR, sprintf("Unknown command \"%s\".\n\n", $command));
+    $argv = ['--help'];
+    $_SERVER['argv'] = array_merge([__FILE__], $argv);
+    include __FILE__;
     exit(1);
 }
 
-require $autoload;
-
-$bootstrap = $projectDir.'/config/bootstrap.php';
-if (file_exists($bootstrap)) {
-    require $bootstrap;
+$root = null;
+$cursor = getcwd() ?: '.';
+for ($depth = 0; $depth <= FABRYQ_ROOT_MAX_DEPTH; $depth++) {
+    if (is_file($cursor . '/composer.json') && is_file($cursor . '/bin/console')) {
+        $root = $cursor;
+        break;
+    }
+    $parent = dirname($cursor);
+    if ($parent === $cursor) {
+        break;
+    }
+    $cursor = $parent;
 }
 
-if (!isset($_SERVER['FABRYQ_ANALYSIS'])) {
-    $_SERVER['FABRYQ_ANALYSIS'] = '1';
-    $_ENV['FABRYQ_ANALYSIS'] = '1';
+if ($root === null) {
+    fwrite(STDERR, "Unable to locate project root (composer.json + bin/console).\n");
+    exit(2);
 }
 
-if (!isset($_SERVER['APP_ENV'])) {
-    $_SERVER['APP_ENV'] = 'dev';
-    $_ENV['APP_ENV'] = 'dev';
-}
-if (!isset($_SERVER['APP_DEBUG'])) {
-    $_SERVER['APP_DEBUG'] = '0';
-    $_ENV['APP_DEBUG'] = '0';
-}
+$console = $root . '/bin/console';
+$php = PHP_BINARY;
+$args = array_merge([$php, $console, $mapped], $extraArgs);
+$escaped = array_map('escapeshellarg', $args);
+$cmd = implode(' ', $escaped);
 
-$kernelClass = 'App\\Kernel';
-if (!class_exists($kernelClass)) {
-    fwrite(STDERR, "Unable to find App\\Kernel.\n");
-    exit(1);
-}
-
-$kernel = new $kernelClass($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
-$application = new Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
-$application->setName('fabryq');
-$application->run();
+passthru($cmd, $exitCode);
+exit($exitCode);

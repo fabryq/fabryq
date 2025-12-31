@@ -34,8 +34,23 @@ final class VerifyCommand extends Command
      * @param string       $projectDir   Absolute project directory.
      */
     public function __construct(
+        /**
+         * Verification analyzer.
+         *
+         * @var Verifier
+         */
         private readonly Verifier     $verifier,
+        /**
+         * Report writer used to persist findings.
+         *
+         * @var ReportWriter
+         */
         private readonly ReportWriter $reportWriter,
+        /**
+         * Absolute project directory.
+         *
+         * @var string
+         */
         private readonly string       $projectDir,
     ) {
         parent::__construct();
@@ -52,10 +67,10 @@ final class VerifyCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Fabryq Verification');
 
-        // 1. Verifizierung ausführen
+        // 1. Run the verification.
         $findings = $this->verifier->verify($this->projectDir);
 
-        // 2. Bericht auf Festplatte schreiben
+        // 2. Write the report to disk.
         $this->reportWriter->write(
             'verify',
             $findings,
@@ -63,7 +78,7 @@ final class VerifyCommand extends Command
             $this->projectDir . '/state/reports/verify/latest.md'
         );
 
-        // 3. Ergebnisse auf dem Bildschirm ausgeben (Das fehlte vorher)
+        // 3. Display results in the console (previously missing).
         if ($findings === []) {
             $io->success('No issues found.');
             return Command::SUCCESS;
@@ -72,7 +87,7 @@ final class VerifyCommand extends Command
         foreach ($findings as $finding) {
             $type = $finding->severity === 'BLOCKER' ? 'error' : 'warning';
 
-            $io->section(sprintf('[%s] %s', $finding->type, $finding->severity));
+            $io->section(sprintf('[%s] %s', $finding->ruleKey, $finding->severity));
             $io->text($finding->message);
 
             if ($finding->location) {

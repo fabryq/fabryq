@@ -26,6 +26,9 @@ final class HelloWorldController
      * Return a plain-text greeting.
      *
      * @return Response HTTP response containing the greeting.
+     *
+     * Side effects:
+     * - None.
      */
     #[OA\Get(
         path: '/hello',
@@ -52,6 +55,33 @@ final class HelloWorldController
         return new Response('Hello Fabryq');
     }
 
+    /**
+     * Return a plain-text greeting using the alternate handler.
+     *
+     * @return Response HTTP response containing the greeting.
+     *
+     * Side effects:
+     * - None.
+     */
+    #[OA\Get(
+        path: '/hello',
+        operationId: 'helloWorldAlternate',
+        summary: 'Return a greeting message (alternate handler).',
+        responses: [
+            new OA\Response(
+                response:    Response::HTTP_OK,
+                description: 'Greeting returned as plain text.',
+                content:     new OA\MediaType(
+                                 mediaType: 'text/plain',
+                                 schema:    new OA\Schema(type: 'string')
+                             )
+            ),
+            new OA\Response(
+                response:    Response::HTTP_INTERNAL_SERVER_ERROR,
+                description: 'Unexpected server error.'
+            ),
+        ]
+    )]
     #[Route('/hello', name: 'hello')]
     public function sss(): Response
     {

@@ -1,7 +1,19 @@
 <?php
 
+/**
+ * Bundle registration for the skeleton application.
+ *
+ * @package   App\Config
+ * @copyright Copyright (c) 2025 Fabryq
+ */
+
 declare(strict_types=1);
 
+/**
+ * Bundle class names keyed to environment enablement.
+ *
+ * @return array<class-string, array<string, bool>>
+ */
 return [
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
     Symfony\Bundle\TwigBundle\TwigBundle::class => ['all' => true],

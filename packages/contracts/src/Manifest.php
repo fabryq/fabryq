@@ -23,12 +23,13 @@ use Fabryq\Contracts\Exception\InvalidManifestException;
 final readonly class Manifest
 {
     /**
-     * @param string               $appId      Application identifier used as a stable key.
-     * @param string               $name       Human-readable application name.
-     * @param string|null          $mountpoint [Optional] Mountpoint path or null when not mounted.
-     * @param ConsumesCapability[] $consumes   Declared capability requirements.
-     * @param ManifestEvents|null  $events     [Optional] Event publication/subscription metadata.
-     */
+ * @param string                $appId      Application identifier used as a stable key.
+ * @param string                $name       Human-readable application name.
+ * @param string|null           $mountpoint [Optional] Mountpoint path or null when not mounted.
+ * @param ProvidesCapability[]  $provides   Declared capability providers.
+ * @param ConsumesCapability[]  $consumes   Declared capability requirements.
+ * @param ManifestEvents|null   $events     [Optional] Event publication/subscription metadata.
+ */
     public function __construct(
         /**
          * Stable application identifier.
@@ -48,6 +49,12 @@ final readonly class Manifest
          * @var string|null
          */
         public ?string         $mountpoint,
+        /**
+         * Capabilities provided by the application.
+         *
+         * @var ProvidesCapability[]
+         */
+        public array           $provides,
         /**
          * Capabilities consumed by the application.
          *
@@ -79,6 +86,16 @@ final readonly class Manifest
             }
         }
 
+        $provides = [];
+        if (isset($data['provides'])) {
+            if (!is_array($data['provides'])) {
+                throw new InvalidManifestException('Manifest "provides" must be an array.');
+            }
+            foreach ($data['provides'] as $entry) {
+                $provides[] = ProvidesCapability::fromMixed($entry);
+            }
+        }
+
         $consumes = [];
         if (!is_array($data['consumes'])) {
             throw new InvalidManifestException('Manifest "consumes" must be an array.');
@@ -97,6 +114,7 @@ final readonly class Manifest
             (string)$data['appId'],
             (string)$data['name'],
             $data['mountpoint'] === null ? null : (string)$data['mountpoint'],
+            $provides,
             $consumes,
             $events,
         );

@@ -9,14 +9,11 @@
 
 declare(strict_types=1);
 
-use Fabryq\Contracts\Capability\CapabilityIds;
-use Fabryq\Contracts\Capability\HttpClientInterface;
-use Fabryq\Provider\HttpClient\HttpClientProvider;
 use Fabryq\Provider\HttpClient\SimpleHttpClient;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 /**
- * Register HTTP client services and capability provider tags.
+ * Register HTTP client services and capability provider attributes.
  *
  * @param ContainerConfigurator $configurator Symfony DI configurator.
  *
@@ -30,11 +27,5 @@ return static function (ContainerConfigurator $configurator): void {
 
     $services->set(SimpleHttpClient::class);
 
-    $services->alias(HttpClientInterface::class, SimpleHttpClient::class);
-
-    $services->set(HttpClientProvider::class)
-        ->tag('fabryq.capability_provider', [
-            'capabilityId' => CapabilityIds::FABRYQ_CLIENT_HTTP,
-            'contract' => HttpClientInterface::class,
-        ]);
+    $services->alias(Fabryq\Contracts\Capability\HttpClientInterface::class, SimpleHttpClient::class);
 };
