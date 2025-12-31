@@ -11,10 +11,9 @@ declare(strict_types=1);
 
 namespace Fabryq\Runtime\Entity;
 
-use DateTimeImmutable;
+use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Ulid;
 
 /**
@@ -25,33 +24,38 @@ abstract class AbstractFabryqEntity implements FabryqEntityInterface
     /**
      * @var Ulid
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
+    #[ORM\Column(name: "id", type: "ulid", unique: true, nullable: false)]
     protected Ulid $id;
 
     /**
-     * @var DateTimeImmutable|null
+     * @var DateTime|null
+     */
+    #[ORM\Column(name: 'archived_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    protected ?DateTime $archivedAt = null;
+
+    /**
+     * @var DateTime|null
      */
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: false, options: ["default" => "CURRENT_TIMESTAMP"])]
-    #[Groups(["all", "default", "status"])]
-    protected ?DateTimeImmutable $createdAt = null;
+    protected ?DateTime $createdAt = null;
 
     /**
-     * @var DateTimeImmutable|null
+     * @var DateTime|null
      */
     #[ORM\Column(name: 'deleted_at', type: Types::DATETIME_MUTABLE, nullable: true)]
-    protected ?DateTimeImmutable $deletedAt = null;
+    protected ?DateTime $deletedAt = null;
 
     /**
-     * @var DateTimeImmutable|null
+     * @var DateTime|null
      */
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE, nullable: false, options: ["default" => "CURRENT_TIMESTAMP"])]
-    #[Groups(["all", "default", "status"])]
-    protected ?DateTimeImmutable $updatedAt = null;
+    protected ?DateTime $updatedAt = null;
 
     public function __construct()
     {
-        $this->createdAt = new DateTimeImmutable();
-        $this->updatedAt = new DateTimeImmutable();
-        $this->deletedAt = null;
+        $this->updatedAt = new DateTime();
         $this->id = new Ulid();
     }
 
@@ -60,13 +64,13 @@ abstract class AbstractFabryqEntity implements FabryqEntityInterface
      */
     final public function getId(): string
     {
-        return $this->id->toRfc4122();
+        return $this->id->toBase32();
     }
 
     /**
      * {@inheritDoc}
      */
-    final public function getCreatedAt(): DateTimeImmutable
+    final public function getCreatedAt(): DateTime
     {
         return $this->createdAt;
     }
@@ -74,24 +78,22 @@ abstract class AbstractFabryqEntity implements FabryqEntityInterface
     /**
      * {@inheritDoc}
      */
-    final public function getUpdatedAt(): DateTimeImmutable
+    final public function getUpdatedAt(): DateTime
     {
         return $this->updatedAt ?? $this->createdAt;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    final public function setUpdatedAt(DateTimeImmutable $updatedAt): self
+    #[ORM\PreUpdate]
+    final protected function setUpdatedAt(): self
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = new DateTime();
         return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    final public function getDeletedAt(): ?DateTimeImmutable
+    final public function getDeletedAt(): ?DateTime
     {
         return $this->deletedAt;
     }
@@ -99,9 +101,26 @@ abstract class AbstractFabryqEntity implements FabryqEntityInterface
     /**
      * {@inheritDoc}
      */
-    final public function setDeletedAt(?DateTimeImmutable $deletedAt): self
+    final public function setDeletedAt(?DateTime $deletedAt): self
     {
         $this->deletedAt = $deletedAt;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    final public function getArchivedAt(): ?DateTime
+    {
+        return $this->archivedAt;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    final public function setArchivedAt(?DateTime $archivedAt): self
+    {
+        $this->archivedAt = $archivedAt;
         return $this;
     }
 }

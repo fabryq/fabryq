@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Runtime\Entity;
 
-use DateTimeImmutable;
+use DateTime;
 
 /**
  * Defines the minimum contract for domain entities.
@@ -19,18 +19,25 @@ use DateTimeImmutable;
 interface FabryqEntityInterface
 {
     /**
+     * Get the archived timestamp.
+     *
+     * @return DateTime|null Archived timestamp or null if not archived.
+     */
+    public function getArchivedAt(): ?DateTime;
+
+    /**
      * Get the creation timestamp.
      *
-     * @return DateTimeImmutable Creation timestamp.
+     * @return DateTime Creation timestamp.
      */
-    public function getCreatedAt(): DateTimeImmutable;
+    public function getCreatedAt(): DateTime;
 
     /**
      * Get the deletion timestamp.
      *
-     * @return DateTimeImmutable|null Deletion timestamp or null if not deleted.
+     * @return DateTime|null Deletion timestamp or null if not deleted.
      */
-    public function getDeletedAt(): ?DateTimeImmutable;
+    public function getDeletedAt(): ?DateTime;
 
     /**
      * Return the entity identifier.
@@ -42,21 +49,21 @@ interface FabryqEntityInterface
     /**
      * Get the last updated timestamp.
      *
-     * @return DateTimeImmutable Last updated timestamp.
+     * @return DateTime Last updated timestamp.
      */
-    public function getUpdatedAt(): DateTimeImmutable;
+    public function getUpdatedAt(): DateTime;
+
+    /**
+     * Set the archived timestamp.
+     *
+     * @param DateTime|null $archivedAt Archived timestamp or null if not archived.
+     */
+    public function setArchivedAt(?DateTime $archivedAt): self;
 
     /**
      * Set the deletion timestamp.
      *
-     * @param DateTimeImmutable|null $deletedAt Deletion timestamp or null if not deleted.
+     * @param DateTime|null $deletedAt Deletion timestamp or null if not deleted.
      */
-    public function setDeletedAt(?DateTimeImmutable $deletedAt): self;
-
-    /**
-     * Set the last updated timestamp.
-     *
-     * @param DateTimeImmutable $updatedAt Last updated timestamp.
-     */
-    public function setUpdatedAt(DateTimeImmutable $updatedAt): self;
+    public function setDeletedAt(?DateTime $deletedAt): self;
 }

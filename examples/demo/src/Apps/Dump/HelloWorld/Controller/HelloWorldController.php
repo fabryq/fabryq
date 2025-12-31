@@ -10,9 +10,7 @@
 declare (strict_types=1);
 
 namespace App\Dump\HelloWorld\Controller;
-
-use Fabryq\Runtime\Entity\FabryqEntityInterface;
-use Fabryq\Runtime\Controller\AbstractFabryqController;
+ 
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
