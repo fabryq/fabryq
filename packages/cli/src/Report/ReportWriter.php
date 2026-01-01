@@ -41,7 +41,7 @@ final readonly class ReportWriter
          *
          * @var string
          */
-        private string             $version = '0.2'
+        private string             $version = '0.3'
     ) {}
 
     /**

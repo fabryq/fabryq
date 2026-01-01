@@ -31,6 +31,8 @@ final readonly class Verifier
      * @param AssetScanner               $assetScanner     Scanner for asset collisions.
      * @param CrossAppReferenceScanner   $crossAppScanner  Scanner for cross-app references.
      * @param DoctrineGate               $doctrineGate     Doctrine validation gate.
+     * @param ServiceLocatorScanner|null $serviceLocatorScanner Scanner for service locator usage.
+     * @param EntityBaseScanner|null     $entityBaseScanner Scanner for entity base usage.
      */
     public function __construct(
         /**
@@ -69,6 +71,18 @@ final readonly class Verifier
          * @var DoctrineGate
          */
         private DoctrineGate               $doctrineGate,
+        /**
+         * Scanner for forbidden service locator usage.
+         *
+         * @var ServiceLocatorScanner|null
+         */
+        private ?ServiceLocatorScanner     $serviceLocatorScanner = null,
+        /**
+         * Scanner for entity base usage.
+         *
+         * @var EntityBaseScanner|null
+         */
+        private ?EntityBaseScanner         $entityBaseScanner = null,
     ) {}
 
     /**
@@ -98,6 +112,10 @@ final readonly class Verifier
         $findings = array_merge($findings, $this->checkGlobalComponentSlugs($projectDir));
         $findings = array_merge($findings, $this->checkCapabilityIds());
         $findings = array_merge($findings, $this->crossAppScanner->scan($projectDir));
+        $serviceLocatorScanner = $this->serviceLocatorScanner ?? new ServiceLocatorScanner();
+        $entityBaseScanner = $this->entityBaseScanner ?? new EntityBaseScanner();
+        $findings = array_merge($findings, $serviceLocatorScanner->scan($projectDir));
+        $findings = array_merge($findings, $entityBaseScanner->scan($projectDir));
         $findings = array_merge($findings, $this->checkAssetCollisions($projectDir));
         $findings = array_merge($findings, $this->doctrineGate->check($projectDir));
         $findings = array_merge($findings, $this->checkProviders());

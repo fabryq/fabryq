@@ -20,6 +20,7 @@ final readonly class DoctrineDiscovery
 {
     /**
      * @param AppRegistry $appRegistry Registry of discovered applications.
+     * @param string      $projectDir  Project root for composer autoload inspection.
      */
     public function __construct(
         /**
@@ -27,7 +28,13 @@ final readonly class DoctrineDiscovery
          *
          * @var AppRegistry
          */
-        private AppRegistry $appRegistry
+        private AppRegistry $appRegistry,
+        /**
+         * Absolute project directory.
+         *
+         * @var string
+         */
+        private string      $projectDir,
     ) {}
 
     /**
@@ -38,6 +45,10 @@ final readonly class DoctrineDiscovery
     public function getEntityMappings(): array
     {
         $mappings = [];
+        $prefix = $this->resolveAppNamespacePrefix();
+        if ($prefix === null) {
+            return $mappings;
+        }
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
@@ -52,7 +63,7 @@ final readonly class DoctrineDiscovery
                     'is_bundle' => false,
                     'type' => 'attribute',
                     'dir' => $entityDir,
-                    'prefix' => sprintf('App\\%s\\%s\\Entity', $appNamespace, $component->name),
+                    'prefix' => sprintf('%s\\%s\\%s\\Entity', $prefix, $appNamespace, $component->name),
                 ];
             }
         }
@@ -68,6 +79,10 @@ final readonly class DoctrineDiscovery
     public function getMigrationPaths(): array
     {
         $paths = [];
+        $prefix = $this->resolveAppNamespacePrefix();
+        if ($prefix === null) {
+            return $paths;
+        }
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
@@ -77,11 +92,49 @@ final readonly class DoctrineDiscovery
                 }
 
                 $appNamespace = basename($app->path);
-                $namespace = sprintf('App\\%s\\%s\\Migrations', $appNamespace, $component->name);
+                $namespace = sprintf('%s\\%s\\%s\\Migrations', $prefix, $appNamespace, $component->name);
                 $paths[$namespace] = $migrationDir;
             }
         }
 
         return $paths;
+    }
+
+    /**
+     * Resolve the namespace prefix that maps to src/Apps.
+     *
+     * @return string|null Namespace prefix without trailing backslash.
+     */
+    private function resolveAppNamespacePrefix(): ?string
+    {
+        $composerPath = $this->projectDir . '/composer.json';
+        if (!is_file($composerPath)) {
+            return null;
+        }
+
+        $data = json_decode((string)file_get_contents($composerPath), true);
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $autoload = $data['autoload']['psr-4'] ?? [];
+        if (!is_array($autoload)) {
+            return null;
+        }
+
+        foreach ($autoload as $namespace => $paths) {
+            $paths = is_array($paths) ? $paths : [$paths];
+            foreach ($paths as $path) {
+                if (!is_string($path)) {
+                    continue;
+                }
+                $normalized = rtrim(str_replace('\\', '/', $path), '/') . '/';
+                if ($normalized === 'src/Apps/') {
+                    return rtrim((string)$namespace, '\\');
+                }
+            }
+        }
+
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 /.idea
+/vendor
 /examples/demo/vendor
 /examples/demo/var
 /examples/demo/state

@@ -1,4 +1,4 @@
-# Fabryq v0.2 Documentation
+# Fabryq v0.3 Documentation
 
 ## CLI
 - doc/cli/wrapper.md
@@ -16,7 +16,14 @@
 - doc/spec/apps.md
 - doc/spec/components.md
 - doc/spec/bridges.md
+- doc/spec/context.md
+- doc/spec/base-layers.md
+- doc/spec/entities.md
 - doc/spec/providers.md
 - doc/spec/reports.md
 - doc/spec/finding-ids.md
 - doc/spec/fix-logging.md
+
+## Rules
+- doc/spec/rules/service-locator-forbidden.md
+- doc/spec/rules/entity-base-required.md

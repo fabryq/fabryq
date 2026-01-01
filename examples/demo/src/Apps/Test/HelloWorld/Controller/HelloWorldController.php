@@ -10,8 +10,7 @@
 declare(strict_types=1);
 
 namespace App\Test\HelloWorld\Controller;
-
-use App\Other\Ghost;
+ 
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;

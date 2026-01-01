@@ -19,7 +19,7 @@ Define report schemas for verify and review outputs.
 {
   "header": {
     "tool": "verify",
-    "version": "0.2",
+    "version": "0.3",
     "generatedAt": "2025-01-01T00:00:00+00:00",
     "result": "ok",
     "summary": {

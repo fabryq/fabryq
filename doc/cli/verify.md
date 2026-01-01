@@ -27,3 +27,5 @@ vendor/bin/fabryq verify
 - Cross-app references
 - Asset collisions
 - Provider issues
+- Service locator usage in apps/components
+- Entities missing AbstractFabryqEntity

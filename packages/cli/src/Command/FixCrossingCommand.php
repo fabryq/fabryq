@@ -3,7 +3,7 @@
 /**
  * Console command that fixes app crossing violations.
  *
- * @package Fabryq\Cli\Command
+ * @package   Fabryq\Cli\Command
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -27,6 +27,7 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
+use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -137,15 +138,19 @@ final class FixCrossingCommand extends Command
         }
 
         $findings = $this->verifier->verify($this->projectDir);
-        $crossings = array_values(array_filter(
-            $findings,
-            static fn (Finding $finding) => $finding->ruleKey === 'FABRYQ.APP.CROSSING' && $finding->autofixAvailable
-        ));
+        $crossings = array_values(
+            array_filter(
+                $findings,
+                static fn(Finding $finding) => $finding->ruleKey === 'FABRYQ.APP.CROSSING' && $finding->autofixAvailable
+            )
+        );
 
-        $selected = array_values(array_filter(
-            $crossings,
-            fn (Finding $finding) => $selection->matchesFinding($finding, $this->idGenerator)
-        ));
+        $selected = array_values(
+            array_filter(
+                $crossings,
+                fn(Finding $finding) => $selection->matchesFinding($finding, $this->idGenerator)
+            )
+        );
 
         if ($selection->findingId !== null && count($selected) !== 1) {
             $io->error('Finding selection did not resolve to exactly one crossing.');
@@ -210,24 +215,139 @@ final class FixCrossingCommand extends Command
     }
 
     /**
-     * Resolve the fix mode from input.
+     * Apply a fix target and update changed files.
      *
-     * @param InputInterface $input Console input.
-     * @param SymfonyStyle   $io    Console style helper.
+     * @param array<string, mixed> $target       Fix target payload.
+     * @param array<int, string>   $changedFiles List of changed files.
      *
-     * @return string|null Fix mode or null on error.
+     * @return array<string, mixed>|null Blocker plan item when apply fails.
      */
-    private function resolveMode(InputInterface $input, SymfonyStyle $io): ?string
+    private function applyTarget(array $target, array &$changedFiles): ?array
     {
-        $dryRun = (bool) $input->getOption('dry-run');
-        $apply = (bool) $input->getOption('apply');
+        $providerApp = $target['providerApp'];
+        $consumerApp = $target['consumerApp'];
+        $providerAppPascal = basename($providerApp->path);
+        $bridgeRoot = $this->projectDir . '/src/Components/Bridge' . $providerAppPascal;
 
-        if ($dryRun === $apply) {
-            $io->error('Specify exactly one of --dry-run or --apply.');
-            return null;
+        if ($this->filesystem->exists($bridgeRoot) && !is_dir($bridgeRoot)) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Bridge path exists and is not a directory.');
         }
 
-        return $dryRun ? FixMode::DRY_RUN : FixMode::APPLY;
+        if (!$this->filesystem->exists($bridgeRoot . '/.fabryq-bridge') && $this->filesystem->exists($bridgeRoot)) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Bridge directory missing .fabryq-bridge marker.');
+        }
+
+        $this->filesystem->mkdir([$bridgeRoot . '/Contract', $bridgeRoot . '/Dto', $bridgeRoot . '/NoOp']);
+        $this->filesystem->touch($bridgeRoot . '/.fabryq-bridge');
+
+        $contractPath = $bridgeRoot . '/Contract/' . $target['contractName'] . '.php';
+        $noopPath = $bridgeRoot . '/NoOp/' . $target['contractName'] . 'NoOp.php';
+        $adapterPath = $providerApp->path . '/Service/Bridge/' . $target['contractName'] . 'Adapter.php';
+
+        $contractContent = $this->renderContract($target);
+        $noopContent = $this->renderNoOp($target);
+        $adapterContent = $this->renderAdapter($target);
+
+        $blocker = $this->writeFileIfCompatible($contractPath, $contractContent, $target);
+        if ($blocker !== null) {
+            return $blocker;
+        }
+        $changedFiles[] = $this->normalizePath($contractPath);
+
+        $blocker = $this->writeFileIfCompatible($noopPath, $noopContent, $target);
+        if ($blocker !== null) {
+            return $blocker;
+        }
+        $changedFiles[] = $this->normalizePath($noopPath);
+
+        $this->filesystem->mkdir(dirname($adapterPath));
+        $blocker = $this->writeFileIfCompatible($adapterPath, $adapterContent, $target);
+        if ($blocker !== null) {
+            return $blocker;
+        }
+        $changedFiles[] = $this->normalizePath($adapterPath);
+
+        foreach ($target['dtoPlan'] as $dtoSpec) {
+            $dtoPath = $bridgeRoot . '/Dto/' . $dtoSpec['className'] . '.php';
+            $dtoContent = $this->renderDto($target, $dtoSpec);
+            $blocker = $this->writeFileIfCompatible($dtoPath, $dtoContent, $target);
+            if ($blocker !== null) {
+                return $blocker;
+            }
+            $changedFiles[] = $this->normalizePath($dtoPath);
+        }
+
+        $consumerBlocker = $this->rewriteConsumer($target);
+        if ($consumerBlocker !== null) {
+            return $consumerBlocker;
+        }
+        $changedFiles[] = $this->normalizePath($target['consumerFile']);
+
+        $providerManifestBlocker = $this->updateManifestProvides($providerApp->manifestPath, $target);
+        if ($providerManifestBlocker !== null) {
+            return $providerManifestBlocker;
+        }
+        $changedFiles[] = $this->normalizePath($providerApp->manifestPath);
+
+        $consumerManifestBlocker = $this->updateManifestConsumes($consumerApp->manifestPath, $target);
+        if ($consumerManifestBlocker !== null) {
+            return $consumerManifestBlocker;
+        }
+        $changedFiles[] = $this->normalizePath($consumerApp->manifestPath);
+
+        return null;
+    }
+
+    /**
+     * Build a blocked plan entry.
+     *
+     * @param string        $findingId Finding id.
+     * @param Finding|array $finding   Finding data.
+     * @param string        $reason    Blocker reason.
+     *
+     * @return array<string, mixed>
+     */
+    private function blockedPlan(string $findingId, Finding|array $finding, string $reason): array
+    {
+        return [
+            'id' => $findingId,
+            'fixable' => false,
+            'reason' => $reason,
+            'finding' => $finding,
+        ];
+    }
+
+    /**
+     * Build contract name from provider class.
+     *
+     * @param string $fqcn Provider class FQCN.
+     *
+     * @return string Contract interface name.
+     */
+    private function buildContractName(string $fqcn): string
+    {
+        $base = basename(str_replace('\\', '/', $fqcn));
+        if (str_ends_with($base, 'Interface')) {
+            return $base;
+        }
+
+        return $base . 'Interface';
+    }
+
+    /**
+     * Build contract slug from contract name.
+     *
+     * @param string $contractName Contract name.
+     *
+     * @return string Slug.
+     */
+    private function buildContractSlug(string $contractName): string
+    {
+        $base = str_ends_with($contractName, 'Interface')
+            ? substr($contractName, 0, -9)
+            : $contractName;
+
+        return $this->slugger->slug($base);
     }
 
     /**
@@ -241,7 +361,7 @@ final class FixCrossingCommand extends Command
     {
         $findingId = $this->idGenerator->generate($finding);
         $details = $finding->details['primary'] ?? '';
-        [$fqcn, $kind] = array_pad(explode('|', (string) $details, 2), 2, null);
+        [$fqcn, $kind] = array_pad(explode('|', (string)$details, 2), 2, null);
         $kind = $kind ?? 'unknown';
 
         if ($fqcn === '' || $kind === null) {
@@ -317,197 +437,96 @@ final class FixCrossingCommand extends Command
     }
 
     /**
-     * Render plan Markdown output.
+     * Provide default return values for NoOp providers.
      *
-     * @param string       $mode      Fix mode.
-     * @param FixSelection $selection Selection payload.
-     * @param array<int, array<string, mixed>> $items Plan items.
-     * @param int          $blockers  Blocker count.
-     * @param int          $warnings  Warning count.
+     * @param array<string, mixed>|null $type Type descriptor.
      *
-     * @return string Markdown content.
+     * @return string|null Default return expression.
      */
-    private function renderPlan(string $mode, FixSelection $selection, array $items, int $blockers, int $warnings): string
+    private function defaultReturn(?array $type): ?string
     {
-        $lines = [];
-        $lines[] = '# Fabryq Fix Plan';
-        $lines[] = '';
-        $lines[] = 'Fixer: crossing';
-        $lines[] = 'Mode: '.$mode;
-        $lines[] = 'Selection: '.json_encode($selection->toArray(), JSON_UNESCAPED_SLASHES);
-        $lines[] = '';
-
-        $lines[] = '## Fixable';
-        $lines[] = '';
-        $hasFixable = false;
-        foreach ($items as $item) {
-            if (!$item['fixable']) {
-                continue;
-            }
-            $hasFixable = true;
-            $lines[] = sprintf('- [%s] %s', $item['id'], $item['summary']);
-        }
-        if (!$hasFixable) {
-            $lines[] = 'None.';
-        }
-        $lines[] = '';
-
-        $lines[] = '## Blockers';
-        $lines[] = '';
-        $hasBlockers = false;
-        foreach ($items as $item) {
-            if ($item['fixable']) {
-                continue;
-            }
-            $hasBlockers = true;
-            $lines[] = sprintf('- [%s] %s', $item['id'], $item['reason']);
-        }
-        if (!$hasBlockers) {
-            $lines[] = 'None.';
-        }
-        $lines[] = '';
-
-        $lines[] = sprintf('Blockers: %d', $blockers);
-        $lines[] = sprintf('Warnings: %d', $warnings);
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Apply a fix target and update changed files.
-     *
-     * @param array<string, mixed> $target      Fix target payload.
-     * @param array<int, string>   $changedFiles List of changed files.
-     *
-     * @return array<string, mixed>|null Blocker plan item when apply fails.
-     */
-    private function applyTarget(array $target, array &$changedFiles): ?array
-    {
-        $providerApp = $target['providerApp'];
-        $consumerApp = $target['consumerApp'];
-        $providerAppPascal = basename($providerApp->path);
-        $bridgeRoot = $this->projectDir.'/src/Components/Bridge'.$providerAppPascal;
-
-        if ($this->filesystem->exists($bridgeRoot) && !is_dir($bridgeRoot)) {
-            return $this->blockedPlan($target['findingId'], $target['finding'], 'Bridge path exists and is not a directory.');
-        }
-
-        if (!$this->filesystem->exists($bridgeRoot.'/.fabryq-bridge') && $this->filesystem->exists($bridgeRoot)) {
-            return $this->blockedPlan($target['findingId'], $target['finding'], 'Bridge directory missing .fabryq-bridge marker.');
-        }
-
-        $this->filesystem->mkdir([$bridgeRoot.'/Contract', $bridgeRoot.'/Dto', $bridgeRoot.'/NoOp']);
-        $this->filesystem->touch($bridgeRoot.'/.fabryq-bridge');
-
-        $contractPath = $bridgeRoot.'/Contract/'.$target['contractName'].'.php';
-        $noopPath = $bridgeRoot.'/NoOp/'.$target['contractName'].'NoOp.php';
-        $adapterPath = $providerApp->path.'/Service/Bridge/'.$target['contractName'].'Adapter.php';
-
-        $contractContent = $this->renderContract($target);
-        $noopContent = $this->renderNoOp($target);
-        $adapterContent = $this->renderAdapter($target);
-
-        $blocker = $this->writeFileIfCompatible($contractPath, $contractContent, $target);
-        if ($blocker !== null) {
-            return $blocker;
-        }
-        $changedFiles[] = $this->normalizePath($contractPath);
-
-        $blocker = $this->writeFileIfCompatible($noopPath, $noopContent, $target);
-        if ($blocker !== null) {
-            return $blocker;
-        }
-        $changedFiles[] = $this->normalizePath($noopPath);
-
-        $this->filesystem->mkdir(dirname($adapterPath));
-        $blocker = $this->writeFileIfCompatible($adapterPath, $adapterContent, $target);
-        if ($blocker !== null) {
-            return $blocker;
-        }
-        $changedFiles[] = $this->normalizePath($adapterPath);
-
-        foreach ($target['dtoPlan'] as $dtoSpec) {
-            $dtoPath = $bridgeRoot.'/Dto/'.$dtoSpec['className'].'.php';
-            $dtoContent = $this->renderDto($target, $dtoSpec);
-            $blocker = $this->writeFileIfCompatible($dtoPath, $dtoContent, $target);
-            if ($blocker !== null) {
-                return $blocker;
-            }
-            $changedFiles[] = $this->normalizePath($dtoPath);
-        }
-
-        $consumerBlocker = $this->rewriteConsumer($target);
-        if ($consumerBlocker !== null) {
-            return $consumerBlocker;
-        }
-        $changedFiles[] = $this->normalizePath($target['consumerFile']);
-
-        $providerManifestBlocker = $this->updateManifestProvides($providerApp->manifestPath, $target);
-        if ($providerManifestBlocker !== null) {
-            return $providerManifestBlocker;
-        }
-        $changedFiles[] = $this->normalizePath($providerApp->manifestPath);
-
-        $consumerManifestBlocker = $this->updateManifestConsumes($consumerApp->manifestPath, $target);
-        if ($consumerManifestBlocker !== null) {
-            return $consumerManifestBlocker;
-        }
-        $changedFiles[] = $this->normalizePath($consumerApp->manifestPath);
-
-        return null;
-    }
-
-    /**
-     * Build a blocked plan entry.
-     *
-     * @param string        $findingId Finding id.
-     * @param Finding|array $finding   Finding data.
-     * @param string        $reason    Blocker reason.
-     *
-     * @return array<string, mixed>
-     */
-    private function blockedPlan(string $findingId, Finding|array $finding, string $reason): array
-    {
-        return [
-            'id' => $findingId,
-            'fixable' => false,
-            'reason' => $reason,
-            'finding' => $finding,
-        ];
-    }
-
-    /**
-     * Normalize a path relative to the project directory.
-     *
-     * @param string $path Path to normalize.
-     *
-     * @return string Normalized path.
-     */
-    private function normalizePath(string $path): string
-    {
-        return (string) $this->idGenerator->normalizePath($path);
-    }
-
-    /**
-     * Resolve a file path relative to project dir.
-     *
-     * @param string|null $path Path from finding.
-     *
-     * @return string|null Absolute file path.
-     */
-    private function resolveAbsolutePath(?string $path): ?string
-    {
-        if ($path === null || $path === '') {
+        if ($type === null) {
             return null;
         }
 
-        $normalized = str_replace('\\', '/', $path);
-        if (str_starts_with($normalized, $this->projectDir.'/')) {
-            return $normalized;
+        $name = $type['type'] ?? '';
+        if ($type['nullable']) {
+            return 'null';
         }
 
-        return $this->projectDir.'/'.ltrim($normalized, '/');
+        if ($name === 'void') {
+            return null;
+        }
+
+        return match ($name) {
+            'string' => "''",
+            'bool' => 'false',
+            'int', 'float' => '0',
+            'array' => '[]',
+            default => in_array($name, ['DateTimeImmutable', 'DateTimeInterface'], true) ? "new DateTimeImmutable('@0')" : 'null',
+        };
+    }
+
+    /**
+     * Ensure constructor injection exists for a property.
+     *
+     * @param Node\Stmt\Class_ $classNode    Class node.
+     * @param string           $contractFqcn Contract FQCN.
+     * @param string           $propertyName Property name.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function ensureConstructorInjection(Node\Stmt\Class_ $classNode, string $contractFqcn, string $propertyName): ?array
+    {
+        foreach ($classNode->getProperties() as $property) {
+            foreach ($property->props as $prop) {
+                if ($prop->name->toString() === $propertyName) {
+                    return null;
+                }
+            }
+        }
+
+        $property = new Node\Stmt\Property(
+            Node\Stmt\Class_::MODIFIER_PRIVATE | Node\Stmt\Class_::MODIFIER_READONLY,
+            [new Node\Stmt\PropertyProperty($propertyName)],
+            [],
+            new Node\Name\FullyQualified($contractFqcn) // Fix: Ensure FQCN use
+        );
+
+        $classNode->stmts = array_merge([$property], $classNode->stmts);
+
+        $constructor = $classNode->getMethod('__construct');
+        $param = new Node\Param(
+            new Node\Expr\Variable($propertyName),
+            null,
+            new Node\Name\FullyQualified($contractFqcn) // Fix: Ensure FQCN use
+        );
+
+        $assign = new Node\Stmt\Expression(
+            new Node\Expr\Assign(
+                new Node\Expr\PropertyFetch(new Node\Expr\Variable('this'), $propertyName),
+                new Node\Expr\Variable($propertyName)
+            )
+        );
+
+        if ($constructor instanceof Node\Stmt\ClassMethod) {
+            $constructor->params[] = $param;
+            $constructor->stmts[] = $assign;
+            return null;
+        }
+
+        $constructor = new Node\Stmt\ClassMethod(
+            '__construct',
+            [
+                'flags' => Node\Stmt\Class_::MODIFIER_PUBLIC,
+                'params' => [$param],
+                'stmts' => [$assign],
+            ]
+        );
+
+        $classNode->stmts[] = $constructor;
+
+        return null;
     }
 
     /**
@@ -525,104 +544,6 @@ final class FixCrossingCommand extends Command
         }
 
         return $parts[1] ?? null;
-    }
-
-    /**
-     * Resolve app definition from a consumer file path.
-     *
-     * @param string $path Absolute file path.
-     *
-     * @return AppDefinition|null
-     */
-    private function resolveAppFromFile(string $path): ?AppDefinition
-    {
-        $relative = $this->normalizePath($path);
-        if (!str_starts_with($relative, 'src/Apps/')) {
-            return null;
-        }
-        $parts = explode('/', $relative);
-        $appFolder = $parts[2] ?? null;
-        if ($appFolder === null) {
-            return null;
-        }
-
-        return $this->findAppByFolder($appFolder);
-    }
-
-    /**
-     * Find an app by folder name.
-     *
-     * @param string $folder App folder name.
-     *
-     * @return AppDefinition|null
-     */
-    private function findAppByFolder(string $folder): ?AppDefinition
-    {
-        foreach ($this->appRegistry->getApps() as $app) {
-            if (basename($app->path) === $folder) {
-                return $app;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Resolve the file path for a class.
-     *
-     * @param string $fqcn Fully qualified class name.
-     *
-     * @return string|null File path or null.
-     */
-    private function resolveClassFile(string $fqcn): ?string
-    {
-        $normalized = str_replace('\\', '/', $fqcn);
-        if (!str_starts_with($normalized, 'App/')) {
-            return null;
-        }
-        $relative = substr($normalized, 4);
-        $parts = explode('/', $relative);
-        $appFolder = $parts[0] ?? null;
-        if ($appFolder === null || $appFolder === 'Components') {
-            return null;
-        }
-        $relativePath = implode('/', array_slice($parts, 1));
-        $path = $this->projectDir.'/src/Apps/'.$appFolder.'/'.$relativePath.'.php';
-
-        return is_file($path) ? $path : null;
-    }
-
-    /**
-     * Build contract name from provider class.
-     *
-     * @param string $fqcn Provider class FQCN.
-     *
-     * @return string Contract interface name.
-     */
-    private function buildContractName(string $fqcn): string
-    {
-        $base = basename(str_replace('\\', '/', $fqcn));
-        if (str_ends_with($base, 'Interface')) {
-            return $base;
-        }
-
-        return $base.'Interface';
-    }
-
-    /**
-     * Build contract slug from contract name.
-     *
-     * @param string $contractName Contract name.
-     *
-     * @return string Slug.
-     */
-    private function buildContractSlug(string $contractName): string
-    {
-        $base = str_ends_with($contractName, 'Interface')
-            ? substr($contractName, 0, -9)
-            : $contractName;
-
-        return $this->slugger->slug($base);
     }
 
     /**
@@ -779,12 +700,96 @@ final class FixCrossingCommand extends Command
     }
 
     /**
+     * Find an app by folder name.
+     *
+     * @param string $folder App folder name.
+     *
+     * @return AppDefinition|null
+     */
+    private function findAppByFolder(string $folder): ?AppDefinition
+    {
+        foreach ($this->appRegistry->getApps() as $app) {
+            if (basename($app->path) === $folder) {
+                return $app;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Format type descriptor into a PHP type string.
+     *
+     * @param array<string, mixed>|null $type Type descriptor.
+     *
+     * @return string
+     */
+    private function formatType(?array $type): string
+    {
+        if ($type === null) {
+            return '';
+        }
+
+        $name = $type['fqcn'] ?? $type['type'];
+        $name = ltrim($name, '\\');
+        $name = $type['isBuiltin'] ? $type['type'] : '\\' . $name;
+
+        return ($type['nullable'] ? '?' : '') . $name;
+    }
+
+    /**
+     * Check for Doctrine attributes or annotations.
+     *
+     * @param Node $node AST node.
+     *
+     * @return bool
+     */
+    private function hasDoctrineMarkers(Node $node): bool
+    {
+        foreach ($node->getComments() ?? [] as $comment) {
+            if (str_contains($comment->getText(), '@ORM') || str_contains($comment->getText(), '@Entity')) {
+                return true;
+            }
+        }
+
+        if (property_exists($node, 'attrGroups')) {
+            foreach ($node->attrGroups as $group) {
+                foreach ($group->attrs as $attr) {
+                    $name = $attr->name->toString();
+                    if (str_contains($name, 'Doctrine\\ORM\\Mapping') || str_starts_with($name, 'ORM\\')) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Load manifest data from file.
+     *
+     * @param string $manifestPath Manifest path.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function loadManifest(string $manifestPath): ?array
+    {
+        $data = require $manifestPath;
+        if (!is_array($data)) {
+            return null;
+        }
+
+        return $data;
+    }
+
+    /**
      * Map provider signatures to contract signatures and DTO plan.
      *
-     * @param array<int, array<string, mixed>> $signatures Provider signatures.
+     * @param array<int, array<string, mixed>> $signatures        Provider signatures.
      * @param string                           $providerAppPascal Provider app folder.
-     * @param array<int, array<string, mixed>> $dtoPlan Output DTO plan.
-     * @param string|null                      $reason Output reason when not fixable.
+     * @param array<int, array<string, mixed>> $dtoPlan           Output DTO plan.
+     * @param string|null                      $reason            Output reason when not fixable.
      *
      * @return array<int, array<string, mixed>>|null
      */
@@ -839,19 +844,550 @@ final class FixCrossingCommand extends Command
     }
 
     /**
+     * Normalize a path relative to the project directory.
+     *
+     * @param string $path Path to normalize.
+     *
+     * @return string Normalized path.
+     */
+    private function normalizePath(string $path): string
+    {
+        return (string)$this->idGenerator->normalizePath($path);
+    }
+
+    /**
+     * Render adapter source.
+     *
+     * @param array<string, mixed> $target Fix target.
+     *
+     * @return string
+     */
+    private function renderAdapter(array $target): string
+    {
+        $providerAppPascal = basename($target['providerApp']->path);
+        $namespace = sprintf('App\\%s\\Service\\Bridge', $providerAppPascal);
+        $contractFqcn = $target['contractFqcn'];
+        $providerFqcn = $target['providerFqcn'];
+        $className = $target['contractName'] . 'Adapter';
+
+        $lines = [];
+        $lines[] = '<?php';
+        $lines[] = '';
+        $lines[] = 'declare(strict_types=1);';
+        $lines[] = '';
+        $lines[] = 'namespace ' . $namespace . ';';
+        $lines[] = '';
+        $lines[] = 'use ' . FabryqProvider::class . ';';
+        $lines[] = 'use ' . $contractFqcn . ';';
+        $lines[] = 'use ' . $providerFqcn . ';';
+        foreach ($target['dtoPlan'] as $dtoSpec) {
+            $lines[] = 'use ' . $dtoSpec['fqcn'] . ';';
+        }
+        $lines[] = '';
+        $lines[] = sprintf(
+            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: 0)]',
+            $target['capability'],
+            $target['contractName']
+        );
+        $lines[] = 'final class ' . $className . ' implements ' . $target['contractName'];
+        $lines[] = '{';
+        $lines[] = '    public function __construct(private readonly ' . $this->shortName($providerFqcn) . ' $provider)';
+        $lines[] = '    {';
+        $lines[] = '    }';
+        $lines[] = '';
+
+        foreach ($target['signatures'] as $signature) {
+            $lines[] = $this->renderMethodSignature($signature, false, $target);
+            $lines[] = '';
+        }
+
+        foreach ($target['dtoPlan'] as $dtoSpec) {
+            $lines[] = $this->renderDtoMapper($dtoSpec, $target);
+            $lines[] = '';
+        }
+
+        $lines[] = '}';
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render arrays with stable formatting.
+     *
+     * @param mixed $value  Value to render.
+     * @param int   $indent Indentation level.
+     *
+     * @return string
+     */
+    private function renderArray(mixed $value, int $indent): string
+    {
+        $pad = str_repeat('    ', $indent);
+        if (is_array($value)) {
+            $isAssoc = array_keys($value) !== range(0, count($value) - 1);
+            $lines = ['['];
+            foreach ($value as $key => $item) {
+                $line = $pad . '    ';
+                if ($isAssoc) {
+                    $line .= "'" . addslashes((string)$key) . "' => ";
+                }
+                $line .= $this->renderArray($item, $indent + 1);
+                $line .= ',';
+                $lines[] = $line;
+            }
+            $lines[] = $pad . ']';
+            return implode("\n", $lines);
+        }
+
+        if (is_string($value)) {
+            return "'" . addslashes($value) . "'";
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        return (string)$value;
+    }
+
+    /**
+     * Render contract interface source.
+     *
+     * @param array<string, mixed> $target Fix target.
+     *
+     * @return string
+     */
+    private function renderContract(array $target): string
+    {
+        $namespace = sprintf('App\\Components\\Bridge%s\\Contract', basename($target['providerApp']->path));
+        $lines = [];
+        $lines[] = '<?php';
+        $lines[] = '';
+        $lines[] = 'declare(strict_types=1);';
+        $lines[] = '';
+        $lines[] = 'namespace ' . $namespace . ';';
+        $lines[] = '';
+        $lines[] = 'interface ' . $target['contractName'];
+        $lines[] = '{';
+
+        foreach ($target['signatures'] as $signature) {
+            $lines[] = $this->renderMethodSignature($signature, true);
+        }
+
+        $lines[] = '}';
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render DTO class source.
+     *
+     * @param array<string, mixed> $target  Fix target.
+     * @param array<string, mixed> $dtoSpec DTO specification.
+     *
+     * @return string
+     */
+    private function renderDto(array $target, array $dtoSpec): string
+    {
+        $providerAppPascal = basename($target['providerApp']->path);
+        $namespace = sprintf('App\\Components\\Bridge%s\\Dto', $providerAppPascal);
+
+        $lines = [];
+        $lines[] = '<?php';
+        $lines[] = '';
+        $lines[] = 'declare(strict_types=1);';
+        $lines[] = '';
+        $lines[] = 'namespace ' . $namespace . ';';
+        $lines[] = '';
+        $lines[] = 'final readonly class ' . $dtoSpec['className'];
+        $lines[] = '{';
+        $lines[] = '    public function __construct(';
+        $props = [];
+        foreach ($dtoSpec['properties'] as $property) {
+            $type = $this->formatType($property['type']);
+            $props[] = sprintf('        public %s $%s', $type, $property['name']);
+        }
+        $lines[] = implode(",\n", $props);
+        $lines[] = '    ) {';
+        $lines[] = '    }';
+        $lines[] = '}';
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render DTO mapper methods.
+     *
+     * @param array<string, mixed> $dtoSpec DTO specification.
+     * @param array<string, mixed> $target  Fix target.
+     *
+     * @return string
+     */
+    private function renderDtoMapper(array $dtoSpec, array $target): string
+    {
+        $domainFqcn = $dtoSpec['sourceFqcn'];
+        $dtoClass = $dtoSpec['className'];
+        $dtoShort = $this->shortName($dtoSpec['fqcn']);
+        $domainShort = $this->shortName($domainFqcn);
+
+        $lines = [];
+        $lines[] = sprintf('    private function to%s(?%s $value): ?%s', $dtoClass, $domainShort, $dtoShort);
+        $lines[] = '    {';
+        $lines[] = '        if ($value === null) {';
+        $lines[] = '            return null;';
+        $lines[] = '        }';
+        $lines[] = sprintf('        return new %s(', $dtoShort);
+        $props = [];
+        foreach ($dtoSpec['properties'] as $property) {
+            $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
+        }
+        $lines[] = implode(",\n", $props);
+        $lines[] = '        );';
+        $lines[] = '    }';
+        $lines[] = '';
+        $lines[] = sprintf('    private function from%s(?%s $value): ?%s', $dtoClass, $dtoShort, $domainShort);
+        $lines[] = '    {';
+        $lines[] = '        if ($value === null) {';
+        $lines[] = '            return null;';
+        $lines[] = '        }';
+        $lines[] = sprintf('        return new %s(', $domainShort);
+        $props = [];
+        foreach ($dtoSpec['properties'] as $property) {
+            $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
+        }
+        $lines[] = implode(",\n", $props);
+        $lines[] = '        );';
+        $lines[] = '    }';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render manifest PHP file content.
+     *
+     * @param array<string, mixed> $data Manifest data.
+     *
+     * @return string
+     */
+    private function renderManifest(array $data): string
+    {
+        $lines = [];
+        $lines[] = '<?php';
+        $lines[] = '';
+        $lines[] = 'declare(strict_types=1);';
+        $lines[] = '';
+        $lines[] = 'return ' . $this->renderArray($data, 0) . ';';
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render a method signature for contract or adapter.
+     *
+     * @param array<string, mixed>      $signature Signature data.
+     * @param bool                      $interface True when generating interface.
+     * @param array<string, mixed>|null $target    Fix target.
+     *
+     * @return string
+     */
+    private function renderMethodSignature(array $signature, bool $interface, ?array $target = null): string
+    {
+        $params = [];
+        foreach ($signature['params'] as $param) {
+            $type = $param['contractType'] ?? $param['type'];
+            $typeString = $type ? $this->formatType($type) : null;
+            $paramString = ($typeString ? $typeString . ' ' : '') . '$' . $param['name'];
+            $params[] = $paramString;
+        }
+        $returnType = $interface ? $signature['contractReturnType'] : $signature['contractReturnType'];
+        $returnTypeString = $returnType ? $this->formatType($returnType) : null;
+        $returnSegment = $returnTypeString ? ': ' . $returnTypeString : '';
+
+        if ($interface) {
+            return sprintf('    public function %s(%s)%s;', $signature['name'], implode(', ', $params), $returnSegment);
+        }
+
+        $lines = [];
+        $lines[] = sprintf('    public function %s(%s)%s', $signature['name'], implode(', ', $params), $returnSegment);
+        $lines[] = '    {';
+
+        $callArgs = [];
+        foreach ($signature['params'] as $param) {
+            $callArgs[] = '$' . $param['name'];
+        }
+
+        $call = sprintf('$this->provider->%s(%s)', $signature['name'], implode(', ', $callArgs));
+        if ($signature['returnDto'] !== null) {
+            $mapper = $signature['returnDto']['className'];
+            $lines[] = sprintf('        $result = %s;', $call);
+            $lines[] = sprintf('        return $this->to%s($result);', $mapper);
+        } else {
+            if ($returnTypeString === null || $returnTypeString === 'void') {
+                $lines[] = '        ' . $call . ';';
+            } else {
+                $lines[] = sprintf('        return %s;', $call);
+            }
+        }
+
+        $lines[] = '    }';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render NoOp provider source.
+     *
+     * @param array<string, mixed> $target Fix target.
+     *
+     * @return string
+     */
+    private function renderNoOp(array $target): string
+    {
+        $providerAppPascal = basename($target['providerApp']->path);
+        $namespace = sprintf('App\\Components\\Bridge%s\\NoOp', $providerAppPascal);
+        $contractFqcn = $target['contractFqcn'];
+        $className = $target['contractName'] . 'NoOp';
+
+        $lines = [];
+        $lines[] = '<?php';
+        $lines[] = '';
+        $lines[] = 'declare(strict_types=1);';
+        $lines[] = '';
+        $lines[] = 'namespace ' . $namespace . ';';
+        $lines[] = '';
+        $lines[] = 'use DateTimeImmutable;';
+        $lines[] = 'use DateTimeInterface;';
+        $lines[] = 'use ' . FabryqProvider::class . ';';
+        $lines[] = 'use ' . $contractFqcn . ';';
+        foreach ($target['dtoPlan'] as $dtoSpec) {
+            $lines[] = 'use ' . $dtoSpec['fqcn'] . ';';
+        }
+        $lines[] = '';
+        $lines[] = sprintf(
+            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: -1000)]',
+            $target['capability'],
+            $target['contractName']
+        );
+        $lines[] = 'final class ' . $className . ' implements ' . $target['contractName'];
+        $lines[] = '{';
+
+        foreach ($target['signatures'] as $signature) {
+            $lines[] = $this->renderNoOpMethod($signature);
+        }
+
+        $lines[] = '}';
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render NoOp method implementation.
+     *
+     * @param array<string, mixed> $signature Signature data.
+     *
+     * @return string
+     */
+    private function renderNoOpMethod(array $signature): string
+    {
+        $params = [];
+        foreach ($signature['params'] as $param) {
+            $type = $param['contractType'] ?? $param['type'];
+            $typeString = $type ? $this->formatType($type) : null;
+            $params[] = ($typeString ? $typeString . ' ' : '') . '$' . $param['name'];
+        }
+        $returnType = $signature['contractReturnType'];
+        $returnTypeString = $returnType ? $this->formatType($returnType) : null;
+        $returnSegment = $returnTypeString ? ': ' . $returnTypeString : '';
+
+        $lines = [];
+        $lines[] = sprintf('    public function %s(%s)%s', $signature['name'], implode(', ', $params), $returnSegment);
+        $lines[] = '    {';
+
+        $default = $this->defaultReturn($returnType);
+        if ($default !== null) {
+            $lines[] = '        return ' . $default . ';';
+        }
+        $lines[] = '    }';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Render plan Markdown output.
+     *
+     * @param string                           $mode      Fix mode.
+     * @param FixSelection                     $selection Selection payload.
+     * @param array<int, array<string, mixed>> $items     Plan items.
+     * @param int                              $blockers  Blocker count.
+     * @param int                              $warnings  Warning count.
+     *
+     * @return string Markdown content.
+     */
+    private function renderPlan(string $mode, FixSelection $selection, array $items, int $blockers, int $warnings): string
+    {
+        $lines = [];
+        $lines[] = '# Fabryq Fix Plan';
+        $lines[] = '';
+        $lines[] = 'Fixer: crossing';
+        $lines[] = 'Mode: ' . $mode;
+        $lines[] = 'Selection: ' . json_encode($selection->toArray(), JSON_UNESCAPED_SLASHES);
+        $lines[] = '';
+
+        $lines[] = '## Fixable';
+        $lines[] = '';
+        $hasFixable = false;
+        foreach ($items as $item) {
+            if (!$item['fixable']) {
+                continue;
+            }
+            $hasFixable = true;
+            $lines[] = sprintf('- [%s] %s', $item['id'], $item['summary']);
+        }
+        if (!$hasFixable) {
+            $lines[] = 'None.';
+        }
+        $lines[] = '';
+
+        $lines[] = '## Blockers';
+        $lines[] = '';
+        $hasBlockers = false;
+        foreach ($items as $item) {
+            if ($item['fixable']) {
+                continue;
+            }
+            $hasBlockers = true;
+            $lines[] = sprintf('- [%s] %s', $item['id'], $item['reason']);
+        }
+        if (!$hasBlockers) {
+            $lines[] = 'None.';
+        }
+        $lines[] = '';
+
+        $lines[] = sprintf('Blockers: %d', $blockers);
+        $lines[] = sprintf('Warnings: %d', $warnings);
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Replace new expressions marked for replacement.
+     *
+     * @param array<int, Node\Stmt> $stmts Statements.
+     */
+    private function replaceNewExpressions(array $stmts): array
+    {
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor(
+            new class extends NodeVisitorAbstract {
+                public function leaveNode(Node $node): ?Node
+                {
+                    if (!$node instanceof Node\Expr\New_) {
+                        return null;
+                    }
+                    $replacement = $node->getAttribute('replacement');
+                    if ($replacement instanceof Node\Expr) {
+                        return $replacement;
+                    }
+
+                    return null;
+                }
+            }
+        );
+
+        return $traverser->traverse($stmts);
+    }
+
+    /**
+     * Resolve a file path relative to project dir.
+     *
+     * @param string|null $path Path from finding.
+     *
+     * @return string|null Absolute file path.
+     */
+    private function resolveAbsolutePath(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        $normalized = str_replace('\\', '/', $path);
+        if (str_starts_with($normalized, $this->projectDir . '/')) {
+            return $normalized;
+        }
+
+        return $this->projectDir . '/' . ltrim($normalized, '/');
+    }
+
+    /**
+     * Resolve app definition from a consumer file path.
+     *
+     * @param string $path Absolute file path.
+     *
+     * @return AppDefinition|null
+     */
+    private function resolveAppFromFile(string $path): ?AppDefinition
+    {
+        $relative = $this->normalizePath($path);
+        if (!str_starts_with($relative, 'src/Apps/')) {
+            return null;
+        }
+        $parts = explode('/', $relative);
+        $appFolder = $parts[2] ?? null;
+        if ($appFolder === null) {
+            return null;
+        }
+
+        return $this->findAppByFolder($appFolder);
+    }
+
+    /**
+     * Resolve the file path for a class.
+     *
+     * @param string $fqcn Fully qualified class name.
+     *
+     * @return string|null File path or null.
+     */
+    private function resolveClassFile(string $fqcn): ?string
+    {
+        $normalized = str_replace('\\', '/', $fqcn);
+        if (!str_starts_with($normalized, 'App/')) {
+            return null;
+        }
+        $relative = substr($normalized, 4);
+        $parts = explode('/', $relative);
+        $appFolder = $parts[0] ?? null;
+        if ($appFolder === null || $appFolder === 'Components') {
+            return null;
+        }
+        $relativePath = implode('/', array_slice($parts, 1));
+        $path = $this->projectDir . '/src/Apps/' . $appFolder . '/' . $relativePath . '.php';
+
+        return is_file($path) ? $path : null;
+    }
+
+    /**
      * Resolve DTO spec for a domain class.
      *
-     * @param string $fqcn Domain class.
-     * @param string $providerAppPascal Provider app folder.
-     * @param array<int, array<string, mixed>> $dtoPlan DTO plan output.
-     * @param array<string, array<string, mixed>> $dtoIndex DTO cache.
-     * @param string|null $reason Failure reason.
+     * @param string                              $fqcn              Domain class.
+     * @param string                              $providerAppPascal Provider app folder.
+     * @param array<int, array<string, mixed>>    $dtoPlan           DTO plan output.
+     * @param array<string, array<string, mixed>> $dtoIndex          DTO cache.
+     * @param string|null                         $reason            Failure reason.
      *
      * @return array<string, mixed>|null
      */
     private function resolveDtoSpec(string $fqcn, string $providerAppPascal, array &$dtoPlan, array &$dtoIndex, ?string &$reason): ?array
     {
-        if (!str_starts_with($fqcn, 'App\\'.$providerAppPascal.'\\')) {
+        if (!str_starts_with($fqcn, 'App\\' . $providerAppPascal . '\\')) {
             $reason = 'DTOs are only generated for provider app classes.';
             return null;
         }
@@ -939,11 +1475,11 @@ final class FixCrossingCommand extends Command
         }
 
         $classBase = basename(str_replace('\\', '/', $fqcn));
-        $dtoClass = $classBase.'Dto';
+        $dtoClass = $classBase . 'Dto';
         $namespaceSuffix = $providerAppPascal;
 
         if (in_array($dtoClass, array_column($dtoPlan, 'className'), true)) {
-            $dtoClass = $namespaceSuffix.$classBase.'Dto';
+            $dtoClass = $namespaceSuffix . $classBase . 'Dto';
         }
 
         $dtoFqcn = sprintf('App\\Components\\Bridge%s\\Dto\\%s', $providerAppPascal, $dtoClass);
@@ -962,32 +1498,24 @@ final class FixCrossingCommand extends Command
     }
 
     /**
-     * Check for Doctrine attributes or annotations.
+     * Resolve the fix mode from input.
      *
-     * @param Node $node AST node.
+     * @param InputInterface $input Console input.
+     * @param SymfonyStyle   $io    Console style helper.
      *
-     * @return bool
+     * @return string|null Fix mode or null on error.
      */
-    private function hasDoctrineMarkers(Node $node): bool
+    private function resolveMode(InputInterface $input, SymfonyStyle $io): ?string
     {
-        foreach ($node->getComments() ?? [] as $comment) {
-            if (str_contains($comment->getText(), '@ORM') || str_contains($comment->getText(), '@Entity')) {
-                return true;
-            }
+        $dryRun = (bool)$input->getOption('dry-run');
+        $apply = (bool)$input->getOption('apply');
+
+        if ($dryRun === $apply) {
+            $io->error('Specify exactly one of --dry-run or --apply.');
+            return null;
         }
 
-        if (property_exists($node, 'attrGroups')) {
-            foreach ($node->attrGroups as $group) {
-                foreach ($group->attrs as $attr) {
-                    $name = $attr->name->toString();
-                    if (str_contains($name, 'Doctrine\\ORM\\Mapping') || str_starts_with($name, 'ORM\\')) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
+        return $dryRun ? FixMode::DRY_RUN : FixMode::APPLY;
     }
 
     /**
@@ -1051,395 +1579,6 @@ final class FixCrossingCommand extends Command
     }
 
     /**
-     * Render contract interface source.
-     *
-     * @param array<string, mixed> $target Fix target.
-     *
-     * @return string
-     */
-    private function renderContract(array $target): string
-    {
-        $namespace = sprintf('App\\Components\\Bridge%s\\Contract', basename($target['providerApp']->path));
-        $lines = [];
-        $lines[] = '<?php';
-        $lines[] = '';
-        $lines[] = 'declare(strict_types=1);';
-        $lines[] = '';
-        $lines[] = 'namespace '.$namespace.';';
-        $lines[] = '';
-        $lines[] = 'interface '.$target['contractName'];
-        $lines[] = '{';
-
-        foreach ($target['signatures'] as $signature) {
-            $lines[] = $this->renderMethodSignature($signature, true);
-        }
-
-        $lines[] = '}';
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render adapter source.
-     *
-     * @param array<string, mixed> $target Fix target.
-     *
-     * @return string
-     */
-    private function renderAdapter(array $target): string
-    {
-        $providerAppPascal = basename($target['providerApp']->path);
-        $namespace = sprintf('App\\%s\\Service\\Bridge', $providerAppPascal);
-        $contractFqcn = $target['contractFqcn'];
-        $providerFqcn = $target['providerFqcn'];
-        $className = $target['contractName'].'Adapter';
-
-        $lines = [];
-        $lines[] = '<?php';
-        $lines[] = '';
-        $lines[] = 'declare(strict_types=1);';
-        $lines[] = '';
-        $lines[] = 'namespace '.$namespace.';';
-        $lines[] = '';
-        $lines[] = 'use '.FabryqProvider::class.';';
-        $lines[] = 'use '.$contractFqcn.';';
-        $lines[] = 'use '.$providerFqcn.';';
-        foreach ($target['dtoPlan'] as $dtoSpec) {
-            $lines[] = 'use '.$dtoSpec['fqcn'].';';
-        }
-        $lines[] = '';
-        $lines[] = sprintf(
-            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: 0)]',
-            $target['capability'],
-            $target['contractName']
-        );
-        $lines[] = 'final class '.$className.' implements '.$target['contractName'];
-        $lines[] = '{';
-        $lines[] = '    public function __construct(private readonly '.$this->shortName($providerFqcn).' $provider)';
-        $lines[] = '    {';
-        $lines[] = '    }';
-        $lines[] = '';
-
-        foreach ($target['signatures'] as $signature) {
-            $lines[] = $this->renderMethodSignature($signature, false, $target);
-            $lines[] = '';
-        }
-
-        foreach ($target['dtoPlan'] as $dtoSpec) {
-            $lines[] = $this->renderDtoMapper($dtoSpec, $target);
-            $lines[] = '';
-        }
-
-        $lines[] = '}';
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render NoOp provider source.
-     *
-     * @param array<string, mixed> $target Fix target.
-     *
-     * @return string
-     */
-    private function renderNoOp(array $target): string
-    {
-        $providerAppPascal = basename($target['providerApp']->path);
-        $namespace = sprintf('App\\Components\\Bridge%s\\NoOp', $providerAppPascal);
-        $contractFqcn = $target['contractFqcn'];
-        $className = $target['contractName'].'NoOp';
-
-        $lines = [];
-        $lines[] = '<?php';
-        $lines[] = '';
-        $lines[] = 'declare(strict_types=1);';
-        $lines[] = '';
-        $lines[] = 'namespace '.$namespace.';';
-        $lines[] = '';
-        $lines[] = 'use DateTimeImmutable;';
-        $lines[] = 'use DateTimeInterface;';
-        $lines[] = 'use '.FabryqProvider::class.';';
-        $lines[] = 'use '.$contractFqcn.';';
-        foreach ($target['dtoPlan'] as $dtoSpec) {
-            $lines[] = 'use '.$dtoSpec['fqcn'].';';
-        }
-        $lines[] = '';
-        $lines[] = sprintf(
-            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: -1000)]',
-            $target['capability'],
-            $target['contractName']
-        );
-        $lines[] = 'final class '.$className.' implements '.$target['contractName'];
-        $lines[] = '{';
-
-        foreach ($target['signatures'] as $signature) {
-            $lines[] = $this->renderNoOpMethod($signature);
-        }
-
-        $lines[] = '}';
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render DTO class source.
-     *
-     * @param array<string, mixed> $target Fix target.
-     * @param array<string, mixed> $dtoSpec DTO specification.
-     *
-     * @return string
-     */
-    private function renderDto(array $target, array $dtoSpec): string
-    {
-        $providerAppPascal = basename($target['providerApp']->path);
-        $namespace = sprintf('App\\Components\\Bridge%s\\Dto', $providerAppPascal);
-
-        $lines = [];
-        $lines[] = '<?php';
-        $lines[] = '';
-        $lines[] = 'declare(strict_types=1);';
-        $lines[] = '';
-        $lines[] = 'namespace '.$namespace.';';
-        $lines[] = '';
-        $lines[] = 'final readonly class '.$dtoSpec['className'];
-        $lines[] = '{';
-        $lines[] = '    public function __construct(';
-        $props = [];
-        foreach ($dtoSpec['properties'] as $property) {
-            $type = $this->formatType($property['type']);
-            $props[] = sprintf('        public %s $%s', $type, $property['name']);
-        }
-        $lines[] = implode(",\n", $props);
-        $lines[] = '    ) {';
-        $lines[] = '    }';
-        $lines[] = '}';
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render a method signature for contract or adapter.
-     *
-     * @param array<string, mixed> $signature Signature data.
-     * @param bool                 $interface True when generating interface.
-     * @param array<string, mixed>|null $target Fix target.
-     *
-     * @return string
-     */
-    private function renderMethodSignature(array $signature, bool $interface, ?array $target = null): string
-    {
-        $params = [];
-        foreach ($signature['params'] as $param) {
-            $type = $param['contractType'] ?? $param['type'];
-            $typeString = $type ? $this->formatType($type) : null;
-            $paramString = ($typeString ? $typeString.' ' : '').'$'.$param['name'];
-            $params[] = $paramString;
-        }
-        $returnType = $interface ? $signature['contractReturnType'] : $signature['contractReturnType'];
-        $returnTypeString = $returnType ? $this->formatType($returnType) : null;
-        $returnSegment = $returnTypeString ? ': '.$returnTypeString : '';
-
-        if ($interface) {
-            return sprintf('    public function %s(%s)%s;', $signature['name'], implode(', ', $params), $returnSegment);
-        }
-
-        $lines = [];
-        $lines[] = sprintf('    public function %s(%s)%s', $signature['name'], implode(', ', $params), $returnSegment);
-        $lines[] = '    {';
-
-        $callArgs = [];
-        foreach ($signature['params'] as $param) {
-            $callArgs[] = '$'.$param['name'];
-        }
-
-        $call = sprintf('$this->provider->%s(%s)', $signature['name'], implode(', ', $callArgs));
-        if ($signature['returnDto'] !== null) {
-            $mapper = $signature['returnDto']['className'];
-            $lines[] = sprintf('        $result = %s;', $call);
-            $lines[] = sprintf('        return $this->to%s($result);', $mapper);
-        } else {
-            if ($returnTypeString === null || $returnTypeString === 'void') {
-                $lines[] = '        '.$call.';';
-            } else {
-                $lines[] = sprintf('        return %s;', $call);
-            }
-        }
-
-        $lines[] = '    }';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render NoOp method implementation.
-     *
-     * @param array<string, mixed> $signature Signature data.
-     *
-     * @return string
-     */
-    private function renderNoOpMethod(array $signature): string
-    {
-        $params = [];
-        foreach ($signature['params'] as $param) {
-            $type = $param['contractType'] ?? $param['type'];
-            $typeString = $type ? $this->formatType($type) : null;
-            $params[] = ($typeString ? $typeString.' ' : '').'$'.$param['name'];
-        }
-        $returnType = $signature['contractReturnType'];
-        $returnTypeString = $returnType ? $this->formatType($returnType) : null;
-        $returnSegment = $returnTypeString ? ': '.$returnTypeString : '';
-
-        $lines = [];
-        $lines[] = sprintf('    public function %s(%s)%s', $signature['name'], implode(', ', $params), $returnSegment);
-        $lines[] = '    {';
-
-        $default = $this->defaultReturn($returnType);
-        if ($default !== null) {
-            $lines[] = '        return '.$default.';';
-        }
-        $lines[] = '    }';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render DTO mapper methods.
-     *
-     * @param array<string, mixed> $dtoSpec DTO specification.
-     * @param array<string, mixed> $target Fix target.
-     *
-     * @return string
-     */
-    private function renderDtoMapper(array $dtoSpec, array $target): string
-    {
-        $domainFqcn = $dtoSpec['sourceFqcn'];
-        $dtoClass = $dtoSpec['className'];
-        $dtoShort = $this->shortName($dtoSpec['fqcn']);
-        $domainShort = $this->shortName($domainFqcn);
-
-        $lines = [];
-        $lines[] = sprintf('    private function to%s(?%s $value): ?%s', $dtoClass, $domainShort, $dtoShort);
-        $lines[] = '    {';
-        $lines[] = '        if ($value === null) {';
-        $lines[] = '            return null;';
-        $lines[] = '        }';
-        $lines[] = sprintf('        return new %s(', $dtoShort);
-        $props = [];
-        foreach ($dtoSpec['properties'] as $property) {
-            $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
-        }
-        $lines[] = implode(",\n", $props);
-        $lines[] = '        );';
-        $lines[] = '    }';
-        $lines[] = '';
-        $lines[] = sprintf('    private function from%s(?%s $value): ?%s', $dtoClass, $dtoShort, $domainShort);
-        $lines[] = '    {';
-        $lines[] = '        if ($value === null) {';
-        $lines[] = '            return null;';
-        $lines[] = '        }';
-        $lines[] = sprintf('        return new %s(', $domainShort);
-        $props = [];
-        foreach ($dtoSpec['properties'] as $property) {
-            $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
-        }
-        $lines[] = implode(",\n", $props);
-        $lines[] = '        );';
-        $lines[] = '    }';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Format type descriptor into a PHP type string.
-     *
-     * @param array<string, mixed>|null $type Type descriptor.
-     *
-     * @return string
-     */
-    private function formatType(?array $type): string
-    {
-        if ($type === null) {
-            return '';
-        }
-
-        $name = $type['fqcn'] ?? $type['type'];
-        $name = ltrim($name, '\\');
-        $name = $type['isBuiltin'] ? $type['type'] : '\\'.$name;
-
-        return ($type['nullable'] ? '?' : '').$name;
-    }
-
-    /**
-     * Provide default return values for NoOp providers.
-     *
-     * @param array<string, mixed>|null $type Type descriptor.
-     *
-     * @return string|null Default return expression.
-     */
-    private function defaultReturn(?array $type): ?string
-    {
-        if ($type === null) {
-            return null;
-        }
-
-        $name = $type['type'] ?? '';
-        if ($type['nullable']) {
-            return 'null';
-        }
-
-        if ($name === 'void') {
-            return null;
-        }
-
-        return match ($name) {
-            'string' => "''",
-            'bool' => 'false',
-            'int', 'float' => '0',
-            'array' => '[]',
-            default => in_array($name, ['DateTimeImmutable', 'DateTimeInterface'], true) ? "new DateTimeImmutable('@0')" : 'null',
-        };
-    }
-
-    /**
-     * Short class name from FQCN.
-     *
-     * @param string $fqcn Fully qualified class name.
-     *
-     * @return string
-     */
-    private function shortName(string $fqcn): string
-    {
-        return basename(str_replace('\\', '/', $fqcn));
-    }
-
-    /**
-     * Write file if compatible, else return blocker.
-     *
-     * @param string               $path   File path.
-     * @param string               $content Expected content.
-     * @param array<string, mixed> $target  Fix target.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function writeFileIfCompatible(string $path, string $content, array $target): ?array
-    {
-        if ($this->filesystem->exists($path)) {
-            $existing = (string) file_get_contents($path);
-            if (trim($existing) !== trim($content)) {
-                return $this->blockedPlan($target['findingId'], $target['finding'], sprintf('File %s already exists with different content.', $this->normalizePath($path)));
-            }
-        }
-
-        $this->filesystem->dumpFile($path, $content);
-
-        return null;
-    }
-
-    /**
      * Rewrite consumer file to use contract injection.
      *
      * @param array<string, mixed> $target Fix target.
@@ -1449,9 +1588,19 @@ final class FixCrossingCommand extends Command
     private function rewriteConsumer(array $target): ?array
     {
         $code = file_get_contents($target['consumerFile']);
-        $lexer = new Emulative(['usedAttributes' => ['comments', 'startLine', 'endLine']]);
-        $parser = (new ParserFactory())->createForNewestSupportedVersion();
-        $oldStmts = $parser->parse($code, $lexer);
+
+        // FIX: nikic/php-parser v5 compatibility
+        $lexer = new Emulative(null);
+        $parser = new \PhpParser\Parser\Php8($lexer);
+
+        try {
+            $oldStmts = $parser->parse($code);
+            // FIX: getTokens() existiert nicht mehr, wir rufen tokenize() explizit auf
+            $tokens = $lexer->tokenize($code);
+        } catch (\Throwable $e) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed: ' . $e->getMessage());
+        }
+
         if ($oldStmts === null) {
             return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed.');
         }
@@ -1475,6 +1624,7 @@ final class FixCrossingCommand extends Command
             return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer class not found.');
         }
 
+        // 1. Modify Use statements (in-place)
         foreach ($nodeFinder->findInstanceOf($stmts, Node\Stmt\UseUse::class) as $useUse) {
             $resolved = $useUse->name->getAttribute('resolvedName');
             $resolvedName = $resolved instanceof Node\Name ? $resolved->toString() : $useUse->name->toString();
@@ -1484,6 +1634,7 @@ final class FixCrossingCommand extends Command
             }
         }
 
+        // 2. Identify and mark New_ expressions (in-place)
         foreach ($nodeFinder->findInstanceOf($stmts, Node\Expr\New_::class) as $newExpr) {
             $newType = $this->resolveTypeDescriptor($newExpr->class);
             if ($newType !== null && $newType['fqcn'] === $providerFqcn) {
@@ -1495,20 +1646,47 @@ final class FixCrossingCommand extends Command
             }
         }
 
-        foreach ($nodeFinder->findInstanceOf($stmts, Node\Name::class) as $nameNode) {
-            $resolved = $nameNode->getAttribute('resolvedName');
-            if (!$resolved instanceof Node\Name) {
-                continue;
-            }
-            if ($resolved->toString() !== $providerFqcn) {
-                continue;
-            }
+        // 3. Replace TypeHint Names using a NodeTraverser (FIX for missing KIND_FQ in v5)
+        $nameReplacer = new class($providerFqcn, $contractFqcn) extends NodeVisitorAbstract {
+            public bool $updated = false;
 
-            if ($this->isTypeHintNode($nameNode)) {
-                $nameNode->parts = explode('\\\\', $contractFqcn);
-                $nameNode->setAttribute('kind', Node\Name::KIND_FQ);
-                $updated = true;
+            public function __construct(
+                private readonly string $target,
+                private readonly string $replacement
+            ) {}
+
+            public function leaveNode(Node $node)
+            {
+                if ($node instanceof Node\Name) {
+                    $resolved = $node->getAttribute('resolvedName');
+                    // Check if name matches provider FQCN
+                    if ($resolved instanceof Node\Name && $resolved->toString() === $this->target) {
+                        // Inline check for isTypeHintNode logic
+                        $parent = $node->getAttribute('parent');
+                        if ($parent instanceof Node\NullableType) {
+                            $parent = $parent->getAttribute('parent');
+                        }
+                        $isTypeHint = $parent instanceof Node\Param
+                            || $parent instanceof Node\Stmt\Property
+                            || $parent instanceof Node\FunctionLike;
+
+                        if ($isTypeHint) {
+                            $this->updated = true;
+                            // Replace with FullyQualified node instead of setting kind attribute
+                            return new Node\Name\FullyQualified($this->replacement);
+                        }
+                    }
+                }
+                return null;
             }
+        };
+
+        $replacerTraverser = new NodeTraverser();
+        $replacerTraverser->addVisitor($nameReplacer);
+        $stmts = $replacerTraverser->traverse($stmts);
+
+        if ($nameReplacer->updated) {
+            $updated = true;
         }
 
         if (!$updated) {
@@ -1524,167 +1702,30 @@ final class FixCrossingCommand extends Command
 
         $stmts = $this->replaceNewExpressions($stmts);
         $printer = new Standard();
-        $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $lexer->getTokens());
+        // FIX: Verwende $tokens Variable statt $lexer->getTokens()
+        $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $tokens);
         $this->filesystem->dumpFile($target['consumerFile'], $newCode);
 
         return null;
     }
 
     /**
-     * Replace new expressions marked for replacement.
+     * Short class name from FQCN.
      *
-     * @param array<int, Node\Stmt> $stmts Statements.
+     * @param string $fqcn Fully qualified class name.
+     *
+     * @return string
      */
-    private function replaceNewExpressions(array $stmts): array
+    private function shortName(string $fqcn): string
     {
-        $traverser = new NodeTraverser();
-        $traverser->addVisitor(new class extends \\PhpParser\\NodeVisitorAbstract {
-            public function leaveNode(Node $node): ?Node
-            {
-                if (!$node instanceof Node\\Expr\\New_) {
-                    return null;
-                }
-                $replacement = $node->getAttribute('replacement');
-                if ($replacement instanceof Node\\Expr) {
-                    return $replacement;
-                }
-
-                return null;
-            }
-        });
-
-        return $traverser->traverse($stmts);
-    }
-
-    /**
-     * Ensure constructor injection exists for a property.
-     *
-     * @param Node\Stmt\Class_ $classNode Class node.
-     * @param string           $contractFqcn Contract FQCN.
-     * @param string           $propertyName Property name.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function ensureConstructorInjection(Node\Stmt\Class_ $classNode, string $contractFqcn, string $propertyName): ?array
-    {
-        foreach ($classNode->getProperties() as $property) {
-            foreach ($property->props as $prop) {
-                if ($prop->name->toString() === $propertyName) {
-                    return null;
-                }
-            }
-        }
-
-        $property = new Node\Stmt\Property(
-            Node\Stmt\Class_::MODIFIER_PRIVATE | Node\Stmt\Class_::MODIFIER_READONLY,
-            [new Node\Stmt\PropertyProperty($propertyName)],
-            [],
-            new Node\Name($contractFqcn)
-        );
-
-        $classNode->stmts = array_merge([$property], $classNode->stmts);
-
-        $constructor = $classNode->getMethod('__construct');
-        $param = new Node\Param(
-            new Node\Expr\Variable($propertyName),
-            null,
-            new Node\Name($contractFqcn)
-        );
-
-        $assign = new Node\Stmt\Expression(
-            new Node\Expr\Assign(
-                new Node\Expr\PropertyFetch(new Node\Expr\Variable('this'), $propertyName),
-                new Node\Expr\Variable($propertyName)
-            )
-        );
-
-        if ($constructor instanceof Node\Stmt\ClassMethod) {
-            $constructor->params[] = $param;
-            $constructor->stmts[] = $assign;
-            return null;
-        }
-
-        $constructor = new Node\Stmt\ClassMethod(
-            '__construct',
-            [
-                'flags' => Node\Stmt\Class_::MODIFIER_PUBLIC,
-                'params' => [$param],
-                'stmts' => [$assign],
-            ]
-        );
-
-        $classNode->stmts[] = $constructor;
-
-        return null;
-    }
-
-    /**
-     * Check if a Name node is used as a type hint.
-     *
-     * @param Node\Name $nameNode Name node.
-     *
-     * @return bool
-     */
-    private function isTypeHintNode(Node\Name $nameNode): bool
-    {
-        $parent = $nameNode->getAttribute('parent');
-        if ($parent instanceof Node\NullableType) {
-            $parent = $parent->getAttribute('parent');
-        }
-
-        return $parent instanceof Node\Param
-            || $parent instanceof Node\Stmt\Property
-            || $parent instanceof Node\FunctionLike;
-    }
-
-    /**
-     * Update provider manifest with provides entry.
-     *
-     * @param string               $manifestPath Manifest path.
-     * @param array<string, mixed> $target Fix target.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function updateManifestProvides(string $manifestPath, array $target): ?array
-    {
-        $data = $this->loadManifest($manifestPath);
-        if ($data === null) {
-            return $this->blockedPlan($target['findingId'], $target['finding'], 'Provider manifest invalid.');
-        }
-
-        $provides = $data['provides'] ?? [];
-        foreach ($provides as &$entry) {
-            if (is_string($entry) && $entry === $target['capability']) {
-                $entry = [
-                    'capabilityId' => $target['capability'],
-                    'contract' => $target['contractFqcn'],
-                ];
-                $data['provides'] = $provides;
-                return $this->writeManifest($manifestPath, $data, $target);
-            }
-            if (is_array($entry) && ($entry['capabilityId'] ?? null) === $target['capability']) {
-                if (($entry['contract'] ?? null) !== $target['contractFqcn']) {
-                    return $this->blockedPlan($target['findingId'], $target['finding'], 'Provider manifest provides incompatible contract.');
-                }
-                return $this->writeManifest($manifestPath, $data, $target);
-            }
-        }
-        unset($entry);
-
-        $provides[] = [
-            'capabilityId' => $target['capability'],
-            'contract' => $target['contractFqcn'],
-        ];
-        $data['provides'] = $provides;
-
-        return $this->writeManifest($manifestPath, $data, $target);
+        return basename(str_replace('\\', '/', $fqcn));
     }
 
     /**
      * Update consumer manifest with consumes entry.
      *
      * @param string               $manifestPath Manifest path.
-     * @param array<string, mixed> $target Fix target.
+     * @param array<string, mixed> $target       Fix target.
      *
      * @return array<string, mixed>|null
      */
@@ -1728,28 +1769,77 @@ final class FixCrossingCommand extends Command
     }
 
     /**
-     * Load manifest data from file.
+     * Update provider manifest with provides entry.
      *
-     * @param string $manifestPath Manifest path.
+     * @param string               $manifestPath Manifest path.
+     * @param array<string, mixed> $target       Fix target.
      *
      * @return array<string, mixed>|null
      */
-    private function loadManifest(string $manifestPath): ?array
+    private function updateManifestProvides(string $manifestPath, array $target): ?array
     {
-        $data = require $manifestPath;
-        if (!is_array($data)) {
-            return null;
+        $data = $this->loadManifest($manifestPath);
+        if ($data === null) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Provider manifest invalid.');
         }
 
-        return $data;
+        $provides = $data['provides'] ?? [];
+        foreach ($provides as &$entry) {
+            if (is_string($entry) && $entry === $target['capability']) {
+                $entry = [
+                    'capabilityId' => $target['capability'],
+                    'contract' => $target['contractFqcn'],
+                ];
+                $data['provides'] = $provides;
+                return $this->writeManifest($manifestPath, $data, $target);
+            }
+            if (is_array($entry) && ($entry['capabilityId'] ?? null) === $target['capability']) {
+                if (($entry['contract'] ?? null) !== $target['contractFqcn']) {
+                    return $this->blockedPlan($target['findingId'], $target['finding'], 'Provider manifest provides incompatible contract.');
+                }
+                return $this->writeManifest($manifestPath, $data, $target);
+            }
+        }
+        unset($entry);
+
+        $provides[] = [
+            'capabilityId' => $target['capability'],
+            'contract' => $target['contractFqcn'],
+        ];
+        $data['provides'] = $provides;
+
+        return $this->writeManifest($manifestPath, $data, $target);
+    }
+
+    /**
+     * Write file if compatible, else return blocker.
+     *
+     * @param string               $path    File path.
+     * @param string               $content Expected content.
+     * @param array<string, mixed> $target  Fix target.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function writeFileIfCompatible(string $path, string $content, array $target): ?array
+    {
+        if ($this->filesystem->exists($path)) {
+            $existing = (string)file_get_contents($path);
+            if (trim($existing) !== trim($content)) {
+                return $this->blockedPlan($target['findingId'], $target['finding'], sprintf('File %s already exists with different content.', $this->normalizePath($path)));
+            }
+        }
+
+        $this->filesystem->dumpFile($path, $content);
+
+        return null;
     }
 
     /**
      * Write manifest data to file.
      *
      * @param string               $manifestPath Manifest path.
-     * @param array<string, mixed> $data Manifest data.
-     * @param array<string, mixed> $target Fix target.
+     * @param array<string, mixed> $data         Manifest data.
+     * @param array<string, mixed> $target       Fix target.
      *
      * @return array<string, mixed>|null
      */
@@ -1759,67 +1849,5 @@ final class FixCrossingCommand extends Command
         $this->filesystem->dumpFile($manifestPath, $content);
 
         return null;
-    }
-
-    /**
-     * Render manifest PHP file content.
-     *
-     * @param array<string, mixed> $data Manifest data.
-     *
-     * @return string
-     */
-    private function renderManifest(array $data): string
-    {
-        $lines = [];
-        $lines[] = '<?php';
-        $lines[] = '';
-        $lines[] = 'declare(strict_types=1);';
-        $lines[] = '';
-        $lines[] = 'return '.$this->renderArray($data, 0).';';
-        $lines[] = '';
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Render arrays with stable formatting.
-     *
-     * @param mixed $value Value to render.
-     * @param int   $indent Indentation level.
-     *
-     * @return string
-     */
-    private function renderArray(mixed $value, int $indent): string
-    {
-        $pad = str_repeat('    ', $indent);
-        if (is_array($value)) {
-            $isAssoc = array_keys($value) !== range(0, count($value) - 1);
-            $lines = ['['];
-            foreach ($value as $key => $item) {
-                $line = $pad.'    ';
-                if ($isAssoc) {
-                    $line .= "'".addslashes((string) $key)."' => ";
-                }
-                $line .= $this->renderArray($item, $indent + 1);
-                $line .= ',';
-                $lines[] = $line;
-            }
-            $lines[] = $pad.']';
-            return implode("\n", $lines);
-        }
-
-        if (is_string($value)) {
-            return "'".addslashes($value)."'";
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if ($value === null) {
-            return 'null';
-        }
-
-        return (string) $value;
     }
 }

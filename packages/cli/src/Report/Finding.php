@@ -17,6 +17,13 @@ namespace Fabryq\Cli\Report;
 final readonly class Finding
 {
     /**
+     * Structured details used for fingerprinting and rendering.
+     *
+     * @var array<string, mixed>
+     */
+    public array $details;
+
+    /**
      * @param string               $ruleKey          Rule identifier for the finding.
      * @param string               $severity         Severity label such as BLOCKER or WARNING.
      * @param string               $message          Human-readable description of the finding.
@@ -51,12 +58,7 @@ final readonly class Finding
          * @var FindingLocation|null
          */
         public ?FindingLocation $location = null,
-        /**
-         * Structured details used for fingerprinting and rendering.
-         *
-         * @var array<string, mixed>
-         */
-        public array            $details = [],
+        array                   $details = [],
         /**
          * Optional hint for resolving the finding.
          *
@@ -76,9 +78,10 @@ final readonly class Finding
          */
         public ?string          $autofixFixer = null,
     ) {
-        if (!array_key_exists('primary', $this->details)) {
-            $this->details['primary'] = $this->message;
+        if (!array_key_exists('primary', $details)) {
+            $details['primary'] = $this->message;
         }
+        $this->details = $details;
     }
 
     /**
