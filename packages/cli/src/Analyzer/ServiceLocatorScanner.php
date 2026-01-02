@@ -3,7 +3,7 @@
 /**
  * Analyzer that detects forbidden service locator usage.
  *
- * @package Fabryq\Cli\Analyzer
+ * @package   Fabryq\Cli\Analyzer
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -42,8 +42,8 @@ final class ServiceLocatorScanner
      */
     public function scan(string $projectDir): array
     {
-        $appsDir = $projectDir.'/src/Apps';
-        $componentsDir = $projectDir.'/src/Components';
+        $appsDir = $projectDir . '/src/Apps';
+        $componentsDir = $projectDir . '/src/Components';
         $paths = [];
 
         if (is_dir($appsDir)) {
@@ -99,7 +99,7 @@ final class ServiceLocatorScanner
                     'BLOCKER',
                     sprintf('Service locator type "%s" is forbidden.', $fqcn),
                     new FindingLocation($path, $nameNode->getLine(), $fqcn),
-                    ['primary' => 'typehint|'.$fqcn],
+                    ['primary' => 'typehint|' . $fqcn],
                     'Inject FabryqContext or explicit dependencies instead of containers.'
                 );
             }
@@ -142,6 +142,30 @@ final class ServiceLocatorScanner
     }
 
     /**
+     * Check whether a node represents container access.
+     *
+     * @param Node\Expr $expr Expression node.
+     *
+     * @return bool
+     */
+    private function isContainerAccess(Node\Expr $expr): bool
+    {
+        if ($expr instanceof Node\Expr\Variable) {
+            return $expr->name === 'container';
+        }
+
+        if ($expr instanceof Node\Expr\PropertyFetch) {
+            if ($expr->var instanceof Node\Expr\Variable && $expr->var->name === 'this') {
+                if ($expr->name instanceof Node\Identifier) {
+                    return $expr->name->toString() === 'container';
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the node is used as a type hint.
      *
      * @param Node\Name $nameNode Name node.
@@ -168,30 +192,6 @@ final class ServiceLocatorScanner
 
         if ($parent instanceof Node\FunctionLike) {
             return $parent->getReturnType() === $node;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check whether a node represents container access.
-     *
-     * @param Node\Expr $expr Expression node.
-     *
-     * @return bool
-     */
-    private function isContainerAccess(Node\Expr $expr): bool
-    {
-        if ($expr instanceof Node\Expr\Variable) {
-            return $expr->name === 'container';
-        }
-
-        if ($expr instanceof Node\Expr\PropertyFetch) {
-            if ($expr->var instanceof Node\Expr\Variable && $expr->var->name === 'this') {
-                if ($expr->name instanceof Node\Identifier) {
-                    return $expr->name->toString() === 'container';
-                }
-            }
         }
 
         return false;

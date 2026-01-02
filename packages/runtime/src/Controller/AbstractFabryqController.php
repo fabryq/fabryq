@@ -3,7 +3,7 @@
 /**
  * Base controller with Fabryq context.
  *
- * @package Fabryq\Runtime\Controller
+ * @package   Fabryq\Runtime\Controller
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -20,7 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 abstract class AbstractFabryqController extends AbstractController
 {
     /**
-     * @param FabryqContext $ctx Fabryq runtime context.
+     * @param FabryqContext $ctx Runtime context.
      */
     public function __construct(
         protected readonly FabryqContext $ctx,

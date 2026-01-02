@@ -1,7 +1,7 @@
 # Base Layers
 
 ## Purpose
-Provide optional base classes that expose FabryqContext in common entrypoints.
+Describe the optional base classes that provide FabryqContext access.
 
 ## Inputs
 - FabryqContext
@@ -11,22 +11,18 @@ Provide optional base classes that expose FabryqContext in common entrypoints.
 - AbstractFabryqCommand
 - AbstractFabryqUseCase
 
-## Behavior
-- Base classes expose FabryqContext as $ctx
-- Use cases are optional; controllers/commands may extend base or inject context directly
-
 ## Flags
 - N/A
 
 ## Examples
 ```bash
-vendor/bin/fabryq app:create billing --mount=/billing
-vendor/bin/fabryq component:create billing Invoices
+vendor/bin/fabryq component:create Demo Operations
 ```
+Extend the base classes in controllers, commands, or use cases when you want standardized context access.
 
 ## Exit Codes
 - N/A
 
 ## Failure Cases
-- Using base classes to access the container directly
-- Hiding constructor dependencies in the context
+- Base layer used as a service locator (not allowed)
+- Base layer used without FabryqContext being available for autowire

@@ -3,9 +3,9 @@
   "description": "Fabryq demo project",
   "type": "project",
   "license": "proprietary",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "symfony/framework-bundle": "^6.4 || ^7.0",
     "symfony/console": "^6.4 || ^7.0",
     "symfony/yaml": "^6.4 || ^7.0",
@@ -15,9 +15,9 @@
     "doctrine/doctrine-bundle": "^2.11",
     "doctrine/doctrine-migrations-bundle": "^3.3",
     "zircote/swagger-php": "^5.7.6",
-    "fabryq/runtime": "^0.2",
-    "fabryq/cli": "^0.2",
-    "fabryq/provider-http-client": "^0.2"
+    "fabryq/runtime": "^0.1",
+    "fabryq/cli": "^0.1",
+    "fabryq/provider-http-client": "^0.1"
   },
   "repositories": [
     {
@@ -67,5 +67,8 @@
   },
   "bin": [
     "vendor/bin/fabryq"
-  ]
+  ],
+  "require-dev": {
+    "symfony/process": "^6.4 || ^7.0"
+  }
 }

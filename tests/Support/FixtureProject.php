@@ -212,7 +212,7 @@ spl_autoload_register(static function (string $class) use ($projectRoot): void {
         }
         return;
     }
-});
+}, true, true);
 PHP,
             var_export($rootAutoload, true)
         );

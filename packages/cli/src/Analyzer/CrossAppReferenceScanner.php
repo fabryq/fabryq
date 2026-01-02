@@ -40,7 +40,7 @@ final class CrossAppReferenceScanner
     {
         $findings = [];
         // Use createForNewestSupportedVersion() for modern syntax compatibility.
-        $parser = new ParserFactory()->createForNewestSupportedVersion();
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         $finder = new Finder();
         $paths = [];
 

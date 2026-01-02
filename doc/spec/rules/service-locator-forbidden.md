@@ -1,43 +1,32 @@
-# FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN
+# Rule: SERVICE_LOCATOR_FORBIDDEN
 
 ## Purpose
-Block service locator/container usage in app and component code.
+Block service locator/container usage in apps, components, and bridges.
 
 ## Inputs
-- Project code under src/Apps/** and src/Components/** (including bridges)
+- src/Apps/**
+- src/Components/** (including Bridge components)
 
 ## Outputs
-- Verification findings with ruleKey FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN
-- details.primary formats:
-  - typehint|<fqcn>
-  - method-call|get
-  - static-call|getContainer
+- FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN findings (BLOCKER)
 
 ## Flags
 - N/A
 
-## Forbidden Patterns
-Type hints or injections of:
-- Psr\Container\ContainerInterface
-- Symfony\Component\DependencyInjection\ContainerInterface
-- Symfony\Contracts\Service\ServiceProviderInterface
-- Symfony\Component\DependencyInjection\ServiceLocator
-
-Calls:
-- $container->get(...)
-- $this->container->get(...)
-- static::getContainer()
-
-## Exceptions
-- Fabryq runtime internals only (fabryq/runtime). App and component code has no exceptions.
-
 ## Examples
 ```bash
-vendor/bin/fabryq verify
+vendor/bin/fabryq app:create Demo --mount=/demo
+vendor/bin/fabryq component:create Demo Core
 ```
+Add a container or service locator dependency in the component to reproduce the blocker.
 
 ## Exit Codes
 - N/A
 
 ## Failure Cases
-- Any forbidden pattern in app or component code
+- Typehinting container interfaces (ContainerInterface, ServiceProviderInterface, ServiceLocator)
+- Calling container->get() or static::getContainer()
+
+## Notes
+- Runtime internals may still use container access when required.
+- Use FabryqContext or explicit dependencies instead.

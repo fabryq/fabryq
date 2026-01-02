@@ -27,6 +27,7 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
+use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -489,7 +490,7 @@ final class FixCrossingCommand extends Command
             Node\Stmt\Class_::MODIFIER_PRIVATE | Node\Stmt\Class_::MODIFIER_READONLY,
             [new Node\Stmt\PropertyProperty($propertyName)],
             [],
-            new Node\Name($contractFqcn)
+            new Node\Name\FullyQualified($contractFqcn) // Fix: Ensure FQCN use
         );
 
         $classNode->stmts = array_merge([$property], $classNode->stmts);
@@ -498,7 +499,7 @@ final class FixCrossingCommand extends Command
         $param = new Node\Param(
             new Node\Expr\Variable($propertyName),
             null,
-            new Node\Name($contractFqcn)
+            new Node\Name\FullyQualified($contractFqcn) // Fix: Ensure FQCN use
         );
 
         $assign = new Node\Stmt\Expression(
@@ -763,25 +764,6 @@ final class FixCrossingCommand extends Command
         }
 
         return false;
-    }
-
-    /**
-     * Check if a Name node is used as a type hint.
-     *
-     * @param Node\Name $nameNode Name node.
-     *
-     * @return bool
-     */
-    private function isTypeHintNode(Node\Name $nameNode): bool
-    {
-        $parent = $nameNode->getAttribute('parent');
-        if ($parent instanceof Node\NullableType) {
-            $parent = $parent->getAttribute('parent');
-        }
-
-        return $parent instanceof Node\Param
-            || $parent instanceof Node\Stmt\Property
-            || $parent instanceof Node\FunctionLike;
     }
 
     /**
@@ -1305,15 +1287,13 @@ final class FixCrossingCommand extends Command
     {
         $traverser = new NodeTraverser();
         $traverser->addVisitor(
-            new class extends \PhpParser\NodeVisitorAbstract {
+            new class extends NodeVisitorAbstract {
                 public function leaveNode(Node $node): ?Node
                 {
-                    // KORREKTUR: Node\Expr\New_ statt Node\\Expr\\New_
                     if (!$node instanceof Node\Expr\New_) {
                         return null;
                     }
                     $replacement = $node->getAttribute('replacement');
-                    // KORREKTUR: Node\Expr statt Node\\Expr
                     if ($replacement instanceof Node\Expr) {
                         return $replacement;
                     }
@@ -1609,13 +1589,14 @@ final class FixCrossingCommand extends Command
     {
         $code = file_get_contents($target['consumerFile']);
 
-        // KORREKTUR: Parser über Factory erstellen (PHP-Parser v5 kompatibel)
-        $parser = (new ParserFactory())->createForNewestSupportedVersion();
+        // FIX: nikic/php-parser v5 compatibility
+        $lexer = new Emulative(null);
+        $parser = new \PhpParser\Parser\Php8($lexer);
 
         try {
             $oldStmts = $parser->parse($code);
-            // KORREKTUR: Tokens direkt vom Parser abrufen (statt vom Lexer)
-            $oldTokens = $parser->getTokens();
+            // FIX: getTokens() existiert nicht mehr, wir rufen tokenize() explizit auf
+            $tokens = $lexer->tokenize($code);
         } catch (\Throwable $e) {
             return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed: ' . $e->getMessage());
         }
@@ -1624,105 +1605,105 @@ final class FixCrossingCommand extends Command
             return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed.');
         }
 
-        $providerFqcn = $target['providerFqcn'];
-        $contractFqcn = $target['contractFqcn'];
-        $contractShort = $this->shortName($contractFqcn);
-        $propertyName = lcfirst(str_replace('Interface', '', $contractShort));
-
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new ParentConnectingVisitor());
         $traverser->addVisitor(new NameResolver());
+        $stmts = $traverser->traverse($oldStmts);
 
-        // KORREKTUR: Eigener Visitor für alle Ersetzungen (Names, New, Use)
-        $visitor = new class($providerFqcn, $contractFqcn, $propertyName) extends \PhpParser\NodeVisitorAbstract {
+        $providerFqcn = $target['providerFqcn'];
+        $contractFqcn = $target['contractFqcn'];
+        $contractShort = $this->shortName($contractFqcn);
+
+        $updated = false;
+        $needsInjection = false;
+        $propertyName = lcfirst(str_replace('Interface', '', $contractShort));
+
+        $nodeFinder = new NodeFinder();
+        $classNode = $nodeFinder->findFirstInstanceOf($stmts, Node\Stmt\Class_::class);
+        if (!$classNode instanceof Node\Stmt\Class_) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer class not found.');
+        }
+
+        // 1. Modify Use statements (in-place)
+        foreach ($nodeFinder->findInstanceOf($stmts, Node\Stmt\UseUse::class) as $useUse) {
+            $resolved = $useUse->name->getAttribute('resolvedName');
+            $resolvedName = $resolved instanceof Node\Name ? $resolved->toString() : $useUse->name->toString();
+            if ($resolvedName === $providerFqcn) {
+                $useUse->name = new Node\Name($contractFqcn);
+                $updated = true;
+            }
+        }
+
+        // 2. Identify and mark New_ expressions (in-place)
+        foreach ($nodeFinder->findInstanceOf($stmts, Node\Expr\New_::class) as $newExpr) {
+            $newType = $this->resolveTypeDescriptor($newExpr->class);
+            if ($newType !== null && $newType['fqcn'] === $providerFqcn) {
+                $newExpr->class = new Node\Name('');
+                $replacement = new Node\Expr\PropertyFetch(new Node\Expr\Variable('this'), $propertyName);
+                $newExpr->setAttribute('replacement', $replacement);
+                $needsInjection = true;
+                $updated = true;
+            }
+        }
+
+        // 3. Replace TypeHint Names using a NodeTraverser (FIX for missing KIND_FQ in v5)
+        $nameReplacer = new class($providerFqcn, $contractFqcn) extends NodeVisitorAbstract {
             public bool $updated = false;
 
-            public bool $needsInjection = false;
-
             public function __construct(
-                private string $providerFqcn,
-                private string $contractFqcn,
-                private string $propertyName
+                private readonly string $target,
+                private readonly string $replacement
             ) {}
 
             public function leaveNode(Node $node)
             {
-                // 1. Use-Statements aktualisieren
-                if ($node instanceof Node\Stmt\UseUse) {
-                    $resolved = $node->name->getAttribute('resolvedName');
-                    $name = $resolved instanceof Node\Name ? $resolved->toString() : $node->name->toString();
-                    if ($name === $this->providerFqcn) {
-                        $node->name = new Node\Name($this->contractFqcn);
-                        $this->updated = true;
-                        return $node;
-                    }
-                }
-
-                // 2. New-Instanziierungen ersetzen
-                if ($node instanceof Node\Expr\New_) {
-                    $classNode = $node->class;
-                    if ($classNode instanceof Node\Name) {
-                        $resolved = $classNode->getAttribute('resolvedName');
-                        $name = $resolved instanceof Node\Name ? $resolved->toString() : $classNode->toString();
-                        if ($name === $this->providerFqcn) {
-                            $this->needsInjection = true;
-                            $this->updated = true;
-                            // Ersetze "new Provider()" durch "$this->provider"
-                            return new Node\Expr\PropertyFetch(
-                                new Node\Expr\Variable('this'),
-                                $this->propertyName
-                            );
-                        }
-                    }
-                }
-
-                // 3. Type-Hints ersetzen (Name Nodes)
                 if ($node instanceof Node\Name) {
                     $resolved = $node->getAttribute('resolvedName');
-                    if ($resolved instanceof Node\Name && $resolved->toString() === $this->providerFqcn) {
-                        if ($this->isTypeHintNode($node)) {
+                    // Check if name matches provider FQCN
+                    if ($resolved instanceof Node\Name && $resolved->toString() === $this->target) {
+                        // Inline check for isTypeHintNode logic
+                        $parent = $node->getAttribute('parent');
+                        if ($parent instanceof Node\NullableType) {
+                            $parent = $parent->getAttribute('parent');
+                        }
+                        $isTypeHint = $parent instanceof Node\Param
+                            || $parent instanceof Node\Stmt\Property
+                            || $parent instanceof Node\FunctionLike;
+
+                        if ($isTypeHint) {
                             $this->updated = true;
-                            // KORREKTUR: FullyQualified Node statt Attribute setzen
-                            return new Node\Name\FullyQualified($this->contractFqcn);
+                            // Replace with FullyQualified node instead of setting kind attribute
+                            return new Node\Name\FullyQualified($this->replacement);
                         }
                     }
                 }
-
                 return null;
-            }
-
-            private function isTypeHintNode(Node\Name $nameNode): bool
-            {
-                $parent = $nameNode->getAttribute('parent');
-                if ($parent instanceof Node\NullableType) {
-                    $parent = $parent->getAttribute('parent');
-                }
-
-                return $parent instanceof Node\Param
-                    || $parent instanceof Node\Stmt\Property
-                    || $parent instanceof Node\FunctionLike;
             }
         };
 
-        $traverser->addVisitor($visitor);
+        $replacerTraverser = new NodeTraverser();
+        $replacerTraverser->addVisitor($nameReplacer);
+        $stmts = $replacerTraverser->traverse($stmts);
 
-        // Traversierung durchführen
-        $stmts = $traverser->traverse($oldStmts);
+        if ($nameReplacer->updated) {
+            $updated = true;
+        }
 
-        if (!$visitor->updated) {
+        if (!$updated) {
             return null;
         }
 
-        if ($visitor->needsInjection) {
-            $nodeFinder = new NodeFinder();
-            $classNode = $nodeFinder->findFirstInstanceOf($stmts, Node\Stmt\Class_::class);
-            if ($classNode instanceof Node\Stmt\Class_) {
-                $this->ensureConstructorInjection($classNode, $contractFqcn, $propertyName);
+        if ($needsInjection) {
+            $blocker = $this->ensureConstructorInjection($classNode, $contractFqcn, $propertyName);
+            if ($blocker !== null) {
+                return $blocker;
             }
         }
 
+        $stmts = $this->replaceNewExpressions($stmts);
         $printer = new Standard();
-        $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $oldTokens);
+        // FIX: Verwende $tokens Variable statt $lexer->getTokens()
+        $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $tokens);
         $this->filesystem->dumpFile($target['consumerFile'], $newCode);
 
         return null;

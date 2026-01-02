@@ -7,22 +7,19 @@
  * @copyright Copyright (c) 2025 Fabryq
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace App\Test\HelloWorld\Controller;
-
-use Fabryq\Runtime\Controller\AbstractFabryqController;
+ 
 use OpenApi\Attributes as OA;
-use OpenApi\Attributes\Get;
-use OpenApi\Attributes\MediaType;
-use OpenApi\Attributes\Schema;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+
 
 /**
  * Handles the HelloWorld demo endpoint.
  */
-final class HelloWorldController extends AbstractFabryqController
+final class HelloWorldController
 {
     /**
      * Return a plain-text greeting.
@@ -32,27 +29,25 @@ final class HelloWorldController extends AbstractFabryqController
      * Side effects:
      * - None.
      */
-    #[
-        Get(
-            path: '/hello',
-            operationId: 'helloWorld',
-            summary: 'Return a greeting message.',
-            responses: [
-                new OA\Response(
-                    response:    Response::HTTP_OK,
-                    description: 'Greeting returned as plain text.',
-                    content:     new MediaType(
-                                     mediaType: 'text/plain',
-                                     schema:    new Schema(type: 'string')
-                                 )
-                ),
-                new OA\Response(
-                    response:    Response::HTTP_INTERNAL_SERVER_ERROR,
-                    description: 'Unexpected server error.'
-                ),
-            ]
-        )
-    ]
+    #[OA\Get(
+        path: '/hello',
+        operationId: 'helloWorld',
+        summary: 'Return a greeting message.',
+        responses: [
+            new OA\Response(
+                response:    Response::HTTP_OK,
+                description: 'Greeting returned as plain text.',
+                content:     new OA\MediaType(
+                                 mediaType: 'text/plain',
+                                 schema:    new OA\Schema(type: 'string')
+                             )
+            ),
+            new OA\Response(
+                response:    Response::HTTP_INTERNAL_SERVER_ERROR,
+                description: 'Unexpected server error.'
+            ),
+        ]
+    )]
     #[Route('/hello', name: 'hello')]
     public function __invoke(): Response
     {
@@ -67,26 +62,25 @@ final class HelloWorldController extends AbstractFabryqController
      * Side effects:
      * - None.
      */
-    #[
-        Get(
-            path: '/hello',
-            operationId: 'helloWorldAlternate',
-            summary: 'Return a greeting message (alternate handler).',
-            responses: [
-                new OA\Response(
-                    response:    Response::HTTP_OK,
-                    description: 'Greeting returned as plain text.',
-                    content:     new MediaType(
-                                     mediaType: 'text/plain',
-                                     schema:    new Schema(type: 'string')
-                                 )
-                ),
-                new OA\Response(
-                    response:    Response::HTTP_INTERNAL_SERVER_ERROR,
-                    description: 'Unexpected server error.'
-                ),
-            ])
-    ]
+    #[OA\Get(
+        path: '/hello',
+        operationId: 'helloWorldAlternate',
+        summary: 'Return a greeting message (alternate handler).',
+        responses: [
+            new OA\Response(
+                response:    Response::HTTP_OK,
+                description: 'Greeting returned as plain text.',
+                content:     new OA\MediaType(
+                                 mediaType: 'text/plain',
+                                 schema:    new OA\Schema(type: 'string')
+                             )
+            ),
+            new OA\Response(
+                response:    Response::HTTP_INTERNAL_SERVER_ERROR,
+                description: 'Unexpected server error.'
+            ),
+        ]
+    )]
     #[Route('/hello', name: 'hello')]
     public function sss(): Response
     {

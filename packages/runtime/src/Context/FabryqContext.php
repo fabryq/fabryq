@@ -10,7 +10,7 @@
 declare(strict_types=1);
 
 namespace Fabryq\Runtime\Context;
- 
+
 use Fabryq\Runtime\Clock\ClockInterface;
 use Fabryq\Runtime\Ulid\UlidFactoryInterface;
 use Psr\Log\LoggerInterface;
@@ -26,8 +26,8 @@ final readonly class FabryqContext
      * @param UlidFactoryInterface $ulids  ULID factory.
      */
     public function __construct(
-        public LoggerInterface      $logger,
-        public ClockInterface       $clock,
+        public LoggerInterface $logger,
+        public ClockInterface $clock,
         public UlidFactoryInterface $ulids
     ) {}
 }

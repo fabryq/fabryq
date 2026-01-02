@@ -62,8 +62,8 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(Filesystem::class), service(FindingIdGenerator::class)]);
 
     $services->set(CrossAppReferenceScanner::class);
-    $services->set(EntityBaseScanner::class);
     $services->set(ServiceLocatorScanner::class);
+    $services->set(EntityBaseScanner::class);
     $services->set(DoctrineGate::class);
     $services->set(Verifier::class);
     $services->set(Doctor::class)

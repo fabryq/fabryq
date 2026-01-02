@@ -30,16 +30,16 @@ trait FabryqEntityTrait
     protected string $id;
 
     /**
-     * @var DateTimeImmutable|null
-     */
-    #[ORM\Column(name: 'archived_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    protected ?DateTimeImmutable $archivedAt = null;
-
-    /**
      * @var DateTimeImmutable
      */
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE, nullable: false)]
     protected DateTimeImmutable $createdAt;
+
+    /**
+     * @var DateTimeImmutable|null
+     */
+    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    protected ?DateTimeImmutable $updatedAt = null;
 
     /**
      * @var DateTimeImmutable|null
@@ -50,8 +50,8 @@ trait FabryqEntityTrait
     /**
      * @var DateTimeImmutable|null
      */
-    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    protected ?DateTimeImmutable $updatedAt = null;
+    #[ORM\Column(name: 'archived_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    protected ?DateTimeImmutable $archivedAt = null;
 
     /**
      * {@inheritDoc}

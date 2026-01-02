@@ -27,5 +27,5 @@ vendor/bin/fabryq verify
 - Cross-app references
 - Asset collisions
 - Provider issues
-- Service locator/container usage in app or component code
-- Doctrine entities missing the Fabryq entity base
+- Service locator usage in apps/components
+- Entities missing AbstractFabryqEntity

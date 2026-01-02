@@ -3,7 +3,7 @@
 /**
  * Base use-case with Fabryq context.
  *
- * @package Fabryq\Runtime\UseCase
+ * @package   Fabryq\Runtime\UseCase
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -19,7 +19,7 @@ use Fabryq\Runtime\Context\FabryqContext;
 abstract class AbstractFabryqUseCase
 {
     /**
-     * @param FabryqContext $ctx Fabryq runtime context.
+     * @param FabryqContext $ctx Runtime context.
      */
     public function __construct(
         protected readonly FabryqContext $ctx,

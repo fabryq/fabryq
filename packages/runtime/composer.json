@@ -3,9 +3,9 @@
   "description": "Fabryq runtime bundle",
   "license": "proprietary",
   "type": "symfony-bundle",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "fabryq/contracts": "*",
     "symfony/framework-bundle": "^6.4 || ^7.0",
     "symfony/config": "^6.4 || ^7.0",
@@ -15,9 +15,9 @@
     "symfony/finder": "^6.4 || ^7.0",
     "symfony/filesystem": "^6.4 || ^7.0",
     "symfony/uid": "^6.4 || ^7.0",
+    "doctrine/orm": "^2.17",
     "doctrine/doctrine-bundle": "^2.11",
-    "doctrine/doctrine-migrations-bundle": "^3.3",
-    "symfony/serializer": "^6.4 || ^7.0"
+    "doctrine/doctrine-migrations-bundle": "^3.3"
   },
   "autoload": {
     "psr-4": {

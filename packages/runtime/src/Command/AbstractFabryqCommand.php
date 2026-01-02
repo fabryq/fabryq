@@ -3,7 +3,7 @@
 /**
  * Base command with Fabryq context.
  *
- * @package Fabryq\Runtime\Command
+ * @package   Fabryq\Runtime\Command
  * @copyright Copyright (c) 2025 Fabryq
  */
 
@@ -20,7 +20,7 @@ use Symfony\Component\Console\Command\Command;
 abstract class AbstractFabryqCommand extends Command
 {
     /**
-     * @param FabryqContext $ctx Fabryq runtime context.
+     * @param FabryqContext $ctx Runtime context.
      */
     public function __construct(
         protected readonly FabryqContext $ctx,

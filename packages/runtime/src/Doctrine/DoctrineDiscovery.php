@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Fabryq\Runtime\Doctrine;
 
 use Fabryq\Runtime\Registry\AppRegistry;
-use RuntimeException;
 
 /**
  * Discovers Doctrine mapping and migration paths from app components.
@@ -20,13 +19,8 @@ use RuntimeException;
 final readonly class DoctrineDiscovery
 {
     /**
-     * @var string
-     */
-    private string $namespaceRoot;
-
-    /**
      * @param AppRegistry $appRegistry Registry of discovered applications.
-     * @param string      $projectDir  Project root directory.
+     * @param string      $projectDir  Project root for composer autoload inspection.
      */
     public function __construct(
         /**
@@ -36,14 +30,12 @@ final readonly class DoctrineDiscovery
          */
         private AppRegistry $appRegistry,
         /**
-         * Project root directory.
+         * Absolute project directory.
          *
          * @var string
          */
-        string $projectDir
-    ) {
-        $this->namespaceRoot = $this->resolveNamespaceRoot($projectDir);
-    }
+        private string      $projectDir,
+    ) {}
 
     /**
      * Build Doctrine ORM mapping configuration for entity directories.
@@ -53,6 +45,10 @@ final readonly class DoctrineDiscovery
     public function getEntityMappings(): array
     {
         $mappings = [];
+        $prefix = $this->resolveAppNamespacePrefix();
+        if ($prefix === null) {
+            return $mappings;
+        }
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
@@ -63,12 +59,11 @@ final readonly class DoctrineDiscovery
 
                 $mappingKey = sprintf('fabryq_%s_%s', $app->manifest->appId, $component->slug);
                 $appNamespace = basename($app->path);
-                $prefix = $this->buildNamespacePrefix($appNamespace, $component->name, 'Entity');
                 $mappings[$mappingKey] = [
                     'is_bundle' => false,
                     'type' => 'attribute',
                     'dir' => $entityDir,
-                    'prefix' => $prefix,
+                    'prefix' => sprintf('%s\\%s\\%s\\Entity', $prefix, $appNamespace, $component->name),
                 ];
             }
         }
@@ -84,6 +79,10 @@ final readonly class DoctrineDiscovery
     public function getMigrationPaths(): array
     {
         $paths = [];
+        $prefix = $this->resolveAppNamespacePrefix();
+        if ($prefix === null) {
+            return $paths;
+        }
 
         foreach ($this->appRegistry->getApps() as $app) {
             foreach ($app->components as $component) {
@@ -93,7 +92,7 @@ final readonly class DoctrineDiscovery
                 }
 
                 $appNamespace = basename($app->path);
-                $namespace = $this->buildNamespacePrefix($appNamespace, $component->name, 'Migrations');
+                $namespace = sprintf('%s\\%s\\%s\\Migrations', $prefix, $appNamespace, $component->name);
                 $paths[$namespace] = $migrationDir;
             }
         }
@@ -102,55 +101,40 @@ final readonly class DoctrineDiscovery
     }
 
     /**
-     * Resolve the namespace root from composer.json autoload settings.
+     * Resolve the namespace prefix that maps to src/Apps.
      *
-     * @param string $projectDir Project root directory.
-     *
-     * @return string Namespace root without trailing backslashes.
+     * @return string|null Namespace prefix without trailing backslash.
      */
-    private function resolveNamespaceRoot(string $projectDir): string
+    private function resolveAppNamespacePrefix(): ?string
     {
-        $composerPath = rtrim($projectDir, '/') . '/composer.json';
+        $composerPath = $this->projectDir . '/composer.json';
         if (!is_file($composerPath)) {
-            throw new RuntimeException('composer.json not found while resolving app namespace.');
+            return null;
         }
 
         $data = json_decode((string)file_get_contents($composerPath), true);
         if (!is_array($data)) {
-            throw new RuntimeException('composer.json is invalid JSON while resolving app namespace.');
+            return null;
         }
 
         $autoload = $data['autoload']['psr-4'] ?? [];
         if (!is_array($autoload)) {
-            throw new RuntimeException('composer.json autoload.psr-4 must be an object.');
+            return null;
         }
 
-        foreach ($autoload as $prefix => $paths) {
-            foreach ((array)$paths as $path) {
-                $normalized = rtrim(str_replace('\\', '/', (string)$path), '/');
-                if ($normalized === 'src/Apps') {
-                    return rtrim((string)$prefix, '\\');
+        foreach ($autoload as $namespace => $paths) {
+            $paths = is_array($paths) ? $paths : [$paths];
+            foreach ($paths as $path) {
+                if (!is_string($path)) {
+                    continue;
+                }
+                $normalized = rtrim(str_replace('\\', '/', $path), '/') . '/';
+                if ($normalized === 'src/Apps/') {
+                    return rtrim((string)$namespace, '\\');
                 }
             }
         }
 
-        throw new RuntimeException('Unable to resolve app namespace: expected autoload.psr-4 mapping for src/Apps/.');
-    }
-
-    /**
-     * Build the full namespace prefix for a component sub-namespace.
-     *
-     * @param string $appNamespace App folder namespace segment.
-     * @param string $component    Component name segment.
-     * @param string $suffix       Namespace suffix segment.
-     *
-     * @return string
-     */
-    private function buildNamespacePrefix(string $appNamespace, string $component, string $suffix): string
-    {
-        $root = $this->namespaceRoot;
-        $prefix = $root !== '' ? $root . '\\' : '';
-
-        return $prefix . $appNamespace . '\\' . $component . '\\' . $suffix;
+        return null;
     }
 }

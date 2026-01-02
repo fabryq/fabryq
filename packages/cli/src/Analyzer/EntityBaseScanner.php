@@ -26,8 +26,11 @@ use Symfony\Component\Finder\Finder;
 final class EntityBaseScanner
 {
     private const ENTITY_ATTRIBUTE = 'Doctrine\\ORM\\Mapping\\Entity';
+
     private const BASE_CLASS = 'Fabryq\\Runtime\\Entity\\AbstractFabryqEntity';
+
     private const BASE_INTERFACE = 'Fabryq\\Runtime\\Entity\\FabryqEntityInterface';
+
     private const BASE_TRAIT = 'Fabryq\\Runtime\\Entity\\FabryqEntityTrait';
 
     /**
@@ -127,61 +130,6 @@ final class EntityBaseScanner
     }
 
     /**
-     * Determine whether a class is marked as a Doctrine entity.
-     *
-     * @param Node\Stmt\Class_ $classNode Class node.
-     *
-     * @return bool
-     */
-    private function isDoctrineEntity(Node\Stmt\Class_ $classNode): bool
-    {
-        foreach ($classNode->attrGroups as $attrGroup) {
-            foreach ($attrGroup->attrs as $attribute) {
-                $name = $attribute->name;
-                if (!$name instanceof Node\Name) {
-                    continue;
-                }
-                $resolved = $name->getAttribute('resolvedName');
-                $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $name->toString();
-                if ($fqcn === self::ENTITY_ATTRIBUTE) {
-                    return true;
-                }
-            }
-        }
-
-        $doc = $classNode->getDocComment();
-        if ($doc !== null) {
-            $text = $doc->getText();
-            if (str_contains($text, '@ORM\\Entity') || str_contains($text, '@Entity') || str_contains($text, '@Doctrine\\ORM\\Mapping\\Entity')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Resolve the class name for reporting.
-     *
-     * @param Node\Stmt\Class_ $classNode Class node.
-     * @param string          $path      File path for fallback.
-     *
-     * @return string
-     */
-    private function resolveClassName(Node\Stmt\Class_ $classNode, string $path): string
-    {
-        if (property_exists($classNode, 'namespacedName') && $classNode->namespacedName instanceof Node\Name) {
-            return $classNode->namespacedName->toString();
-        }
-
-        if ($classNode->name instanceof Node\Identifier) {
-            return $classNode->name->toString();
-        }
-
-        return $path;
-    }
-
-    /**
      * Check whether the class extends the Fabryq base entity.
      *
      * @param Node\Stmt\Class_ $classNode Class node.
@@ -218,6 +166,61 @@ final class EntityBaseScanner
         }
 
         return false;
+    }
+
+    /**
+     * Determine whether a class is marked as a Doctrine entity.
+     *
+     * @param Node\Stmt\Class_ $classNode Class node.
+     *
+     * @return bool
+     */
+    private function isDoctrineEntity(Node\Stmt\Class_ $classNode): bool
+    {
+        foreach ($classNode->attrGroups as $attrGroup) {
+            foreach ($attrGroup->attrs as $attribute) {
+                $name = $attribute->name;
+                if (!$name instanceof Node\Name) {
+                    continue;
+                }
+                $resolved = $name->getAttribute('resolvedName');
+                $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $name->toString();
+                if ($fqcn === self::ENTITY_ATTRIBUTE || $fqcn === 'ORM\\Entity' || $fqcn === 'Entity') {
+                    return true;
+                }
+            }
+        }
+
+        $doc = $classNode->getDocComment();
+        if ($doc !== null) {
+            $text = $doc->getText();
+            if (str_contains($text, '@ORM\\Entity') || str_contains($text, '@Entity') || str_contains($text, '@Doctrine\\ORM\\Mapping\\Entity')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve the class name for reporting.
+     *
+     * @param Node\Stmt\Class_ $classNode Class node.
+     * @param string           $path      File path for fallback.
+     *
+     * @return string
+     */
+    private function resolveClassName(Node\Stmt\Class_ $classNode, string $path): string
+    {
+        if (property_exists($classNode, 'namespacedName') && $classNode->namespacedName instanceof Node\Name) {
+            return $classNode->namespacedName->toString();
+        }
+
+        if ($classNode->name instanceof Node\Identifier) {
+            return $classNode->name->toString();
+        }
+
+        return $path;
     }
 
     /**

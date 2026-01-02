@@ -3,10 +3,10 @@
   "description": "Fabryq HTTP client provider",
   "license": "proprietary",
   "type": "symfony-bundle",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "require": {
-    "php": ">=8.2",
-    "fabryq/contracts": "^0.2",
+    "php": ">=8.4",
+    "fabryq/contracts": "*",
     "symfony/framework-bundle": "^6.4 || ^7.0"
   },
   "autoload": {

@@ -1,7 +1,7 @@
-# FabryqContext
+# Context
 
 ## Purpose
-Provide a minimal, stable set of shared utilities without acting as a container.
+Define the FabryqContext as a minimal, non-container utility holder.
 
 ## Inputs
 - LoggerInterface
@@ -9,25 +9,20 @@ Provide a minimal, stable set of shared utilities without acting as a container.
 - UlidFactoryInterface
 
 ## Outputs
-- FabryqContext service (autowireable)
-
-## Behavior
-- Provides logger, clock, and ULID factory only
-- No service lookup or get() method
-- Use constructor injection when needed
+- Injectable FabryqContext service
 
 ## Flags
 - N/A
 
 ## Examples
 ```bash
-vendor/bin/fabryq app:create billing --mount=/billing
-vendor/bin/fabryq component:create billing Invoices
+vendor/bin/fabryq component:create Demo Core
 ```
+Use FabryqContext as an explicit constructor dependency in services or controllers.
 
 ## Exit Codes
 - N/A
 
 ## Failure Cases
-- Using FabryqContext as a service locator (forbidden)
-- Adding dynamic get()/lookup methods
+- Attempting to use FabryqContext as a service locator (no get() allowed)
+- Missing autowire bindings for logger, clock, or ULID factory

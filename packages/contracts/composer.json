@@ -3,9 +3,9 @@
   "description": "Fabryq contracts",
   "license": "proprietary",
   "type": "library",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "require": {
-    "php": ">=8.2"
+    "php": ">=8.4"
   },
   "autoload": {
     "psr-4": {

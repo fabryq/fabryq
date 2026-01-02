@@ -58,12 +58,6 @@ final readonly class Finding
          * @var FindingLocation|null
          */
         public ?FindingLocation $location = null,
-        /**
-         * Structured details argument.
-         * Note: Not promoted to allow modification before assignment.
-         *
-         * @var array<string, mixed>
-         */
         array                   $details = [],
         /**
          * Optional hint for resolving the finding.
@@ -84,9 +78,8 @@ final readonly class Finding
          */
         public ?string          $autofixFixer = null,
     ) {
-        // Bearbeite das lokale Array '$details', bevor es der readonly-Eigenschaft zugewiesen wird
         if (!array_key_exists('primary', $details)) {
-            $details['primary'] = $message;
+            $details['primary'] = $this->message;
         }
         $this->details = $details;
     }
