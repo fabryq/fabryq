@@ -79,3 +79,9 @@ For a project using Fabryq packages:
 2) Run `composer update`.
 3) Re-run `verify`, `doctor`, and tests.
 4) Review `CHANGELOG.md` for manual steps.
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [Getting Started](GETTING_STARTED.md)
+- [CLI](CLI.md)
+- [Guardrails](GUARDRAILS.md)

@@ -257,3 +257,9 @@ vendor/bin/fabryq fix assets --apply --all
 ```bash
 vendor/bin/fabryq review
 ```
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [Workflows](WORKFLOWS.md)
+- [Guardrails](GUARDRAILS.md)
+- [Troubleshooting](TROUBLESHOOTING.md)

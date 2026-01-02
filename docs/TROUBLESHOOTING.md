@@ -86,3 +86,9 @@ Fix:
   - have public, typed properties
   - avoid Doctrine annotations
   - have constructors that accept all properties
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [CLI](CLI.md)
+- [Guardrails](GUARDRAILS.md)
+- [Workflows](WORKFLOWS.md)

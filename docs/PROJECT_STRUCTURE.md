@@ -7,8 +7,7 @@
 - `packages/`: Internal packages (contracts, runtime, CLI, providers).
 - `skeleton/`: Project template.
 - `examples/demo/`: Sample project with intentional rule violations.
-- `doc/`: Legacy spec notes.
-- `docs/`: Canonical documentation.
+- `docs/`: Canonical documentation (start with [INDEX](INDEX.md)).
 - `tests/`: PHPUnit tests.
 - `tools/`: Environment and lint scripts.
 
@@ -88,3 +87,9 @@ src/Apps/Billing/Controller/InvoiceController.php
 src/Apps/Billing/Payments/public/invoices.js
 public/invoices.js
 ```
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [Concepts](CONCEPTS.md)
+- [Getting Started](GETTING_STARTED.md)
+- [Workflows](WORKFLOWS.md)

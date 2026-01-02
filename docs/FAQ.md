@@ -26,3 +26,9 @@ No. Container typehints and `container->get()` calls are blocked. Use explicit d
 
 ## Is Fabryq stable?
 v0.3.x is pre-release. Breaking changes are possible.
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [Getting Started](GETTING_STARTED.md)
+- [Concepts](CONCEPTS.md)
+- [Guardrails](GUARDRAILS.md)

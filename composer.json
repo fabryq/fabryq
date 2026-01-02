@@ -1,6 +1,6 @@
 {
   "name": "fabryq/fabryq",
-  "description": "Fabryq monorepo development",
+  "description": "PHP/Symfony architecture toolkit for multi-app runtimes.",
   "license": "MIT",
   "type": "project",
   "require": {
@@ -9,9 +9,14 @@
     "fabryq/runtime": "*",
     "fabryq/cli": "*",
     "fabryq/provider-http-client": "*",
+    "doctrine/doctrine-bundle": "^2.11",
+    "doctrine/doctrine-migrations-bundle": "^3.3",
     "doctrine/orm": "^2.17",
+    "symfony/console": "^6.4 || ^7.0",
     "symfony/dotenv": "^6.4 || ^7.0",
+    "symfony/framework-bundle": "^6.4 || ^7.0",
     "symfony/twig-bundle": "^6.4 || ^7.0",
+    "symfony/webpack-encore-bundle": "^1.16 || ^2.0",
     "symfony/yaml": "^6.4 || ^7.0"
   },
   "require-dev": {

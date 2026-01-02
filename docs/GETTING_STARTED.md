@@ -2,6 +2,10 @@
 
 This guide walks you through a minimal, working Fabryq setup from the repo.
 
+Docs index: [INDEX](INDEX.md).
+
+To install Fabryq in an existing project, run `composer require fabryq/fabryq` (https://packagist.org/packages/fabryq/fabryq).
+
 ## Requirements
 - PHP 8.4.x
 - Composer
@@ -50,10 +54,10 @@ Verification writes artifacts to:
 - `state/reports/verify/latest.md`
 
 ## Next steps
-- Learn the architecture vocabulary: `CONCEPTS.md`
-- Understand enforced rules: `GUARDRAILS.md`
-- Use the CLI effectively: `CLI.md`
-- Follow end-to-end tasks: `WORKFLOWS.md`
+- Learn the architecture vocabulary: [Concepts](CONCEPTS.md)
+- Understand enforced rules: [Guardrails](GUARDRAILS.md)
+- Use the CLI effectively: [CLI](CLI.md)
+- Follow end-to-end tasks: [Workflows](WORKFLOWS.md)
 
 ## Optional: start from the skeleton
 The `skeleton/` directory is a project template. You can copy it into a new directory and run `composer install`. If you have access to a Composer package feed that contains `fabryq/skeleton`, you can also use:

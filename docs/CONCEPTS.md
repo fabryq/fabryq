@@ -115,3 +115,9 @@ Gates emit findings and write reports under `state/`. Key artifacts:
 - `state/reports/review/latest.md`
 - `state/reports/doctor/latest.json` and `.md`
 - `state/graph/latest.md` (and `.json` with `--json`)
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [Project Structure](PROJECT_STRUCTURE.md)
+- [Guardrails](GUARDRAILS.md)
+- [Getting Started](GETTING_STARTED.md)

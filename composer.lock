@@ -4,7 +4,7 @@
     "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
     "This file is @generated automatically"
   ],
-  "content-hash": "338c31c2c28b009ab2b40366b953eeb3",
+  "content-hash": "fa135ceb9a8ad9ee206f8dd9d4c0b12b",
   "packages": [
     {
       "name": "doctrine/cache",
@@ -1334,7 +1334,7 @@
       "dist": {
         "type": "path",
         "url": "packages/cli",
-        "reference": "5ddd849635f409486c3528df43187f6a7533c340"
+        "reference": "0f4cc1b74443aad16bad85e7b2d2112322caa0b3"
       },
       "require": {
         "fabryq/contracts": "*",
@@ -1356,7 +1356,7 @@
         }
       },
       "license": [
-        "proprietary"
+        "MIT"
       ],
       "description": "Fabryq CLI bundle",
       "transport-options": {
@@ -1370,7 +1370,7 @@
       "dist": {
         "type": "path",
         "url": "packages/contracts",
-        "reference": "a62aeebb7cd25f0ff7a82c5a2bc48c2cb2f49fc3"
+        "reference": "f414dadf830c185314dafc985766e8994ccfd910"
       },
       "require": {
         "php": ">=8.4"
@@ -1382,7 +1382,7 @@
         }
       },
       "license": [
-        "proprietary"
+        "MIT"
       ],
       "description": "Fabryq contracts",
       "transport-options": {
@@ -1396,7 +1396,7 @@
       "dist": {
         "type": "path",
         "url": "packages/provider-http-client",
-        "reference": "16ecbea435edc82f71feabf8aacc46c9149d8a76"
+        "reference": "c5fe9326f1c686db6156b7b154a02b9e62ba76cf"
       },
       "require": {
         "fabryq/contracts": "*",
@@ -1410,7 +1410,7 @@
         }
       },
       "license": [
-        "proprietary"
+        "MIT"
       ],
       "description": "Fabryq HTTP client provider",
       "transport-options": {
@@ -1424,7 +1424,7 @@
       "dist": {
         "type": "path",
         "url": "packages/runtime",
-        "reference": "c2b9f76a80036c0692c70ae5a71001a6b36115da"
+        "reference": "79d8b3f2f6691092a4b29e20077337f1ea6bfbed"
       },
       "require": {
         "doctrine/doctrine-bundle": "^2.11",
@@ -1448,7 +1448,7 @@
         }
       },
       "license": [
-        "proprietary"
+        "MIT"
       ],
       "description": "Fabryq runtime bundle",
       "transport-options": {
@@ -1715,6 +1715,76 @@
         "source": "https://github.com/php-fig/log/tree/3.0.2"
       },
       "time": "2024-09-11T13:17:53+00:00"
+    },
+    {
+      "name": "symfony/asset",
+      "version": "v8.0.0",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/symfony/asset.git",
+        "reference": "e07d70cfca384c1eabee192fdeedb6850c1c840b"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/symfony/asset/zipball/e07d70cfca384c1eabee192fdeedb6850c1c840b",
+        "reference": "e07d70cfca384c1eabee192fdeedb6850c1c840b",
+        "shasum": ""
+      },
+      "require": {
+        "php": ">=8.4"
+      },
+      "require-dev": {
+        "symfony/http-client": "^7.4|^8.0",
+        "symfony/http-foundation": "^7.4|^8.0",
+        "symfony/http-kernel": "^7.4|^8.0"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "Symfony\\Component\\Asset\\": ""
+        },
+        "exclude-from-classmap": [
+          "/Tests/"
+        ]
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": [
+        "MIT"
+      ],
+      "authors": [
+        {
+          "name": "Fabien Potencier",
+          "email": "fabien@symfony.com"
+        },
+        {
+          "name": "Symfony Community",
+          "homepage": "https://symfony.com/contributors"
+        }
+      ],
+      "description": "Manages URL generation and versioning of web assets such as CSS stylesheets, JavaScript files and image files",
+      "homepage": "https://symfony.com",
+      "support": {
+        "source": "https://github.com/symfony/asset/tree/v8.0.0"
+      },
+      "funding": [
+        {
+          "url": "https://symfony.com/sponsor",
+          "type": "custom"
+        },
+        {
+          "url": "https://github.com/fabpot",
+          "type": "github"
+        },
+        {
+          "url": "https://github.com/nicolas-grekas",
+          "type": "github"
+        },
+        {
+          "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+          "type": "tidelift"
+        }
+      ],
+      "time": "2025-08-04T07:36:47+00:00"
     },
     {
       "name": "symfony/cache",
@@ -4731,6 +4801,82 @@
         }
       ],
       "time": "2025-11-05T18:53:00+00:00"
+    },
+    {
+      "name": "symfony/webpack-encore-bundle",
+      "version": "v2.4.0",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/symfony/webpack-encore-bundle.git",
+        "reference": "5b932e0feddd81aaf0ecd7d5fcd2e450e5a7817e"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/symfony/webpack-encore-bundle/zipball/5b932e0feddd81aaf0ecd7d5fcd2e450e5a7817e",
+        "reference": "5b932e0feddd81aaf0ecd7d5fcd2e450e5a7817e",
+        "shasum": ""
+      },
+      "require": {
+        "php": ">=8.1.0",
+        "symfony/asset": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/config": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/dependency-injection": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/http-kernel": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/service-contracts": "^1.1.9 || ^2.1.3 || ^3.0"
+      },
+      "require-dev": {
+        "symfony/framework-bundle": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/http-client": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/phpunit-bridge": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/twig-bundle": "^5.4 || ^6.2 || ^7.0 || ^8.0",
+        "symfony/web-link": "^5.4 || ^6.2 || ^7.0 || ^8.0"
+      },
+      "type": "symfony-bundle",
+      "extra": {
+        "thanks": {
+          "url": "https://github.com/symfony/webpack-encore",
+          "name": "symfony/webpack-encore"
+        }
+      },
+      "autoload": {
+        "psr-4": {
+          "Symfony\\WebpackEncoreBundle\\": "src"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": [
+        "MIT"
+      ],
+      "authors": [
+        {
+          "name": "Symfony Community",
+          "homepage": "https://symfony.com/contributors"
+        }
+      ],
+      "description": "Integration of your Symfony app with Webpack Encore",
+      "support": {
+        "issues": "https://github.com/symfony/webpack-encore-bundle/issues",
+        "source": "https://github.com/symfony/webpack-encore-bundle/tree/v2.4.0"
+      },
+      "funding": [
+        {
+          "url": "https://symfony.com/sponsor",
+          "type": "custom"
+        },
+        {
+          "url": "https://github.com/fabpot",
+          "type": "github"
+        },
+        {
+          "url": "https://github.com/nicolas-grekas",
+          "type": "github"
+        },
+        {
+          "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+          "type": "tidelift"
+        }
+      ],
+      "time": "2025-11-27T13:41:46+00:00"
     },
     {
       "name": "symfony/yaml",

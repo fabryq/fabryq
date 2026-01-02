@@ -127,3 +127,9 @@ Fix:
 Fix:
 - Rename or move assets to avoid collisions.
 - Use `fabryq fix assets --dry-run` to review the plan.
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [CLI](CLI.md)
+- [Concepts](CONCEPTS.md)
+- [Troubleshooting](TROUBLESHOOTING.md)

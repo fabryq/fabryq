@@ -19,3 +19,9 @@ This roadmap is intentionally short and factual. Items under Next and Later are 
 - Formal stability and upgrade policy for system components.
 - Structured release tooling and automated changelog generation.
 - Expanded examples that cover multi-app capability wiring.
+
+## Related docs
+- [Docs Index](INDEX.md)
+- [FAQ](FAQ.md)
+- [Workflows](WORKFLOWS.md)
+- [Concepts](CONCEPTS.md)
