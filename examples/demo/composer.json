@@ -2,7 +2,7 @@
   "name": "fabryq/examples-demo",
   "description": "Fabryq demo project",
   "type": "project",
-  "license": "proprietary",
+  "license": "MIT",
   "version": "0.1.0",
   "require": {
     "php": ">=8.4",

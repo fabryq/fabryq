@@ -1,7 +1,7 @@
 {
   "name": "fabryq/provider-http-client",
   "description": "Fabryq HTTP client provider",
-  "license": "proprietary",
+  "license": "MIT",
   "type": "symfony-bundle",
   "version": "0.1.0",
   "require": {

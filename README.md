@@ -64,4 +64,4 @@ Use the issue tracker for this repository if available. There is no public SLA.
 See `CONTRIBUTING.md`.
 
 ## License
-Proprietary. See `composer.json` for package metadata.
+MIT. See `LICENSE.md`.

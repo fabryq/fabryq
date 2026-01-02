@@ -1,7 +1,7 @@
 {
   "name": "fabryq/contracts",
   "description": "Fabryq contracts",
-  "license": "proprietary",
+  "license": "MIT",
   "type": "library",
   "version": "0.1.0",
   "require": {

@@ -1,7 +1,7 @@
 {
   "name": "fabryq/fabryq",
   "description": "Fabryq monorepo development",
-  "license": "proprietary",
+  "license": "MIT",
   "type": "project",
   "require": {
     "php": ">=8.4",
