@@ -5,7 +5,7 @@
   "license": "proprietary",
   "version": "0.1.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "symfony/framework-bundle": "^6.4 || ^7.0",
     "symfony/console": "^6.4 || ^7.0",
     "symfony/yaml": "^6.4 || ^7.0",
@@ -67,5 +67,8 @@
   },
   "bin": [
     "vendor/bin/fabryq"
-  ]
+  ],
+  "require-dev": {
+    "symfony/process": "^6.4 || ^7.0"
+  }
 }

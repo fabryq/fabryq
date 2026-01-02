@@ -26,8 +26,11 @@ use Symfony\Component\Finder\Finder;
 final class EntityBaseScanner
 {
     private const ENTITY_ATTRIBUTE = 'Doctrine\\ORM\\Mapping\\Entity';
+
     private const BASE_CLASS = 'Fabryq\\Runtime\\Entity\\AbstractFabryqEntity';
+
     private const BASE_INTERFACE = 'Fabryq\\Runtime\\Entity\\FabryqEntityInterface';
+
     private const BASE_TRAIT = 'Fabryq\\Runtime\\Entity\\FabryqEntityTrait';
 
     /**
@@ -127,6 +130,45 @@ final class EntityBaseScanner
     }
 
     /**
+     * Check whether the class extends the Fabryq base entity.
+     *
+     * @param Node\Stmt\Class_ $classNode Class node.
+     *
+     * @return bool
+     */
+    private function extendsBase(Node\Stmt\Class_ $classNode): bool
+    {
+        if ($classNode->extends === null) {
+            return false;
+        }
+
+        $resolved = $classNode->extends->getAttribute('resolvedName');
+        $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $classNode->extends->toString();
+
+        return $fqcn === self::BASE_CLASS;
+    }
+
+    /**
+     * Check whether the class implements the Fabryq entity interface.
+     *
+     * @param Node\Stmt\Class_ $classNode Class node.
+     *
+     * @return bool
+     */
+    private function implementsInterface(Node\Stmt\Class_ $classNode): bool
+    {
+        foreach ($classNode->implements as $interface) {
+            $resolved = $interface->getAttribute('resolvedName');
+            $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $interface->toString();
+            if ($fqcn === self::BASE_INTERFACE) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Determine whether a class is marked as a Doctrine entity.
      *
      * @param Node\Stmt\Class_ $classNode Class node.
@@ -179,45 +221,6 @@ final class EntityBaseScanner
         }
 
         return $path;
-    }
-
-    /**
-     * Check whether the class extends the Fabryq base entity.
-     *
-     * @param Node\Stmt\Class_ $classNode Class node.
-     *
-     * @return bool
-     */
-    private function extendsBase(Node\Stmt\Class_ $classNode): bool
-    {
-        if ($classNode->extends === null) {
-            return false;
-        }
-
-        $resolved = $classNode->extends->getAttribute('resolvedName');
-        $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $classNode->extends->toString();
-
-        return $fqcn === self::BASE_CLASS;
-    }
-
-    /**
-     * Check whether the class implements the Fabryq entity interface.
-     *
-     * @param Node\Stmt\Class_ $classNode Class node.
-     *
-     * @return bool
-     */
-    private function implementsInterface(Node\Stmt\Class_ $classNode): bool
-    {
-        foreach ($classNode->implements as $interface) {
-            $resolved = $interface->getAttribute('resolvedName');
-            $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $interface->toString();
-            if ($fqcn === self::BASE_INTERFACE) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

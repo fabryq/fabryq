@@ -23,7 +23,7 @@ final class ResourceRegistry
      *
      * @var string[]
      */
-    private const array CONFIG_ALLOWLIST = [
+    private const CONFIG_ALLOWLIST = [
         'services.yaml',
         'services.yml',
         'services.php',
