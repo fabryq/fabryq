@@ -1,133 +1,133 @@
-# Fabryq
+Fabryq
 
-Fabryq is an opinionated Symfony backend toolkit: **a CLI + runtime + generators** that enforce **deterministic app structures** and produce **repeatable reports**.
+Fabryq provides an opinionated, deterministic path to build Symfony backends.
 
-The goal is not “more flexibility”. The goal is **less drift**.
+It combines:
+	•	a runtime (the standard bootstrapping and conventions),
+	•	a CLI (generators + verification gates), and
+	•	a set of templates / rules that keep projects on one consistent track.
 
-* **One standard path** for structure and modules
-* **Deterministic output** (same inputs → same structure)
-* **Guardrails first** (fail fast instead of “it kinda works”)
+Fabryq is built for teams (or solo developers) who want speed without drift: fewer architectural choices, fewer edge cases, and repeatable outcomes.
 
-> Status: **v0.3 (pre-release)**. Expect breaking changes until the first stable release.
+⸻
 
----
+What Fabryq is for
 
-## Why Fabryq
+Symfony is flexible. Over time, that flexibility often turns into:
+	•	inconsistent folder structures,
+	•	diverging patterns between teams/projects,
+	•	cross-module coupling,
+	•	and steadily increasing maintenance cost.
 
-Symfony is powerful because it is flexible. That flexibility also creates drift:
+Fabryq reduces that drift by enforcing a single standard path through:
+	•	structure (apps/components),
+	•	ownership rules (no silent coupling), and
+	•	automated gates (verify/review).
 
-* different folder structures
-* different patterns per team or project
-* hidden coupling across modules
-* reviews that devolve into style debates
+⸻
 
-Fabryq turns conventions into **gates**.
+Core principles
+	•	One Way Only
+	•	There is exactly one standard path for project layout, app/component boundaries, naming, and conventions.
+	•	Removable Apps
+	•	Every app is self-contained; removing one must not break another.
+	•	No Silent Coupling
+	•	Data ownership is per app; cross-app ORM relations are prohibited.
+	•	Core stays clean
+	•	Infrastructure lives in Core; business logic lives in apps.
 
----
+⸻
 
-## Core principles
+Repository layout
 
-* **One Way Only** — exactly one standard path for structure, naming, and wiring.
-* **Removable Apps** — an app can be removed without breaking the runtime.
-* **No Silent Coupling** — apps own their data; avoid cross-app ORM relations.
-* **Core stays clean** — infrastructure belongs in Core; business logic stays in Apps.
+This repository is a monorepo.
+	•	src/ — core runtime + shared infrastructure
+	•	packages/ — standalone packages (runtime/cli/etc.)
+	•	skeleton/ — project scaffold templates
+	•	examples/ — demos / reference usage
+	•	tests/ — automated checks
+	•	doc/ — local documentation entry point
 
----
+⸻
 
-## What you get
+Status
 
-* **CLI** to verify, review, and generate scaffolding
-* **Runtime** that defines the “standard path” for bootstrapping
-* **Generators** for apps/components that follow the same rules every time
-* **Reports** (current and planned) to make structure and coupling visible
+Pre-release / in active development.
+	•	APIs and conventions may change.
+	•	The CLI gates are the source of truth for what is currently supported.
 
----
+If you want stability guarantees, wait for the first tagged release.
 
-## Requirements
+⸻
 
-* PHP **>= 8.4**
+Requirements
+	•	PHP >= 8.4
 
----
+(Additional requirements depend on which packages you use and which Symfony version your project targets.)
 
-## Installation
+⸻
 
-### Monorepo development (recommended for contributors)
+Installation
 
-```bash
-composer install
-```
+Monorepo development (this repo)
+	1.	Install dependencies:
+	•	composer install
+	2.	Run checks:
+	•	composer test
+	•	vendor/bin/fabryq verify
+	•	vendor/bin/fabryq review
 
-### Package-only usage
+Standalone package usage
 
-```bash
-cd packages/runtime
-composer install
-```
+If you only want a specific package, install it directly from packages/* and run composer install within that package.
 
----
+⸻
 
-## Quickstart
+CLI usage
 
-Run the quality gates:
+Typical workflow:
+	•	Verify the project against Fabryq rules:
+	•	vendor/bin/fabryq verify
+	•	Generate a review/report (human-readable):
+	•	vendor/bin/fabryq review
+	•	Create an app:
+	•	vendor/bin/fabryq app:create billing --mount=/billing
+	•	Create a component inside an app:
+	•	vendor/bin/fabryq component:create billing Checkout
 
-```bash
-vendor/bin/fabryq verify
-vendor/bin/fabryq review
-```
+Note: The CLI is intended to be the primary interface. If you can do something “by hand”, the question is usually: should you?
 
-Create an app and a component:
+⸻
 
-```bash
-vendor/bin/fabryq app:create billing --mount=/billing
-vendor/bin/fabryq component:create billing Checkout
-```
+Documentation
 
----
+Start here:
+	•	doc/README.md
 
-## Repository layout
+Recommended next steps:
+	•	Read the “One Way” and app/component rules.
+	•	Run fabryq review on an existing Symfony project (even if it fails) to see what Fabryq expects.
 
-This repository is currently organized as a monorepo:
+⸻
 
-* `src/` — framework/tooling code
-* `packages/` — packaged building blocks (runtime, etc.)
-* `skeleton/` — project bootstrap scaffolding
-* `examples/` — demo / reference setups
-* `tools/` — internal tooling
-* `tests/` — test suite
-* `doc/` — local documentation entry points
+Roadmap
 
----
+A useful roadmap is concrete and testable. The project should only claim features that have:
+	•	a generator path, and
+	•	a gate that enforces the result.
 
-## Documentation
+If you maintain a separate roadmap document, link it here.
 
-* In-repo docs: `doc/README.md`
-* Public docs repo: `fabryq/docs` (recommended for narrative documentation and roadmap)
+⸻
 
----
+Contributing
 
-## Development
+This project is currently maintained with a strong opinionated direction.
+	•	For bug reports: open an issue.
+	•	For changes: contact the maintainers first so efforts align with the “One Way” constraints.
 
-```bash
-composer test
-vendor/bin/phpunit
-vendor/bin/fabryq verify
-vendor/bin/fabryq review
-```
+⸻
 
----
-
-## Contributing
-
-Fabryq is still evolving rapidly. If you want to contribute, open an issue describing:
-
-* your intended use-case
-* the drift/problem you are trying to remove
-* what the “one way” should enforce
-
-Then we can align on guardrails and implementation.
-
----
-
-## License
+License
 
 Proprietary. See package metadata for details.
