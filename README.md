@@ -1,133 +1,67 @@
-Fabryq
+# Fabryq
 
-Fabryq provides an opinionated, deterministic path to build Symfony backends.
+Fabryq is a PHP/Symfony architecture toolkit for building multiple apps inside one runtime. It combines a runtime bundle, CLI gates, and contracts so structure and dependencies are explicit and machine-checkable.
 
-It combines:
-	•	a runtime (the standard bootstrapping and conventions),
-	•	a CLI (generators + verification gates), and
-	•	a set of templates / rules that keep projects on one consistent track.
+Fabryq targets backend engineers and tech leads who want predictable boundaries between apps, deterministic reports, and a minimal set of shared abstractions. Current line: v0.3.x (pre-release).
 
-Fabryq is built for teams (or solo developers) who want speed without drift: fewer architectural choices, fewer edge cases, and repeatable outcomes.
+## Core principles
+- One Way structure: apps live in `src/Apps/<App>` with `manifest.php`; components are directories inside apps; global components live in `src/Components`. Enforced by discovery and slug checks; deeper structure rules are planned.
+- Gates over guidelines: `fabryq verify`, `review`, `doctor`, and `graph` emit findings and exit codes for CI.
+- Removability and no silent coupling: direct app-to-app references are blocked (`FABRYQ.APP.CROSSING`), and global components may not reference app classes (`FABRYQ.GLOBAL_COMPONENT.REFERENCES_APP`).
+- Explicit capabilities: apps declare `provides`/`consumes` in manifests; providers are declared with `#[FabryqProvider]`; missing required providers are blockers.
+- No service locator: container typehints and `container->get()` are blocked (`FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN`).
+- Deterministic entities: Doctrine entities must extend `AbstractFabryqEntity` or use the interface+trait exception path.
 
-⸻
+## Quickstart (repo)
+Requirements:
+- PHP 8.4.x
+- Composer
+- For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-What Fabryq is for
+Install:
+```bash
+composer install
+```
 
-Symfony is flexible. Over time, that flexibility often turns into:
-	•	inconsistent folder structures,
-	•	diverging patterns between teams/projects,
-	•	cross-module coupling,
-	•	and steadily increasing maintenance cost.
+Run:
+```bash
+vendor/bin/fabryq verify
+```
 
-Fabryq reduces that drift by enforcing a single standard path through:
-	•	structure (apps/components),
-	•	ownership rules (no silent coupling), and
-	•	automated gates (verify/review).
+## First success (minimal)
+```bash
+vendor/bin/fabryq app:create Billing --mount=/billing
+vendor/bin/fabryq component:create Billing Payments
+vendor/bin/fabryq verify
+```
 
-⸻
+Expected output (verify):
+```
+Fabryq Verification
+No issues found.
+```
 
-Core principles
-	•	One Way Only
-	•	There is exactly one standard path for project layout, app/component boundaries, naming, and conventions.
-	•	Removable Apps
-	•	Every app is self-contained; removing one must not break another.
-	•	No Silent Coupling
-	•	Data ownership is per app; cross-app ORM relations are prohibited.
-	•	Core stays clean
-	•	Infrastructure lives in Core; business logic lives in apps.
+## Repo structure
+- `packages/contracts`: manifest and capability contracts.
+- `packages/runtime`: runtime bundle, discovery, routing, resources, entities.
+- `packages/cli`: CLI gates and fixers.
+- `packages/provider-http-client`: example capability provider.
+- `skeleton`: starter project template.
+- `examples/demo`: sample project with multiple apps.
+- `doc`: internal spec notes for v0.3 (legacy).
+- `docs`: canonical documentation (this release).
 
-⸻
+## Versioning and stability
+Fabryq v0.3.x is pre-release. Breaking changes are possible, and there is no compatibility guarantee between pre-release tags. Treat rule keys, report schemas, and CLI output as subject to change.
 
-Repository layout
+## Documentation
+Start with `docs/INDEX.md`.
 
-This repository is a monorepo.
-	•	src/ — core runtime + shared infrastructure
-	•	packages/ — standalone packages (runtime/cli/etc.)
-	•	skeleton/ — project scaffold templates
-	•	examples/ — demos / reference usage
-	•	tests/ — automated checks
-	•	doc/ — local documentation entry point
+## Support
+Use the issue tracker for this repository if available. There is no public SLA.
 
-⸻
+## Contributing
+See `CONTRIBUTING.md`.
 
-Status
-
-Pre-release / in active development.
-	•	APIs and conventions may change.
-	•	The CLI gates are the source of truth for what is currently supported.
-
-If you want stability guarantees, wait for the first tagged release.
-
-⸻
-
-Requirements
-	•	PHP >= 8.4
-
-(Additional requirements depend on which packages you use and which Symfony version your project targets.)
-
-⸻
-
-Installation
-
-Monorepo development (this repo)
-	1.	Install dependencies:
-	•	composer install
-	2.	Run checks:
-	•	composer test
-	•	vendor/bin/fabryq verify
-	•	vendor/bin/fabryq review
-
-Standalone package usage
-
-If you only want a specific package, install it directly from packages/* and run composer install within that package.
-
-⸻
-
-CLI usage
-
-Typical workflow:
-	•	Verify the project against Fabryq rules:
-	•	vendor/bin/fabryq verify
-	•	Generate a review/report (human-readable):
-	•	vendor/bin/fabryq review
-	•	Create an app:
-	•	vendor/bin/fabryq app:create billing --mount=/billing
-	•	Create a component inside an app:
-	•	vendor/bin/fabryq component:create billing Checkout
-
-Note: The CLI is intended to be the primary interface. If you can do something “by hand”, the question is usually: should you?
-
-⸻
-
-Documentation
-
-Start here:
-	•	doc/README.md
-
-Recommended next steps:
-	•	Read the “One Way” and app/component rules.
-	•	Run fabryq review on an existing Symfony project (even if it fails) to see what Fabryq expects.
-
-⸻
-
-Roadmap
-
-A useful roadmap is concrete and testable. The project should only claim features that have:
-	•	a generator path, and
-	•	a gate that enforces the result.
-
-If you maintain a separate roadmap document, link it here.
-
-⸻
-
-Contributing
-
-This project is currently maintained with a strong opinionated direction.
-	•	For bug reports: open an issue.
-	•	For changes: contact the maintainers first so efforts align with the “One Way” constraints.
-
-⸻
-
-License
-
-Proprietary. See package metadata for details.
+## License
+Proprietary. See `composer.json` for package metadata.
