@@ -1,9 +1,17 @@
-# Fabryq
+<p align="center">
+  <img src="https://img.shields.io/badge/v0.3.x-blue?label=Status" alt="Fabryq version">
+  <img src="https://img.shields.io/github/license/fabryq/fabryq" alt="Fabryq license">
+  <img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq version">
+  <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq size">
+  <p align="center">
+    <img src="https://raw.githubusercontent.com/fabryq/.github/main/fabryq-schriftzug-github.jpg" alt="Fabryq logo">
+  </p>
+</p>
 
 Fabryq is a PHP/Symfony architecture toolkit for building multiple apps inside one runtime. It combines a runtime bundle, CLI gates, and contracts so structure
 and dependencies are explicit and machine-checkable.
 
-Fabryq targets backend engineers and tech leads who want predictable boundaries between apps, deterministic reports, and a minimal set of shared abstractions.
+Fabryq is aimed at backend developers, tech leads, and solo developers who value clear application boundaries, deterministic reports, and a minimum of shared abstractions.
 Current line: v0.3.x (pre-release).
 
 ## Core principles
@@ -24,9 +32,7 @@ Install the runtime and CLI in an existing Symfony project:
 
 ```bash
 composer require fabryq/fabryq
-```
-
-Package: https://packagist.org/packages/fabryq/fabryq
+``` 
 
 ## Quickstart (repo)
 
