@@ -12,6 +12,9 @@ declare(strict_types=1);
 namespace Fabryq\Cli\Command;
 
 use Fabryq\Cli\Analyzer\Verifier;
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Error\ProjectStateError;
+use Fabryq\Cli\Error\UserError;
 use Fabryq\Cli\Fix\FixMode;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Fix\FixSelection;
@@ -24,6 +27,7 @@ use Fabryq\Runtime\Registry\AppDefinition;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use PhpParser\Lexer\Emulative;
+use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -33,7 +37,6 @@ use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -47,22 +50,19 @@ use Symfony\Component\Filesystem\Filesystem;
     name: 'fabryq:fix:crossing',
     description: 'Fix cross-app references by generating bridges.'
 )]
-final class FixCrossingCommand extends Command
+final class FixCrossingCommand extends AbstractFabryqCommand
 {
+    private const ENTITY_TO_INTERFACE_RULE = 'crossing.entity_to_interface';
+
     /**
-     * Whether to prune unresolvable imports.
-     *
      * @var bool
      */
     private bool $pruneUnresolvableImports = false;
 
     /**
-     * Import pruner instance.
-     *
      * @var ImportPruner|null
      */
     private ?ImportPruner $importPruner = null;
-
     /**
      * @param Verifier           $verifier    Verification analyzer.
      * @param AppRegistry        $appRegistry Application registry.
@@ -139,6 +139,7 @@ final class FixCrossingCommand extends Command
             ->addOption('finding', null, InputOption::VALUE_REQUIRED, 'Filter by finding id.')
             ->addOption('prune-unresolvable-imports', null, InputOption::VALUE_NONE, 'Remove unresolvable imports (requires vendor/autoload.php).')
             ->setDescription('Fix cross-app references by generating bridges.');
+        parent::configure();
     }
 
     /**
@@ -148,18 +149,13 @@ final class FixCrossingCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $mode = $this->resolveMode($input, $io);
-
+        $mode = $this->resolveMode($input);
         $this->initImportPruner($input);
-        if ($mode === null) {
-            return Command::FAILURE;
-        }
 
         try {
             $selection = FixSelection::fromInput($input);
         } catch (\InvalidArgumentException $exception) {
-            $io->error($exception->getMessage());
-            return Command::FAILURE;
+            throw new UserError($exception->getMessage(), previous: $exception);
         }
 
         $findings = $this->verifier->verify($this->projectDir);
@@ -178,8 +174,7 @@ final class FixCrossingCommand extends Command
         );
 
         if ($selection->findingId !== null && count($selected) !== 1) {
-            $io->error('Finding selection did not resolve to exactly one crossing.');
-            return Command::FAILURE;
+            throw new UserError('Finding selection did not resolve to exactly one crossing.');
         }
 
         $targets = [];
@@ -202,20 +197,19 @@ final class FixCrossingCommand extends Command
         try {
             $context = $this->runLogger->start('crossing', $mode, $planMarkdown, $selection);
         } catch (\RuntimeException $exception) {
-            $io->error($exception->getMessage());
-            return Command::FAILURE;
+            throw new ProjectStateError($exception->getMessage(), previous: $exception);
         }
 
         if ($blockers > 0) {
             $this->runLogger->finish($context, 'crossing', $mode, 'blocked', [], $blockers, $warnings);
             $io->error('Crossing fix blocked.');
-            return Command::FAILURE;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         if ($mode === FixMode::DRY_RUN) {
             $this->runLogger->finish($context, 'crossing', $mode, 'ok', [], $blockers, $warnings);
             $io->success('Crossing fix plan written (dry-run).');
-            return Command::SUCCESS;
+            return CliExitCode::SUCCESS;
         }
 
         $this->writeLock->acquire();
@@ -229,7 +223,7 @@ final class FixCrossingCommand extends Command
                     $planItems[] = $result;
                 }
             }
-    
+
             $resultLabel = $blockers > 0 ? 'blocked' : 'ok';
             $this->runLogger->finish($context, 'crossing', $mode, $resultLabel, $changedFiles, $blockers, $warnings);
         } finally {
@@ -238,11 +232,11 @@ final class FixCrossingCommand extends Command
 
         if ($blockers > 0) {
             $io->error('Crossing fix blocked.');
-            return Command::FAILURE;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         $io->success('Crossing fix applied.');
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 
     /**
@@ -255,6 +249,10 @@ final class FixCrossingCommand extends Command
      */
     private function applyTarget(array $target, array &$changedFiles): ?array
     {
+        if (($target['type'] ?? null) === 'entity_to_interface') {
+            return $this->applyEntityToInterface($target, $changedFiles);
+        }
+
         $providerApp = $target['providerApp'];
         $consumerApp = $target['consumerApp'];
         $providerAppPascal = basename($providerApp->path);
@@ -421,6 +419,38 @@ final class FixCrossingCommand extends Command
         $providerApp = $this->findAppByFolder($providerAppPascal);
         if ($providerApp === null) {
             return $this->blockedPlan($findingId, $finding, 'Provider app not found.');
+        }
+
+        $entityInfo = $this->parseEntityFqcn($fqcn);
+        if ($entityInfo !== null) {
+            if (!in_array($kind, ['use', 'typehint'], true)) {
+                return $this->blockedPlan($findingId, $finding, 'Entity references are only fixable in type hints.');
+            }
+
+            $interfaceName = $entityInfo['entity'] . 'Interface';
+            $interfaceFqcn = $entityInfo['baseNamespace'] . '\\Contracts\\' . $interfaceName;
+            return [
+                'id' => $findingId,
+                'fixable' => true,
+                'ruleKey' => self::ENTITY_TO_INTERFACE_RULE,
+                'summary' => sprintf(
+                    '%s -> %s (%s)',
+                    $this->normalizePath($consumerFile),
+                    $interfaceFqcn,
+                    self::ENTITY_TO_INTERFACE_RULE
+                ),
+                'target' => [
+                    'type' => 'entity_to_interface',
+                    'findingId' => $findingId,
+                    'finding' => $finding,
+                    'consumerFile' => $consumerFile,
+                    'consumerApp' => $consumerApp,
+                    'providerApp' => $providerApp,
+                    'entityFqcn' => $fqcn,
+                    'entityShort' => $entityInfo['entity'],
+                    'interfaceFqcn' => $interfaceFqcn,
+                ],
+            ];
         }
 
         $providerClassFile = $this->resolveClassFile($fqcn);
@@ -1280,7 +1310,8 @@ final class FixCrossingCommand extends Command
                 continue;
             }
             $hasFixable = true;
-            $lines[] = sprintf('- [%s] %s', $item['id'], $item['summary']);
+            $ruleKey = $item['ruleKey'] ?? 'crossing';
+            $lines[] = sprintf('- [%s] (%s) %s', $item['id'], $ruleKey, $item['summary']);
         }
         if (!$hasFixable) {
             $lines[] = 'None.';
@@ -1532,18 +1563,16 @@ final class FixCrossingCommand extends Command
      * Resolve the fix mode from input.
      *
      * @param InputInterface $input Console input.
-     * @param SymfonyStyle   $io    Console style helper.
      *
-     * @return string|null Fix mode or null on error.
+     * @return string Fix mode.
      */
-    private function resolveMode(InputInterface $input, SymfonyStyle $io): ?string
+    private function resolveMode(InputInterface $input): string
     {
         $dryRun = (bool)$input->getOption('dry-run');
         $apply = (bool)$input->getOption('apply');
 
         if ($dryRun === $apply) {
-            $io->error('Specify exactly one of --dry-run or --apply.');
-            return null;
+            throw new UserError('Specify exactly one of --dry-run or --apply.');
         }
 
         return $dryRun ? FixMode::DRY_RUN : FixMode::APPLY;
@@ -1882,6 +1911,216 @@ final class FixCrossingCommand extends Command
 
         return null;
     }
+
+    /**
+     * Apply entity-to-interface replacements in a consumer file.
+     *
+     * @param array<string, mixed> $target
+     * @param array<int, string>   $changedFiles
+     * @return array<string, mixed>|null
+     */
+    private function applyEntityToInterface(array $target, array &$changedFiles): ?array
+    {
+        $consumerFile = $target['consumerFile'];
+        $entityFqcn = $target['entityFqcn'];
+        $entityShort = $target['entityShort'];
+        $interfaceFqcn = $target['interfaceFqcn'];
+
+        $code = file_get_contents($consumerFile);
+
+        $lexer = new Emulative(null);
+        $parser = new \PhpParser\Parser\Php8($lexer);
+
+        try {
+            $oldStmts = $parser->parse($code);
+            $tokens = $lexer->tokenize($code);
+        } catch (\Throwable $e) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed: ' . $e->getMessage());
+        }
+
+        if ($oldStmts === null) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file parse failed.');
+        }
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor(new ParentConnectingVisitor());
+        $traverser->addVisitor(new NameResolver());
+        $stmts = $traverser->traverse($oldStmts);
+
+        $updated = false;
+
+        $typeReplacer = new class($entityFqcn, $interfaceFqcn, $updated) extends NodeVisitorAbstract {
+            private bool $updated;
+
+            public function __construct(
+                private readonly string $entityFqcn,
+                private readonly string $interfaceFqcn,
+                bool &$updated
+            ) {
+                $this->updated = &$updated;
+            }
+
+            public function enterNode(Node $node): ?Node
+            {
+                if ($node instanceof Node\Param) {
+                    $node->type = $this->replaceType($node->type);
+                }
+                if ($node instanceof Node\Stmt\Property) {
+                    $node->type = $this->replaceType($node->type);
+                }
+                if ($node instanceof Node\FunctionLike) {
+                    $node->returnType = $this->replaceType($node->getReturnType());
+                }
+
+                return null;
+            }
+
+            private function replaceType(?Node $type): ?Node
+            {
+                if ($type === null) {
+                    return null;
+                }
+
+                if ($type instanceof Node\NullableType) {
+                    $type->type = $this->replaceType($type->type);
+                    return $type;
+                }
+
+                if ($type instanceof Node\UnionType || $type instanceof Node\IntersectionType) {
+                    foreach ($type->types as $index => $subType) {
+                        $type->types[$index] = $this->replaceType($subType);
+                    }
+                    return $type;
+                }
+
+                if ($type instanceof Node\Name) {
+                    $resolved = $type->getAttribute('resolvedName');
+                    $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : $type->toString();
+                    if ($fqcn === $this->entityFqcn) {
+                        $this->updated = true;
+                        return new Node\Name\FullyQualified($this->interfaceFqcn);
+                    }
+                }
+
+                return $type;
+            }
+        };
+
+        $docReplacer = new class($entityFqcn, $interfaceFqcn, $entityShort, $updated) extends NodeVisitorAbstract {
+            private bool $updated;
+
+            public function __construct(
+                private readonly string $entityFqcn,
+                private readonly string $interfaceFqcn,
+                private readonly string $entityShort,
+                bool &$updated
+            ) {
+                $this->updated = &$updated;
+            }
+
+            public function enterNode(Node $node): ?Node
+            {
+                $doc = $node->getDocComment();
+                if ($doc === null) {
+                    return null;
+                }
+
+                $text = $doc->getText();
+                $updatedText = $this->replaceDocTypes($text);
+                if ($updatedText !== $text) {
+                    $node->setDocComment(new Doc($updatedText));
+                    $this->updated = true;
+                }
+
+                return null;
+            }
+
+            private function replaceDocTypes(string $text): string
+            {
+                $interfaceFqcn = '\\' . $this->interfaceFqcn;
+                return preg_replace_callback('/@(param|return|var)\s+([^\s]+)(.*)/', function (array $matches) use ($interfaceFqcn): string {
+                    $types = explode('|', $matches[2]);
+                    foreach ($types as $index => $type) {
+                        $types[$index] = $this->replaceDocType($type, $interfaceFqcn);
+                    }
+                    return '@' . $matches[1] . ' ' . implode('|', $types) . $matches[3];
+                }, $text) ?? $text;
+            }
+
+            private function replaceDocType(string $type, string $interfaceFqcn): string
+            {
+                $nullable = str_starts_with($type, '?') ? '?' : '';
+                if ($nullable !== '') {
+                    $type = substr($type, 1);
+                }
+
+                $suffix = '';
+                if (str_ends_with($type, '[]')) {
+                    $suffix = '[]';
+                    $type = substr($type, 0, -2);
+                }
+
+                $normalized = ltrim($type, '\\');
+                if ($normalized === $this->entityFqcn || $type === $this->entityShort) {
+                    $type = $interfaceFqcn;
+                }
+
+                return $nullable . $type . $suffix;
+            }
+        };
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor($typeReplacer);
+        $traverser->addVisitor($docReplacer);
+        $stmts = $traverser->traverse($stmts);
+
+        $stmts = $this->pruneImports($stmts);
+        $printer = new Standard();
+        $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $tokens);
+        if ($newCode !== $code) {
+            $this->filesystem->dumpFile($consumerFile, $newCode);
+            $changedFiles[] = $this->normalizePath($consumerFile);
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse entity FQCN into base namespace and entity name.
+     *
+     * @param string $fqcn
+     *
+     * @return array{appFolder: string, baseNamespace: string, entity: string}|null
+     */
+    private function parseEntityFqcn(string $fqcn): ?array
+    {
+        if (!str_starts_with($fqcn, 'App\\')) {
+            return null;
+        }
+
+        $parts = explode('\\', $fqcn);
+        $entityIndex = array_search('Entity', $parts, true);
+        if ($entityIndex === false || $entityIndex >= count($parts) - 1) {
+            return null;
+        }
+
+        $baseParts = array_slice($parts, 0, $entityIndex);
+        if (count($baseParts) < 2) {
+            return null;
+        }
+
+        $appFolder = $baseParts[1];
+        if ($appFolder === 'Components') {
+            return null;
+        }
+
+        return [
+            'appFolder' => $appFolder,
+            'baseNamespace' => implode('\\', $baseParts),
+            'entity' => $parts[$entityIndex + 1],
+        ];
+    }
+
     /**
      * Initialize the import pruner based on input flags.
      *
