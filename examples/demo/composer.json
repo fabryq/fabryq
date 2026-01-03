@@ -63,7 +63,7 @@
     },
     {
       "type": "path",
-      "url": "../../skeleton",
+      "url": "../../packages/skeleton",
       "options": {
         "symlink": true,
         "versions": {

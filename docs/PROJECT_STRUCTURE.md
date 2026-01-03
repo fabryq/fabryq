@@ -5,7 +5,7 @@
 - `config/`: Symfony configuration and routing.
 - `src/`: Runtime app root (apps and global components).
 - `packages/`: Internal packages (contracts, runtime, CLI, providers).
-- `skeleton/`: Project template.
+- `packages/skeleton/`: Project template.
 - `examples/demo/`: Sample project with intentional rule violations.
 - `docs/`: Canonical documentation (start with [INDEX](INDEX.md)).
 - `tests/`: PHPUnit tests.

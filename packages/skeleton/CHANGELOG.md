@@ -4,7 +4,17 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
-- No documented changes yet.
+Added:
+
+- Root `composer.json` now requires Symfony framework/console, Doctrine bundles, and Webpack Encore bundle for the monorepo runtime.
+
+Changed:
+
+- Root `composer.json` description aligned with README positioning.
+- Docs navigation improved with cross-links and an index pointer across core pages.
+- Install instructions updated to use `composer create-project fabryq/fabryq . -s dev`.
+- CLI command examples updated to use `bin/console fabryq:*` in the repo root.
+- The CLI wrapper script has been removed; use `bin/console` commands instead.
 
 ## v0.3.x
 

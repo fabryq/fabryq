@@ -322,6 +322,6 @@ PHP,
      */
     private static function skeletonPath(): string
     {
-        return self::rootPath() . '/skeleton';
+        return self::rootPath() . '/packages/skeleton';
     }
 }
