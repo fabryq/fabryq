@@ -7,5 +7,4 @@
 /examples/demo/state
 examples/demo/public/fabryq/
 /examples/demo/composer.lock
-/.env
 /.DS_Store
