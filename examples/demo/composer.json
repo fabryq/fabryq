@@ -3,7 +3,7 @@
   "description": "Fabryq demo project",
   "type": "project",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "require": {
     "php": ">=8.2",
     "fabryq/contracts": "^0.3",
@@ -27,7 +27,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/contracts": "0.3.1"
+          "fabryq/contracts": "0.3.0"
         }
       }
     },
@@ -37,7 +37,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/runtime": "0.3.1"
+          "fabryq/runtime": "0.3.0"
         }
       }
     },
@@ -47,7 +47,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/cli": "0.3.1"
+          "fabryq/cli": "0.3.0"
         }
       }
     },
@@ -57,7 +57,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/provider-http-client": "0.3.1"
+          "fabryq/provider-http-client": "0.3.0"
         }
       }
     },
@@ -67,7 +67,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/skeleton": "0.3.1"
+          "fabryq/skeleton": "0.3.0"
         }
       }
     }

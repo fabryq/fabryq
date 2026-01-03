@@ -2,7 +2,7 @@
   "name": "fabryq/fabryq",
   "description": "PHP/Symfony architecture toolkit for multi-app runtimes.",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.3.0",
   "type": "project",
   "require": {
     "php": ">=8.2",
@@ -31,7 +31,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/contracts": "0.3.1"
+          "fabryq/contracts": "0.3.0"
         }
       }
     },
@@ -41,7 +41,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/runtime": "0.3.1"
+          "fabryq/runtime": "0.3.0"
         }
       }
     },
@@ -51,7 +51,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/cli": "0.3.1"
+          "fabryq/cli": "0.3.0"
         }
       }
     },
@@ -61,7 +61,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/provider-http-client": "0.3.1"
+          "fabryq/provider-http-client": "0.3.0"
         }
       }
     }

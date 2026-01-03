@@ -3,7 +3,7 @@
   "description": "Fabryq runtime bundle",
   "license": "MIT",
   "type": "symfony-bundle",
-  "version": "0.3.1",
+  "version": "0.3.0",
   "require": {
     "php": ">=8.2",
     "fabryq/contracts": "^0.3",

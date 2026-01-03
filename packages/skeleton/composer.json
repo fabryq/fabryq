@@ -3,7 +3,7 @@
   "description": "Fabryq project skeleton",
   "type": "project",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "require": {
     "php": ">=8.2",
     "symfony/framework-bundle": "^7.0",

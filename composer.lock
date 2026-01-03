@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f822b5ebe7f415dfdb37aec8c2de32a6",
+    "content-hash": "2a85cb47983df6f3b7fc3776dcfe9529",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -1330,11 +1330,11 @@
         },
         {
             "name": "fabryq/cli",
-            "version": "0.3.1",
+            "version": "0.3.0",
             "dist": {
                 "type": "path",
                 "url": "packages/cli",
-                "reference": "f3980831c35e3ede46673893125caff9c0e250ea"
+                "reference": "f73c3fca6cf864a2b46e7b49addcd7f7b3caf7b0"
             },
             "require": {
                 "fabryq/contracts": "^0.3",
@@ -1363,11 +1363,11 @@
         },
         {
             "name": "fabryq/contracts",
-            "version": "0.3.1",
+            "version": "0.3.0",
             "dist": {
                 "type": "path",
                 "url": "packages/contracts",
-                "reference": "04ad1b1d378b5dd5b994434a70b9534afffe291c"
+                "reference": "4a6a19126e77262838425a53ce161ab3a5ba1a1d"
             },
             "require": {
                 "php": ">=8.2"
@@ -1389,11 +1389,11 @@
         },
         {
             "name": "fabryq/provider-http-client",
-            "version": "0.3.1",
+            "version": "0.3.0",
             "dist": {
                 "type": "path",
                 "url": "packages/provider-http-client",
-                "reference": "1390011131b6919e49791032448e2795c37293b4"
+                "reference": "ceba0c98f8b1279d2919055bbcaf1acd80313020"
             },
             "require": {
                 "fabryq/contracts": "^0.3",
@@ -1417,11 +1417,11 @@
         },
         {
             "name": "fabryq/runtime",
-            "version": "0.3.1",
+            "version": "0.3.0",
             "dist": {
                 "type": "path",
                 "url": "packages/runtime",
-                "reference": "bf29d8d4e24824c3f63840fdf8a096a3ff02eeac"
+                "reference": "7d504e642e9723ac375e28ee96260c410c2bdc6f"
             },
             "require": {
                 "doctrine/doctrine-bundle": "^2.11",
