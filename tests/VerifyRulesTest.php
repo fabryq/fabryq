@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Tests;
 
+use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Tests\Support\FixtureProject;
 use PHPUnit\Framework\TestCase;
 
@@ -53,7 +54,7 @@ PHP;
         file_put_contents($path, $code);
 
         $result = FixtureProject::runFabryq($this->projectDir, ['verify']);
-        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
         $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
@@ -87,7 +88,7 @@ PHP;
         file_put_contents($path, $code);
 
         $result = FixtureProject::runFabryq($this->projectDir, ['verify']);
-        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
         $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
@@ -117,7 +118,7 @@ PHP;
         file_put_contents($path, $code);
 
         $result = FixtureProject::runFabryq($this->projectDir, ['verify']);
-        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
         $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
@@ -195,7 +196,7 @@ PHP;
         file_put_contents($entityDir . '/GoodEntity.php', $goodEntity);
 
         $result = FixtureProject::runFabryq($this->projectDir, ['verify']);
-        $this->assertSame(1, $result['exitCode'], $result['output']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
         $this->assertHasFinding($report, 'FABRYQ.ENTITY.BASE_REQUIRED', 'BLOCKER');

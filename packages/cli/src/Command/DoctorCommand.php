@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Doctor;
 use Fabryq\Cli\Report\ReportWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -25,7 +25,7 @@ use Symfony\Component\Console\Output\OutputInterface;
     name: 'fabryq:doctor',
     description: 'Run fabryq doctor checks.'
 )]
-final class DoctorCommand extends Command
+final class DoctorCommand extends AbstractFabryqCommand
 {
     /**
      * @param Doctor $doctor Doctor analyzer.
@@ -61,6 +61,7 @@ final class DoctorCommand extends Command
     protected function configure(): void
     {
         $this->setDescription('Check fabryq provider wiring.');
+        parent::configure();
     }
 
     /**
@@ -71,11 +72,7 @@ final class DoctorCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        try {
-            $result = $this->doctor->run();
-        } catch (\Throwable $exception) {
-            return 30;
-        }
+        $result = $this->doctor->run();
 
         $markdownAppendix = $this->renderAppStatusTable($result->appStatuses);
 
@@ -99,14 +96,14 @@ final class DoctorCommand extends Command
         );
 
         if ($hasBlockers !== [] || $hasUnhealthy !== []) {
-            return 20;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         if ($hasDegraded !== []) {
-            return 10;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
-        return 0;
+        return CliExitCode::SUCCESS;
     }
 
     /**

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Config;
 
+use Fabryq\Cli\Error\ProjectStateError;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -35,9 +36,13 @@ final class ProjectConfig
             return;
         }
 
-        $parsed = Yaml::parseFile($path);
+        try {
+            $parsed = Yaml::parseFile($path);
+        } catch (\Symfony\Component\Yaml\Exception\ParseException $exception) {
+            throw new ProjectStateError('fabryq.yaml is invalid: ' . $exception->getMessage(), previous: $exception);
+        }
         if (!is_array($parsed)) {
-            throw new \RuntimeException('fabryq.yaml must decode to a mapping.');
+            throw new ProjectStateError('fabryq.yaml must decode to a mapping.');
         }
 
         $this->config = self::merge($this->config, $parsed);

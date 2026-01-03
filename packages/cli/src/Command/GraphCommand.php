@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\GraphBuilder;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,7 +26,7 @@ use Symfony\Component\Filesystem\Filesystem;
     name: 'fabryq:graph',
     description: 'Export fabryq capability graph.'
 )]
-final class GraphCommand extends Command
+final class GraphCommand extends AbstractFabryqCommand
 {
     /**
      * @param GraphBuilder $graphBuilder Graph builder service.
@@ -65,6 +65,7 @@ final class GraphCommand extends Command
             ->addOption('json', null, InputOption::VALUE_NONE, 'Write JSON output to state/graph/latest.json.')
             ->addOption('mermaid', null, InputOption::VALUE_NONE, 'Include Mermaid graph in Markdown output.')
             ->setDescription('Export fabryq capability graph.');
+        parent::configure();
     }
 
     /**
@@ -107,14 +108,14 @@ final class GraphCommand extends Command
         }
 
         if ($hasMissing) {
-            return 20;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         if ($hasDegraded) {
-            return 10;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
-        return 0;
+        return CliExitCode::SUCCESS;
     }
 
     /**

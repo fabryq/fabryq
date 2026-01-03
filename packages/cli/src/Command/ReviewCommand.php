@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Report\ReviewWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -25,7 +25,7 @@ use Symfony\Component\Console\Output\OutputInterface;
     name: 'fabryq:review',
     description: 'Run fabryq verification and generate a review report.'
 )]
-final class ReviewCommand extends Command
+final class ReviewCommand extends AbstractFabryqCommand
 {
     /**
  * @param Verifier $verifier Verification analyzer.
@@ -61,6 +61,7 @@ final class ReviewCommand extends Command
     protected function configure(): void
     {
         $this->setDescription('Run fabryq verification and generate a review report.');
+        parent::configure();
     }
 
     /**
@@ -80,6 +81,6 @@ final class ReviewCommand extends Command
 
         $blockers = array_filter($findings, static fn ($finding) => $finding->severity === 'BLOCKER');
 
-        return $blockers === [] ? Command::SUCCESS : Command::FAILURE;
+        return $blockers === [] ? CliExitCode::SUCCESS : CliExitCode::PROJECT_STATE_ERROR;
     }
 }

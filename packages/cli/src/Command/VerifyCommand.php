@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Report\ReportWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -26,7 +26,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
     name: 'fabryq:verify',
     description: 'Run fabryq verification gates.'
 )]
-final class VerifyCommand extends Command
+final class VerifyCommand extends AbstractFabryqCommand
 {
     /**
      * @param Verifier     $verifier     Verification analyzer.
@@ -81,7 +81,7 @@ final class VerifyCommand extends Command
         // 3. Display results in the console (previously missing).
         if ($findings === []) {
             $io->success('No issues found.');
-            return Command::SUCCESS;
+            return CliExitCode::SUCCESS;
         }
 
         foreach ($findings as $finding) {
@@ -102,10 +102,10 @@ final class VerifyCommand extends Command
 
         if ($blockers !== []) {
             $io->error(sprintf('Found %d blockers.', count($blockers)));
-            return Command::FAILURE;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         $io->success('Verification passed (with warnings).');
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 }

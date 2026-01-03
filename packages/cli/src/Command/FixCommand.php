@@ -11,13 +11,15 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Error\InternalError;
+use Fabryq\Cli\Error\UserError;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Fix\FixMode;
 use Fabryq\Cli\Fix\FixSelection;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -31,7 +33,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
     name: 'fabryq:fix',
     description: 'Dispatch fabryq fixers based on autofixable findings.'
 )]
-final class FixCommand extends Command
+final class FixCommand extends AbstractFabryqCommand
 {
     /**
      * @param Verifier           $verifier    Verification analyzer.
@@ -74,6 +76,7 @@ final class FixCommand extends Command
             ->addOption('symbol', null, InputOption::VALUE_REQUIRED, 'Filter by symbol.')
             ->addOption('finding', null, InputOption::VALUE_REQUIRED, 'Filter by finding id.')
             ->setDescription('Dispatch fabryq fixers based on autofixable findings.');
+        parent::configure();
     }
 
     /**
@@ -83,16 +86,12 @@ final class FixCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $mode = $this->resolveMode($input, $io);
-        if ($mode === null) {
-            return Command::FAILURE;
-        }
+        $mode = $this->resolveMode($input);
 
         try {
             $selection = FixSelection::fromInput($input);
         } catch (\InvalidArgumentException $exception) {
-            $io->error($exception->getMessage());
-            return Command::FAILURE;
+            throw new UserError($exception->getMessage(), previous: $exception);
         }
 
         $findings = $this->verifier->verify($this->projectDir);
@@ -105,8 +104,7 @@ final class FixCommand extends Command
 
         if ($selection->findingId !== null) {
             if (count($selected) !== 1) {
-                $io->error('Finding selection did not resolve to exactly one autofixable finding.');
-                return Command::FAILURE;
+                throw new UserError('Finding selection did not resolve to exactly one autofixable finding.');
             }
         }
 
@@ -120,21 +118,20 @@ final class FixCommand extends Command
 
         if ($groups === []) {
             $io->success('No autofixable findings matched.');
-            return Command::SUCCESS;
+            return CliExitCode::SUCCESS;
         }
 
         $application = $this->getApplication();
         if ($application === null) {
-            $io->error('Unable to locate application for dispatch.');
-            return Command::FAILURE;
+            throw new InternalError('Unable to locate application for dispatch.');
         }
 
-        $exitCode = Command::SUCCESS;
+        $exitCode = CliExitCode::SUCCESS;
         foreach (array_keys($groups) as $fixer) {
             $commandName = $this->resolveFixerCommand($fixer);
             if ($commandName === null) {
                 $io->error(sprintf('Unknown fixer "%s".', $fixer));
-                $exitCode = Command::FAILURE;
+                $exitCode = CliExitCode::INTERNAL_ERROR;
                 continue;
             }
 
@@ -153,18 +150,16 @@ final class FixCommand extends Command
      * Resolve the fix mode from input.
      *
      * @param InputInterface $input Console input.
-     * @param SymfonyStyle   $io    Console style helper.
      *
-     * @return string|null Fix mode or null on error.
+     * @return string Fix mode.
      */
-    private function resolveMode(InputInterface $input, SymfonyStyle $io): ?string
+    private function resolveMode(InputInterface $input): string
     {
         $dryRun = (bool) $input->getOption('dry-run');
         $apply = (bool) $input->getOption('apply');
 
         if ($dryRun === $apply) {
-            $io->error('Specify exactly one of --dry-run or --apply.');
-            return null;
+            throw new UserError('Specify exactly one of --dry-run or --apply.');
         }
 
         return $dryRun ? FixMode::DRY_RUN : FixMode::APPLY;
