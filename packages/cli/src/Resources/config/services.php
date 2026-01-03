@@ -18,6 +18,7 @@ use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Assets\AssetInstaller;
 use Fabryq\Cli\Assets\AssetManifestWriter;
 use Fabryq\Cli\Assets\AssetScanner;
+use Fabryq\Cli\Config\ProjectConfig;
 use Fabryq\Cli\Command\AssetsInstallCommand;
 use Fabryq\Cli\Command\AppCreateCommand;
 use Fabryq\Cli\Command\ComponentCreateCommand;
@@ -53,6 +54,9 @@ return static function (ContainerConfigurator $configurator): void {
     $services->set(Filesystem::class);
 
     $services->set(FindingIdGenerator::class)
+        ->args(['%kernel.project_dir%']);
+
+    $services->set(ProjectConfig::class)
         ->args(['%kernel.project_dir%']);
 
     $services->set(ReportWriter::class)

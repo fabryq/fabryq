@@ -1,0 +1,17 @@
+controller:
+  route_prefix: ''
+  route_name_prefix: ''
+  default_format: 'json'
+  security:
+    enabled: false
+    attribute: ''
+  templates:
+    enabled: false
+    namespace: ''
+  translations:
+    enabled: false
+    domain: 'messages'
+reports:
+  links:
+    enabled: true
+    scheme: 'phpstorm'
