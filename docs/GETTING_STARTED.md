@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide walks you through a minimal, working Fabryq setup from the repo.
+This guide walks you through a minimal, working Fabryq setup using `composer create-project`.
 
 Docs index: [INDEX](INDEX.md).
 
@@ -13,7 +13,8 @@ Docs index: [INDEX](INDEX.md).
 ## Install (repo)
 
 ```bash
-composer create-project fabryq/fabryq . -s dev
+composer create-project fabryq/fabryq fabryq-project -s dev
+cd fabryq-project
 ```
 
 Optional environment gate:
