@@ -1,5 +1,11 @@
 /.idea
-/vendor
+/vendor/
+/state/
 /var
-/state
-/composer.lock
+/examples/demo/vendor
+/examples/demo/var
+/examples/demo/state
+examples/demo/public/fabryq/
+/examples/demo/composer.lock
+/.env
+/.DS_Store
