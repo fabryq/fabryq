@@ -29,6 +29,7 @@ use Fabryq\Cli\Command\FixCrossingCommand;
 use Fabryq\Cli\Command\GraphCommand;
 use Fabryq\Cli\Command\ReviewCommand;
 use Fabryq\Cli\Command\VerifyCommand;
+use Fabryq\Cli\EventSubscriber\CliErrorSubscriber;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Gate\DoctrineGate;
 use Fabryq\Cli\Report\FindingIdGenerator;
@@ -55,6 +56,8 @@ return static function (ContainerConfigurator $configurator): void {
 
     $services->set(FindingIdGenerator::class)
         ->args(['%kernel.project_dir%']);
+
+    $services->set(CliErrorSubscriber::class);
 
     $services->set(ProjectConfig::class)
         ->args(['%kernel.project_dir%']);
