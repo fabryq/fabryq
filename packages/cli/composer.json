@@ -18,8 +18,5 @@
     "psr-4": {
       "Fabryq\\Cli\\": "src/"
     }
-  },
-  "bin": [
-    "bin/fabryq"
-  ]
+  }
 }

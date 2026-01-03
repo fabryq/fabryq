@@ -81,7 +81,6 @@ final class FixtureProject
         }
 
         self::installAutoload($target);
-        self::installWrapper($target);
 
         return $target;
     }
@@ -109,7 +108,7 @@ final class FixtureProject
     }
 
     /**
-     * Run a Fabryq CLI command inside the fixture.
+     * Run a Fabryq console command inside the fixture.
      *
      * @param string   $projectDir Fixture directory.
      * @param string[] $args       CLI arguments.
@@ -118,8 +117,44 @@ final class FixtureProject
      */
     public static function runFabryq(string $projectDir, array $args): array
     {
-        $script = $projectDir . '/vendor/bin/fabryq';
-        $cmd = array_merge([PHP_BINARY, $script], $args);
+        $aliases = [
+            'verify' => 'fabryq:verify',
+            'review' => 'fabryq:review',
+            'doctor' => 'fabryq:doctor',
+            'graph' => 'fabryq:graph',
+            'assets:install' => 'fabryq:assets:install',
+            'app:create' => 'fabryq:app:create',
+            'component:create' => 'fabryq:component:create',
+            'fix' => 'fabryq:fix',
+        ];
+
+        $command = $args[0] ?? '';
+        $extraArgs = array_slice($args, 1);
+
+        if ($command === 'fix' && isset($args[1])) {
+            if ($args[1] === 'assets') {
+                $command = 'fix assets';
+                $extraArgs = array_slice($args, 2);
+            } elseif ($args[1] === 'crossing') {
+                $command = 'fix crossing';
+                $extraArgs = array_slice($args, 2);
+            }
+        }
+
+        if (str_starts_with($command, 'fabryq:')) {
+            $mapped = $command;
+        } elseif (isset($aliases[$command])) {
+            $mapped = $aliases[$command];
+        } elseif ($command === 'fix assets') {
+            $mapped = 'fabryq:fix:assets';
+        } elseif ($command === 'fix crossing') {
+            $mapped = 'fabryq:fix:crossing';
+        } else {
+            throw new RuntimeException(sprintf('Unknown Fabryq command: %s', $command));
+        }
+
+        $console = $projectDir . '/bin/console';
+        $cmd = array_merge([PHP_BINARY, $console, $mapped], $extraArgs);
 
         return self::runCommand($cmd, $projectDir);
     }
@@ -218,24 +253,6 @@ PHP,
         );
 
         file_put_contents($autoloadPath, $content);
-    }
-
-    /**
-     * Install the Fabryq wrapper into the fixture.
-     *
-     * @param string $projectDir Fixture directory.
-     */
-    private static function installWrapper(string $projectDir): void
-    {
-        $source = self::rootPath() . '/packages/cli/bin/fabryq';
-        $targetDir = $projectDir . '/vendor/bin';
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0775, true);
-        }
-
-        $target = $targetDir . '/fabryq';
-        copy($source, $target);
-        chmod($target, 0775);
     }
 
     /**
