@@ -45,7 +45,7 @@ Requirements:
 Install (repo):
 
 ```bash
-composer install
+composer create-project fabryq/fabryq . -s dev
 ```
 
 Run:
