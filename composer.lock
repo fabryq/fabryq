@@ -1396,10 +1396,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/provider-http-client",
-                "reference": "c2007dc26b98c0488bc9bacc1500718459b5fdf6"
+                "reference": "9c33d20c3fd67651628e175e4978eeb4a4e03007"
             },
             "require": {
-                "fabryq/contracts": "*",
+                "fabryq/contracts": "^0.1",
                 "php": ">=8.2",
                 "symfony/framework-bundle": "^7.0"
             },
