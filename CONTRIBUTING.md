@@ -53,7 +53,7 @@ bin/console fabryq:doctor
 
 - [ ] `composer test` passes
 - [ ] `composer lint` passes
-- [ ] `fabryq verify` and `fabryq doctor` pass or failures are explained
+- [ ] `bin/console fabryq:verify` and `bin/console fabryq:doctor` pass or failures are explained
 - [ ] Docs updated for behavioral changes
 - [ ] `CHANGELOG.md` updated when behavior changes
 
@@ -61,5 +61,5 @@ bin/console fabryq:doctor
 
 - [ ] Update version numbers in `composer.json` files under `packages/`
 - [ ] Move items from Unreleased to the new version in `CHANGELOG.md`
-- [ ] Run `composer test`, `composer lint`, `fabryq verify`, and `fabryq doctor`
+- [ ] Run `composer test`, `composer lint`, `bin/console fabryq:verify`, and `bin/console fabryq:doctor`
 - [ ] Tag the release and push tags
