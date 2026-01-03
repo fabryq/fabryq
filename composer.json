@@ -6,10 +6,10 @@
   "type": "project",
   "require": {
     "php": ">=8.2",
-    "fabryq/contracts": "^0.1",
-    "fabryq/runtime": "^0.1",
-    "fabryq/cli": "^0.1",
-    "fabryq/provider-http-client": "^0.1",
+    "fabryq/contracts": "^0.3.1",
+    "fabryq/runtime": "^0.3.1",
+    "fabryq/cli": "^0.3.1",
+    "fabryq/provider-http-client": "^0.3.1",
     "doctrine/doctrine-bundle": "^2.11",
     "doctrine/doctrine-migrations-bundle": "^3.3",
     "doctrine/orm": "^2.17",
@@ -29,28 +29,40 @@
       "type": "path",
       "url": "packages/contracts",
       "options": {
-        "symlink": true
+        "symlink": true,
+        "versions": {
+          "fabryq/contracts": "0.3.1"
+        }
       }
     },
     {
       "type": "path",
       "url": "packages/runtime",
       "options": {
-        "symlink": true
+        "symlink": true,
+        "versions": {
+          "fabryq/runtime": "0.3.1"
+        }
       }
     },
     {
       "type": "path",
       "url": "packages/cli",
       "options": {
-        "symlink": true
+        "symlink": true,
+        "versions": {
+          "fabryq/cli": "0.3.1"
+        }
       }
     },
     {
       "type": "path",
       "url": "packages/provider-http-client",
       "options": {
-        "symlink": true
+        "symlink": true,
+        "versions": {
+          "fabryq/provider-http-client": "0.3.1"
+        }
       }
     }
   ],

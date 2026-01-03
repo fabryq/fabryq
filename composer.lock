@@ -4,7 +4,7 @@
     "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
     "This file is @generated automatically"
   ],
-  "content-hash": "a6100c44aec64f28c101d3c6e5de9420",
+  "content-hash": "a8ce9b02d50ee837cc1197f961e859e6",
   "packages": [
     {
       "name": "doctrine/cache",
@@ -1330,15 +1330,15 @@
     },
     {
       "name": "fabryq/cli",
-      "version": "0.1.0",
+      "version": "0.3.1",
       "dist": {
         "type": "path",
         "url": "packages/cli",
-        "reference": "1efc21563fef39054dbf4d5044879dd016d6f0cd"
+        "reference": "92ffeef9a08722bf8316ee845055588e5f08ac7d"
       },
       "require": {
-        "fabryq/contracts": "^0.1",
-        "fabryq/runtime": "^0.1",
+        "fabryq/contracts": "^0.3.1",
+        "fabryq/runtime": "^0.3.1",
         "nikic/php-parser": "^5.0",
         "php": ">=8.2",
         "symfony/console": "^7.0",
@@ -1363,11 +1363,11 @@
     },
     {
       "name": "fabryq/contracts",
-      "version": "0.1.0",
+      "version": "0.3.1",
       "dist": {
         "type": "path",
         "url": "packages/contracts",
-        "reference": "938930a56e3953d79ee38f67a8b91b37b083ff16"
+        "reference": "6f857ec921e0556069056c1ef1d33cee8e8ba701"
       },
       "require": {
         "php": ">=8.2"
@@ -1389,14 +1389,14 @@
     },
     {
       "name": "fabryq/provider-http-client",
-      "version": "0.1.0",
+      "version": "0.3.1",
       "dist": {
         "type": "path",
         "url": "packages/provider-http-client",
-        "reference": "9c33d20c3fd67651628e175e4978eeb4a4e03007"
+        "reference": "e62e0873958f0358174ed29f174a826af8ca0dc9"
       },
       "require": {
-        "fabryq/contracts": "^0.1",
+        "fabryq/contracts": "^0.3.1",
         "php": ">=8.2",
         "symfony/framework-bundle": "^7.0"
       },
@@ -1417,17 +1417,17 @@
     },
     {
       "name": "fabryq/runtime",
-      "version": "0.1.0",
+      "version": "0.3.1",
       "dist": {
         "type": "path",
         "url": "packages/runtime",
-        "reference": "3c85b4d340141705dc043eeeccd1de5827ac2665"
+        "reference": "5e5152ea1ada207d40d801048fe644bf72808918"
       },
       "require": {
         "doctrine/doctrine-bundle": "^2.11",
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^2.17",
-        "fabryq/contracts": "^0.1",
+        "fabryq/contracts": "^0.3.1",
         "php": ">=8.2",
         "symfony/config": "^7.0",
         "symfony/dependency-injection": "^7.0",
