@@ -4,7 +4,7 @@
     "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
     "This file is @generated automatically"
   ],
-  "content-hash": "a8ce9b02d50ee837cc1197f961e859e6",
+  "content-hash": "460a51d62a2a6c2c6a2609eb5741649a",
   "packages": [
     {
       "name": "doctrine/cache",
@@ -1334,11 +1334,11 @@
       "dist": {
         "type": "path",
         "url": "packages/cli",
-        "reference": "92ffeef9a08722bf8316ee845055588e5f08ac7d"
+        "reference": "f3980831c35e3ede46673893125caff9c0e250ea"
       },
       "require": {
-        "fabryq/contracts": "^0.3.1",
-        "fabryq/runtime": "^0.3.1",
+        "fabryq/contracts": "^0.3",
+        "fabryq/runtime": "^0.3",
         "nikic/php-parser": "^5.0",
         "php": ">=8.2",
         "symfony/console": "^7.0",
@@ -1367,7 +1367,7 @@
       "dist": {
         "type": "path",
         "url": "packages/contracts",
-        "reference": "6f857ec921e0556069056c1ef1d33cee8e8ba701"
+        "reference": "04ad1b1d378b5dd5b994434a70b9534afffe291c"
       },
       "require": {
         "php": ">=8.2"
@@ -1393,10 +1393,10 @@
       "dist": {
         "type": "path",
         "url": "packages/provider-http-client",
-        "reference": "e62e0873958f0358174ed29f174a826af8ca0dc9"
+        "reference": "1390011131b6919e49791032448e2795c37293b4"
       },
       "require": {
-        "fabryq/contracts": "^0.3.1",
+        "fabryq/contracts": "^0.3",
         "php": ">=8.2",
         "symfony/framework-bundle": "^7.0"
       },
@@ -1421,13 +1421,13 @@
       "dist": {
         "type": "path",
         "url": "packages/runtime",
-        "reference": "5e5152ea1ada207d40d801048fe644bf72808918"
+        "reference": "bf29d8d4e24824c3f63840fdf8a096a3ff02eeac"
       },
       "require": {
         "doctrine/doctrine-bundle": "^2.11",
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^2.17",
-        "fabryq/contracts": "^0.3.1",
+        "fabryq/contracts": "^0.3",
         "php": ">=8.2",
         "symfony/config": "^7.0",
         "symfony/dependency-injection": "^7.0",
