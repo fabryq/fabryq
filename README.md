@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq version">
   <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq size">
   <p align="center">
-    <img src="https://raw.githubusercontent.com/fabryq/.github/main/fabryq-schriftzug-github.jpg" alt="Fabryq logo">
+    <img src="https://raw.githubusercontent.com/fabryq/.github/main/fabryq-schriftzug-github.jpg" alt="Fabryq logo" width="400">
   </p>
 </p>
 
