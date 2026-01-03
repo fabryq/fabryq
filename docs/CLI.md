@@ -1,34 +1,11 @@
 # CLI
 
-Fabryq ships Symfony console commands (`fabryq:*`). Use them via `bin/console`.
+Fabryq ships Symfony console commands (`fabryq:*`). Use them via `bin/console` from the project root.
 
 ## Usage
 ```bash
 bin/console fabryq:<command> [args...]
 ```
-
-## Optional wrapper: `bin/fabryq`
-The wrapper maps short aliases to full Symfony commands and auto-detects the project root. Docs use `bin/console` examples.
-
-Alias map:
-- `verify` -> `fabryq:verify`
-- `review` -> `fabryq:review`
-- `doctor` -> `fabryq:doctor`
-- `graph` -> `fabryq:graph`
-- `assets:install` -> `fabryq:assets:install`
-- `app:create` -> `fabryq:app:create`
-- `component:create` -> `fabryq:component:create`
-- `fix` -> `fabryq:fix`
-- `fix assets` -> `fabryq:fix:assets`
-- `fix crossing` -> `fabryq:fix:crossing`
-
-Root detection:
-- Searches upward for `composer.json` and `bin/console` (max depth 6).
-
-Exit codes:
-- `0`: success
-- `1`: unknown command
-- `2`: project root not found
 
 ## Gate flow (high level)
 ```mermaid

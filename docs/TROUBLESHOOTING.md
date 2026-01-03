@@ -62,7 +62,7 @@ Fix:
 
 ## `FABRYQ.CAPABILITY.MAP.MISSING`
 Symptoms:
-- `fabryq doctor` returns a blocker even in an empty project.
+- `bin/console fabryq:doctor` returns a blocker even in an empty project.
 
 Fix:
 - Register at least one provider so the capability map is not empty, or skip `doctor` until providers exist.
@@ -77,7 +77,7 @@ Fix:
 
 ## `fix crossing` is blocked by DTO rules
 Symptoms:
-- `fabryq fix crossing` reports a blocker about DTO safety.
+- `bin/console fabryq:fix:crossing` reports a blocker about DTO safety.
 
 Fix:
 - Ensure the provider class is inside the provider app.

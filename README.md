@@ -19,7 +19,8 @@ Current line: v0.3.x (pre-release).
 
 - One Way structure: apps live in `src/Apps/<App>` with `manifest.php`; components are directories inside apps; global components live in `src/Components`.
   Enforced by discovery and slug checks; deeper structure rules are planned.
-- Gates over guidelines: `fabryq verify`, `review`, `doctor`, and `graph` emit findings and exit codes for CI.
+- Gates over guidelines: `bin/console fabryq:verify`, `bin/console fabryq:review`, `bin/console fabryq:doctor`, and `bin/console fabryq:graph` emit findings
+  and exit codes for CI.
 - Removability and no silent coupling: direct app-to-app references are blocked (`FABRYQ.APP.CROSSING`), and global components may not reference app classes (
   `FABRYQ.GLOBAL_COMPONENT.REFERENCES_APP`).
 - Explicit capabilities: apps declare `provides`/`consumes` in manifests; providers are declared with `#[FabryqProvider]`; missing required providers are

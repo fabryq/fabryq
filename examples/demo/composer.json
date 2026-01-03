@@ -66,9 +66,6 @@
       "src/Kernel.php"
     ]
   },
-  "bin": [
-    "vendor/bin/fabryq"
-  ],
   "require-dev": {
     "symfony/process": "^6.4 || ^7.0"
   }

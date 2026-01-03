@@ -1,6 +1,6 @@
 # Guardrails
 
-Guardrails are enforced rules that produce findings during `fabryq verify` and `fabryq doctor`. Blockers fail the command; warnings do not.
+Guardrails are enforced rules that produce findings during `bin/console fabryq:verify` and `bin/console fabryq:doctor`. Blockers fail the command; warnings do not.
 
 ## Rule index
 | Rule key | Severity | Gate | Summary |
@@ -32,7 +32,7 @@ Guardrails are enforced rules that produce findings during `fabryq verify` and `
 - `FABRYQ.MOUNTPOINT.COLLISION`: each app mountpoint must be unique.
 
 Fix:
-- Correct the manifest array and rerun `fabryq verify`.
+- Correct the manifest array and rerun `bin/console fabryq:verify`.
 
 ### Component slugs
 - `FABRYQ.COMPONENT.SLUG.INVALID`: component slug derived from directory name is invalid.
