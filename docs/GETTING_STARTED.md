@@ -28,6 +28,12 @@ Expected output:
 Environment gate passed.
 ```
 
+## Why the commands are available
+
+Projects created with the skeleton enable Fabryq bundles in `config/bundles.php`, so `bin/console` exposes `fabryq:*` commands by default.
+
+Advanced: if you disable bundles, re-enable `FabryqRuntimeBundle` and `FabryqCliBundle` to restore the commands.
+
 ## Create a first app and component
 
 ```bash
