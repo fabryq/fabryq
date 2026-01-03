@@ -1,6 +1,6 @@
 # Fabryq Documentation
 
-This is the entry point for Fabryq v0.3.x pre-release documentation.
+This is the entry point for Fabryq v0.3.x pre-release documentation. Treat it as the single docs start for this line.
 
 ## Start here
 - [Getting Started](GETTING_STARTED.md)
