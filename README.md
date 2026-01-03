@@ -27,15 +27,7 @@ Current line: v0.3.x (pre-release).
 - No service locator: container typehints and `container->get()` are blocked (`FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN`).
 - Deterministic entities: Doctrine entities must extend `AbstractFabryqEntity` or use the interface+trait exception path.
 
-## Installation (package)
-
-Install the runtime and CLI in an existing Symfony project:
-
-```bash
-composer require fabryq/fabryq
-``` 
-
-## Quickstart (repo)
+## Quickstart
 
 Requirements:
 
@@ -43,15 +35,11 @@ Requirements:
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-Install (repo):
+Install:
 
 ```bash
-composer create-project fabryq/fabryq . -s dev
-```
-
-Run:
-
-```bash
+composer create-project fabryq/fabryq fabryq-project -s dev
+cd fabryq-project
 bin/console fabryq:verify
 ```
 
