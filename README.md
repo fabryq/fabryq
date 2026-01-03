@@ -36,7 +36,7 @@ Requirements:
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-Fabryq v0.3.x-dev is distributed as a `composer create-project` template. Installing into an existing Symfony project is not the supported path yet.
+Fabryq v0.3.x-dev is distributed as a `composer create-project` template only.
 `composer create-project fabryq/fabryq` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
 
 Install:
