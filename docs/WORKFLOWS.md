@@ -68,7 +68,7 @@ Fabryq does not ship an automated upgrade command.
 
 For this repo (fresh setup):
 ```bash
-composer create-project fabryq/fabryq fabryq-project -s dev
+composer create-project fabryq/fabryq:0.3.0 fabryq-project
 cd fabryq-project
 ```
 

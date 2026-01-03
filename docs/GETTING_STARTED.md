@@ -10,11 +10,17 @@ Docs index: [INDEX](INDEX.md).
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-## Install (repo)
+## Install
 
 ```bash
-composer create-project fabryq/fabryq fabryq-project -s dev
+composer create-project fabryq/fabryq:0.3.0 fabryq-project
 cd fabryq-project
+```
+
+Development branch (bleeding edge):
+
+```bash
+composer create-project fabryq/fabryq:dev-v0.3.x-dev fabryq-project
 ```
 
 Optional environment gate:
