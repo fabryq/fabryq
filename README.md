@@ -36,15 +36,21 @@ Requirements:
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-Fabryq v0.3.x-dev is distributed as a `composer create-project` template only.
-`composer create-project fabryq/fabryq` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
+Fabryq v0.3.0 is distributed as a `composer create-project` template only.
+`composer create-project fabryq/fabryq:0.3.0` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
 
 Install:
 
 ```bash
-composer create-project fabryq/fabryq fabryq-project -s dev
+composer create-project fabryq/fabryq:0.3.0 fabryq-project
 cd fabryq-project
 bin/console fabryq:verify
+```
+
+Development branch (bleeding edge):
+
+```bash
+composer create-project fabryq/fabryq:dev-v0.3.x-dev fabryq-project
 ```
 
 ## First success (minimal)
