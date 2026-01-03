@@ -14,14 +14,17 @@ namespace Fabryq\Cli\Command;
 use Fabryq\Cli\Assets\AssetInstallResult;
 use Fabryq\Cli\Assets\AssetManifestWriter;
 use Fabryq\Cli\Assets\AssetScanner;
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Error\ProjectStateError;
+use Fabryq\Cli\Error\UserError;
 use Fabryq\Cli\Fix\FixMode;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Fix\FixSelection;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Fabryq\Cli\Report\FindingLocation;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,7 +38,7 @@ use Symfony\Component\Filesystem\Filesystem;
     name: 'fabryq:fix:assets',
     description: 'Fix asset publishing and collisions.'
 )]
-final class FixAssetsCommand extends Command
+final class FixAssetsCommand extends AbstractFabryqCommand
 {
     /**
      * @param AssetScanner        $scanner        Asset scanner.
@@ -75,6 +78,12 @@ final class FixAssetsCommand extends Command
          * @var FindingIdGenerator
          */
         private readonly FindingIdGenerator  $idGenerator,
+        /**
+         * Write lock guard.
+         *
+         * @var WriteLock
+         */
+        private readonly WriteLock           $writeLock,
     ) {
         parent::__construct();
     }
@@ -92,6 +101,7 @@ final class FixAssetsCommand extends Command
             ->addOption('symbol', null, InputOption::VALUE_REQUIRED, 'Filter by symbol (not supported).')
             ->addOption('finding', null, InputOption::VALUE_REQUIRED, 'Filter by finding id.')
             ->setDescription('Fix asset publishing and collisions.');
+        parent::configure();
     }
 
     /**
@@ -101,21 +111,16 @@ final class FixAssetsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $mode = $this->resolveMode($input, $io);
-        if ($mode === null) {
-            return Command::FAILURE;
-        }
+        $mode = $this->resolveMode($input);
 
         try {
             $selection = FixSelection::fromInput($input);
         } catch (\InvalidArgumentException $exception) {
-            $io->error($exception->getMessage());
-            return Command::FAILURE;
+            throw new UserError($exception->getMessage(), previous: $exception);
         }
 
         if ($selection->symbol !== null) {
-            $io->error('Symbol selection is not supported for asset fixes.');
-            return Command::FAILURE;
+            throw new UserError('Symbol selection is not supported for asset fixes.');
         }
 
         $scanResult = $this->scanner->scan();
@@ -149,59 +154,63 @@ final class FixAssetsCommand extends Command
         try {
             $context = $this->runLogger->start('assets', $mode, $planMarkdown, $selection);
         } catch (\RuntimeException $exception) {
-            $io->error($exception->getMessage());
-            return Command::FAILURE;
+            throw new ProjectStateError($exception->getMessage(), previous: $exception);
         }
 
         if ($blockers > 0) {
             $this->runLogger->finish($context, 'assets', $mode, 'blocked', [], $blockers, $warnings);
             $io->error('Asset fix blocked.');
-            return Command::FAILURE;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
         if ($mode === FixMode::DRY_RUN) {
             $this->runLogger->finish($context, 'assets', $mode, 'ok', [], $blockers, $warnings);
             $io->success('Asset fix plan written (dry-run).');
-            return Command::SUCCESS;
+            return CliExitCode::SUCCESS;
         }
+
+        $this->writeLock->acquire();
 
         $changedFiles = [];
         $appliedEntries = [];
-        foreach ($entries as $entry) {
-            if (!$selection->matchesPath($entry['target'], $this->idGenerator)) {
-                $entry['method'] = 'skipped';
+        try {
+            foreach ($entries as $entry) {
+                if (!$selection->matchesPath($entry['target'], $this->idGenerator)) {
+                    $entry['method'] = 'skipped';
+                    $appliedEntries[] = $entry;
+                    continue;
+                }
+
+                $entry['method'] = $this->publish($entry['source'], $entry['target']);
+                $changedFiles[] = $this->idGenerator->normalizePath($entry['target']);
                 $appliedEntries[] = $entry;
-                continue;
             }
 
-            $entry['method'] = $this->publish($entry['source'], $entry['target']);
-            $changedFiles[] = $this->idGenerator->normalizePath($entry['target']);
-            $appliedEntries[] = $entry;
+            $this->manifestWriter->write(new AssetInstallResult($appliedEntries, $scanResult->collisions));
+            $this->runLogger->finish($context, 'assets', $mode, 'ok', $changedFiles, $blockers, $warnings);
+        } finally {
+            $this->writeLock->release();
         }
 
-        $this->manifestWriter->write(new AssetInstallResult($appliedEntries, $scanResult->collisions));
-        $this->runLogger->finish($context, 'assets', $mode, 'ok', $changedFiles, $blockers, $warnings);
         $io->success('Assets published.');
 
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 
     /**
      * Resolve the fix mode from input.
      *
      * @param InputInterface $input Console input.
-     * @param SymfonyStyle   $io    Console style helper.
      *
-     * @return string|null Fix mode or null on error.
+     * @return string Fix mode.
      */
-    private function resolveMode(InputInterface $input, SymfonyStyle $io): ?string
+    private function resolveMode(InputInterface $input): string
     {
         $dryRun = (bool) $input->getOption('dry-run');
         $apply = (bool) $input->getOption('apply');
 
         if ($dryRun === $apply) {
-            $io->error('Specify exactly one of --dry-run or --apply.');
-            return null;
+            throw new UserError('Specify exactly one of --dry-run or --apply.');
         }
 
         return $dryRun ? FixMode::DRY_RUN : FixMode::APPLY;

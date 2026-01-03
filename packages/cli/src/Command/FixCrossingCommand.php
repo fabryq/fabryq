@@ -15,6 +15,7 @@ use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Fix\FixMode;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Fix\FixSelection;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Fabryq\Runtime\Attribute\FabryqProvider;
@@ -99,6 +100,12 @@ final class FixCrossingCommand extends Command
          * @var string
          */
         private readonly string             $projectDir,
+        /**
+         * Write lock guard.
+         *
+         * @var WriteLock
+         */
+        private readonly WriteLock          $writeLock,
     ) {
         parent::__construct();
     }
@@ -193,17 +200,23 @@ final class FixCrossingCommand extends Command
             return Command::SUCCESS;
         }
 
-        $changedFiles = [];
-        foreach ($targets as $target) {
-            $result = $this->applyTarget($target, $changedFiles);
-            if ($result !== null) {
-                $blockers++;
-                $planItems[] = $result;
-            }
-        }
+        $this->writeLock->acquire();
 
-        $resultLabel = $blockers > 0 ? 'blocked' : 'ok';
-        $this->runLogger->finish($context, 'crossing', $mode, $resultLabel, $changedFiles, $blockers, $warnings);
+        $changedFiles = [];
+        try {
+            foreach ($targets as $target) {
+                $result = $this->applyTarget($target, $changedFiles);
+                if ($result !== null) {
+                    $blockers++;
+                    $planItems[] = $result;
+                }
+            }
+    
+            $resultLabel = $blockers > 0 ? 'blocked' : 'ok';
+            $this->runLogger->finish($context, 'crossing', $mode, $resultLabel, $changedFiles, $blockers, $warnings);
+        } finally {
+            $this->writeLock->release();
+        }
 
         if ($blockers > 0) {
             $io->error('Crossing fix blocked.');

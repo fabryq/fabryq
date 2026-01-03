@@ -11,10 +11,11 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Assets\AssetInstaller;
 use Fabryq\Cli\Assets\AssetManifestWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -25,11 +26,12 @@ use Symfony\Component\Console\Output\OutputInterface;
     name: 'fabryq:assets:install',
     description: 'Publish Fabryq assets to public/fabryq.'
 )]
-final class AssetsInstallCommand extends Command
+final class AssetsInstallCommand extends AbstractFabryqCommand
 {
     /**
-     * @param AssetInstaller $assetInstaller Asset installer service.
+     * @param AssetInstaller      $assetInstaller Asset installer service.
      * @param AssetManifestWriter $manifestWriter Asset manifest writer service.
+     * @param WriteLock           $writeLock      Write lock guard.
      */
     public function __construct(
         /**
@@ -44,6 +46,12 @@ final class AssetsInstallCommand extends Command
          * @var AssetManifestWriter
          */
         private readonly AssetManifestWriter $manifestWriter,
+        /**
+         * Write lock guard.
+         *
+         * @var WriteLock
+         */
+        private readonly WriteLock $writeLock,
     ) {
         parent::__construct();
     }
@@ -54,6 +62,7 @@ final class AssetsInstallCommand extends Command
     protected function configure(): void
     {
         $this->setDescription('Publish Fabryq assets to public/fabryq.');
+        parent::configure();
     }
 
     /**
@@ -64,17 +73,23 @@ final class AssetsInstallCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $result = $this->assetInstaller->install();
-        $this->manifestWriter->write($result);
+        $this->writeLock->acquire();
+
+        try {
+            $result = $this->assetInstaller->install();
+            $this->manifestWriter->write($result);
+        } finally {
+            $this->writeLock->release();
+        }
 
         if ($result->collisions !== []) {
             $output->writeln('<error>FABRYQ.PUBLIC.COLLISION: asset targets overlap.</error>');
             foreach ($result->collisions as $collision) {
                 $output->writeln(' - '.$collision['target']);
             }
-            return Command::FAILURE;
+            return CliExitCode::PROJECT_STATE_ERROR;
         }
 
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 }

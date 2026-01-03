@@ -11,10 +11,13 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Error\ProjectStateError;
+use Fabryq\Cli\Error\UserError;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -29,7 +32,7 @@ use Symfony\Component\Filesystem\Filesystem;
     name: 'fabryq:component:create',
     description: 'Create a new Fabryq component within an app.'
 )]
-final class ComponentCreateCommand extends Command
+final class ComponentCreateCommand extends AbstractFabryqCommand
 {
     /**
      * @param Filesystem       $filesystem Filesystem abstraction for writing files.
@@ -62,6 +65,12 @@ final class ComponentCreateCommand extends Command
          * @var string
          */
         private readonly string           $projectDir,
+        /**
+         * Write lock guard.
+         *
+         * @var WriteLock
+         */
+        private readonly WriteLock        $writeLock,
     ) {
         parent::__construct();
     }
@@ -78,6 +87,7 @@ final class ComponentCreateCommand extends Command
             ->addOption('with-templates', null, InputOption::VALUE_NONE, 'Add Resources/templates directory.')
             ->addOption('with-translations', null, InputOption::VALUE_NONE, 'Add Resources/translations directory.')
             ->setDescription('Create a new Fabryq component within an app.');
+        parent::configure();
     }
 
     /**
@@ -90,28 +100,24 @@ final class ComponentCreateCommand extends Command
         $componentName = (string) $input->getArgument('component');
 
         if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $componentName)) {
-            $io->error(sprintf('Invalid component name "%s".', $componentName));
-            return Command::FAILURE;
+            throw new UserError(sprintf('Invalid component name "%s".', $componentName));
         }
 
         $app = $this->findApp($appName);
         if ($app === null) {
-            $io->error(sprintf('App "%s" not found.', $appName));
-            return Command::FAILURE;
+            throw new ProjectStateError(sprintf('App "%s" not found.', $appName));
         }
 
         $slug = $this->slugger->slug($componentName);
         foreach ($app->components as $component) {
             if ($component->slug === $slug) {
-                $io->error(sprintf('Component slug "%s" already exists in app %s.', $slug, $app->manifest->appId));
-                return Command::FAILURE;
+                throw new ProjectStateError(sprintf('Component slug "%s" already exists in app %s.', $slug, $app->manifest->appId));
             }
         }
 
         $componentPath = $this->projectDir.'/src/Apps/'.basename($app->path).'/'.$componentName;
         if ($this->filesystem->exists($componentPath)) {
-            $io->error(sprintf('Component path "%s" already exists.', $componentPath));
-            return Command::FAILURE;
+            throw new ProjectStateError(sprintf('Component path "%s" already exists.', $componentPath));
         }
 
         $resourceDirs = [$componentPath.'/Resources/config'];
@@ -125,19 +131,35 @@ final class ComponentCreateCommand extends Command
             $resourceDirs[] = $componentPath.'/Resources/translations';
         }
 
-        $this->filesystem->mkdir([
+        $planned = [
+            $componentPath,
             $componentPath.'/Controller',
             $componentPath.'/Service',
-            ...$resourceDirs,
-        ]);
-
+        ];
         foreach ($resourceDirs as $dir) {
-            $this->filesystem->touch($dir.'/.keep');
+            $planned[] = $dir;
+            $planned[] = $dir.'/.keep';
+        }
+
+        $this->writeLock->acquire();
+
+        try {
+            $this->filesystem->mkdir([
+                $componentPath.'/Controller',
+                $componentPath.'/Service',
+                ...$resourceDirs,
+            ]);
+
+            foreach ($resourceDirs as $dir) {
+                $this->filesystem->touch($dir.'/.keep');
+            }
+        } finally {
+            $this->writeLock->release();
         }
 
         $io->success(sprintf('Component "%s" created in app %s.', $componentName, $app->manifest->appId));
 
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 
     /**

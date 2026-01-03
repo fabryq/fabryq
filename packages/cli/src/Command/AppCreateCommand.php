@@ -11,10 +11,13 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Error\ProjectStateError;
+use Fabryq\Cli\Error\UserError;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -29,7 +32,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
     name: 'fabryq:app:create',
     description: 'Create a new Fabryq application skeleton.'
 )]
-final class AppCreateCommand extends Command
+final class AppCreateCommand extends AbstractFabryqCommand
 {
     /**
      * @param Filesystem       $filesystem Filesystem abstraction for writing files.
@@ -62,6 +65,12 @@ final class AppCreateCommand extends Command
          * @var string
          */
         private readonly string           $projectDir,
+        /**
+         * Write lock guard.
+         *
+         * @var WriteLock
+         */
+        private readonly WriteLock        $writeLock,
     ) {
         parent::__construct();
     }
@@ -76,6 +85,7 @@ final class AppCreateCommand extends Command
             ->addOption('app-id', null, InputOption::VALUE_REQUIRED, 'App id (defaults to slug of name).')
             ->addOption('mount', null, InputOption::VALUE_REQUIRED, 'Mountpoint starting with "/" (optional).')
             ->setDescription('Create a new Fabryq application skeleton.');
+        parent::configure();
     }
 
     /**
@@ -87,8 +97,7 @@ final class AppCreateCommand extends Command
         $name = (string) $input->getArgument('name');
 
         if ($name === '' || str_contains($name, '/') || str_contains($name, '\\')) {
-            $io->error('Invalid app name.');
-            return Command::FAILURE;
+            throw new UserError('Invalid app name.');
         }
 
         $appId = (string)($input->getOption('app-id') ?? '');
@@ -97,8 +106,7 @@ final class AppCreateCommand extends Command
         }
 
         if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $appId)) {
-            $io->error(sprintf('Invalid appId "%s".', $appId));
-            return Command::FAILURE;
+            throw new UserError(sprintf('Invalid appId "%s".', $appId));
         }
 
         $mount = $input->getOption('mount');
@@ -108,30 +116,25 @@ final class AppCreateCommand extends Command
                 && ($mountpoint === '/' || !str_ends_with($mountpoint, '/'))
                 && !str_contains($mountpoint, '//');
             if (!$valid) {
-                $io->error(sprintf('Invalid mountpoint "%s".', $mountpoint));
-                return Command::FAILURE;
+                throw new UserError(sprintf('Invalid mountpoint "%s".', $mountpoint));
             }
         }
 
         foreach ($this->appRegistry->getApps() as $app) {
             if ($app->manifest->appId === $appId) {
-                $io->error(sprintf('AppId "%s" already exists.', $appId));
-                return Command::FAILURE;
+                throw new ProjectStateError(sprintf('AppId "%s" already exists.', $appId));
             }
             if (basename($app->path) === $name) {
-                $io->error(sprintf('App folder "%s" already exists.', $name));
-                return Command::FAILURE;
+                throw new ProjectStateError(sprintf('App folder "%s" already exists.', $name));
             }
             if ($mountpoint !== null && $app->manifest->mountpoint === $mountpoint) {
-                $io->error(sprintf('Mountpoint "%s" is already used.', $mountpoint));
-                return Command::FAILURE;
+                throw new ProjectStateError(sprintf('Mountpoint "%s" is already used.', $mountpoint));
             }
         }
 
         $appPath = $this->projectDir.'/src/Apps/'.$name;
         if ($this->filesystem->exists($appPath)) {
-            $io->error(sprintf('App path "%s" already exists.', $appPath));
-            return Command::FAILURE;
+            throw new ProjectStateError(sprintf('App path "%s" already exists.', $appPath));
         }
 
         $resourceDirs = [
@@ -141,18 +144,25 @@ final class AppCreateCommand extends Command
             $appPath.'/Resources/translations',
         ];
 
-        $this->filesystem->mkdir($resourceDirs);
-        foreach ($resourceDirs as $dir) {
-            $this->filesystem->touch($dir.'/.keep');
-        }
-
         $manifestPath = $appPath.'/manifest.php';
-        $manifest = $this->renderManifest($appId, $name, $mountpoint);
-        $this->filesystem->dumpFile($manifestPath, $manifest);
+
+        $this->writeLock->acquire();
+
+        try {
+            $this->filesystem->mkdir($resourceDirs);
+            foreach ($resourceDirs as $dir) {
+                $this->filesystem->touch($dir.'/.keep');
+            }
+
+            $manifest = $this->renderManifest($appId, $name, $mountpoint);
+            $this->filesystem->dumpFile($manifestPath, $manifest);
+        } finally {
+            $this->writeLock->release();
+        }
 
         $io->success(sprintf('App "%s" created at %s.', $appId, $appPath));
 
-        return Command::SUCCESS;
+        return CliExitCode::SUCCESS;
     }
 
     /**

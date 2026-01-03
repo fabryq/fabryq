@@ -32,6 +32,7 @@ use Fabryq\Cli\Command\VerifyCommand;
 use Fabryq\Cli\EventSubscriber\CliErrorSubscriber;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Gate\DoctrineGate;
+use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Fabryq\Cli\Report\ReportWriter;
 use Fabryq\Cli\Report\ReviewWriter;
@@ -60,6 +61,9 @@ return static function (ContainerConfigurator $configurator): void {
     $services->set(CliErrorSubscriber::class);
 
     $services->set(ProjectConfig::class)
+        ->args(['%kernel.project_dir%']);
+
+    $services->set(WriteLock::class)
         ->args(['%kernel.project_dir%']);
 
     $services->set(ReportWriter::class)
@@ -103,20 +107,20 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(GraphBuilder::class), service(Filesystem::class), '%kernel.project_dir%']);
 
     $services->set(AssetsInstallCommand::class)
-        ->args([service(AssetInstaller::class), service(AssetManifestWriter::class)]);
+        ->args([service(AssetInstaller::class), service(AssetManifestWriter::class), service(WriteLock::class)]);
 
     $services->set(FixCommand::class)
         ->args([service(Verifier::class), service(FindingIdGenerator::class), '%kernel.project_dir%']);
 
     $services->set(FixAssetsCommand::class)
-        ->args([service(AssetScanner::class), service(AssetManifestWriter::class), service(Filesystem::class), service(FixRunLogger::class), service(FindingIdGenerator::class)]);
+        ->args([service(AssetScanner::class), service(AssetManifestWriter::class), service(Filesystem::class), service(FixRunLogger::class), service(FindingIdGenerator::class), service(WriteLock::class)]);
 
     $services->set(FixCrossingCommand::class)
-        ->args([service(Verifier::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service(FixRunLogger::class), service(FindingIdGenerator::class), service(Filesystem::class), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%']);
+        ->args([service(Verifier::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(FixRunLogger::class), service(FindingIdGenerator::class), service(Filesystem::class), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(AppCreateCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%']);
+        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentCreateCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%']);
+        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
 };
