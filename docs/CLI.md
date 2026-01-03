@@ -1,13 +1,13 @@
 # CLI
 
-Fabryq ships a wrapper (`vendor/bin/fabryq`) and Symfony console commands (`fabryq:*`).
+Fabryq ships a wrapper (`bin/fabryq`) and Symfony console commands (`fabryq:*`).
 
-## Wrapper: `vendor/bin/fabryq`
+## Wrapper: `bin/fabryq`
 The wrapper maps short aliases to full Symfony commands and auto-detects the project root.
 
 Usage:
 ```bash
-vendor/bin/fabryq <alias> [args...]
+bin/fabryq <alias> [args...]
 ```
 
 Alias map:
@@ -50,7 +50,7 @@ Run all verification gates and write report artifacts.
 
 Syntax:
 ```bash
-vendor/bin/fabryq verify
+bin/fabryq verify
 # or
 php bin/console fabryq:verify
 ```
@@ -68,7 +68,7 @@ Run verification and generate a review report grouped by rule key.
 
 Syntax:
 ```bash
-vendor/bin/fabryq review
+bin/fabryq review
 ```
 
 Output:
@@ -83,7 +83,7 @@ Evaluate consumed capabilities against resolver winners and app status.
 
 Syntax:
 ```bash
-vendor/bin/fabryq doctor
+bin/fabryq doctor
 ```
 
 Outputs:
@@ -101,7 +101,7 @@ Export the capability graph showing consumes, provider candidates, and winners.
 
 Syntax:
 ```bash
-vendor/bin/fabryq graph [--json] [--mermaid]
+bin/fabryq graph [--json] [--mermaid]
 ```
 
 Options:
@@ -122,7 +122,7 @@ Publish app and component assets to `public/fabryq`.
 
 Syntax:
 ```bash
-vendor/bin/fabryq assets:install
+bin/fabryq assets:install
 ```
 
 Outputs:
@@ -138,7 +138,7 @@ Create a new app skeleton.
 
 Syntax:
 ```bash
-vendor/bin/fabryq app:create <AppPascal> [--app-id=<kebab>] [--mount=/<path>]
+bin/fabryq app:create <AppPascal> [--app-id=<kebab>] [--mount=/<path>]
 ```
 
 Options:
@@ -158,7 +158,7 @@ Create a new component within an app.
 
 Syntax:
 ```bash
-vendor/bin/fabryq component:create <AppPascal|appId> <ComponentPascal> [--with-public] [--with-templates] [--with-translations]
+bin/fabryq component:create <AppPascal|appId> <ComponentPascal> [--with-public] [--with-templates] [--with-translations]
 ```
 
 Options:
@@ -178,7 +178,7 @@ Dispatch autofixers based on available findings.
 
 Syntax:
 ```bash
-vendor/bin/fabryq fix --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>]
+bin/fabryq fix --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>]
 ```
 
 Options:
@@ -195,7 +195,7 @@ Plan or apply asset publishing, including collision handling.
 
 Syntax:
 ```bash
-vendor/bin/fabryq fix assets --dry-run|--apply [--all|--file=<path>|--finding=<id>]
+bin/fabryq fix assets --dry-run|--apply [--all|--file=<path>|--finding=<id>]
 ```
 
 Notes:
@@ -214,7 +214,7 @@ Generate bridge contracts and adapters for cross-app references.
 
 Syntax:
 ```bash
-vendor/bin/fabryq fix crossing --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>]
+bin/fabryq fix crossing --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>]
 ```
 
 Outputs:
@@ -231,31 +231,31 @@ Exit codes:
 
 ### CI gate
 ```bash
-vendor/bin/fabryq verify
+bin/fabryq verify
 ```
 Fail the build if the exit code is non-zero.
 
 ### Resolve cross-app references
 ```bash
-vendor/bin/fabryq verify
-vendor/bin/fabryq fix crossing --dry-run --finding=<F-ID>
-vendor/bin/fabryq fix crossing --apply --finding=<F-ID>
-vendor/bin/fabryq verify
+bin/fabryq verify
+bin/fabryq fix crossing --dry-run --finding=<F-ID>
+bin/fabryq fix crossing --apply --finding=<F-ID>
+bin/fabryq verify
 ```
 
 ### Publish assets
 ```bash
-vendor/bin/fabryq assets:install
+bin/fabryq assets:install
 ```
 If collisions exist:
 ```bash
-vendor/bin/fabryq fix assets --dry-run --all
-vendor/bin/fabryq fix assets --apply --all
+bin/fabryq fix assets --dry-run --all
+bin/fabryq fix assets --apply --all
 ```
 
 ### Review output for PRs
 ```bash
-vendor/bin/fabryq review
+bin/fabryq review
 ```
 
 ## Related docs

@@ -17,6 +17,15 @@ $aliases = [
 ];
 
 $argv = $_SERVER['argv'] ?? [];
+$invocation = $argv[0] ?? 'bin/fabryq';
+$invocation = str_replace('\\', '/', $invocation);
+if (str_contains($invocation, 'vendor/bin/fabryq')) {
+    $display = 'vendor/bin/fabryq';
+} elseif (str_contains($invocation, 'bin/fabryq')) {
+    $display = 'bin/fabryq';
+} else {
+    $display = 'fabryq';
+}
 array_shift($argv);
 
 $shouldShowHelp = $argv === [] || in_array('--help', $argv, true);
@@ -26,7 +35,7 @@ if ($shouldShowHelp) {
     $lines[] = 'Fabryq CLI wrapper';
     $lines[] = '';
     $lines[] = 'Usage:';
-    $lines[] = '  vendor/bin/fabryq <alias> [args...]';
+    $lines[] = '  ' . $display . ' <alias> [args...]';
     $lines[] = '';
     $lines[] = 'Aliases:';
     $lines[] = '  verify            -> fabryq:verify';
@@ -41,9 +50,9 @@ if ($shouldShowHelp) {
     $lines[] = '  fix crossing      -> fabryq:fix:crossing';
     $lines[] = '';
     $lines[] = 'Examples:';
-    $lines[] = '  vendor/bin/fabryq verify';
-    $lines[] = '  vendor/bin/fabryq app:create Demo --mount=/demo';
-    $lines[] = '  vendor/bin/fabryq fix crossing --dry-run';
+    $lines[] = '  ' . $display . ' verify';
+    $lines[] = '  ' . $display . ' app:create Demo --mount=/demo';
+    $lines[] = '  ' . $display . ' fix crossing --dry-run';
     $lines[] = '';
     $lines[] = 'Root detection:';
     $lines[] = '  Searches upwards for composer.json + bin/console (max depth '.FABRYQ_ROOT_MAX_DEPTH.').';

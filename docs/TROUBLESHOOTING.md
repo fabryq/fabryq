@@ -5,7 +5,7 @@ Symptoms:
 - `Unable to locate project root (composer.json + bin/console).`
 
 Fix:
-- Run `vendor/bin/fabryq` from inside a Symfony project that contains `composer.json` and `bin/console`.
+- Run `bin/fabryq` from inside a Symfony project that contains `composer.json` and `bin/console`.
 - If you are inside a subdirectory, run the command from the project root.
 
 ## `FABRYQ.MANIFEST.INVALID`

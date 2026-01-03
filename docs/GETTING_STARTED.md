@@ -33,8 +33,8 @@ Environment gate passed.
 ## Create a first app and component
 
 ```bash
-vendor/bin/fabryq app:create Billing --mount=/billing
-vendor/bin/fabryq component:create Billing Payments
+bin/fabryq app:create Billing --mount=/billing
+bin/fabryq component:create Billing Payments
 ```
 
 Expected output:
@@ -47,7 +47,7 @@ Component "Payments" created in app billing.
 ## Run the verification gate
 
 ```bash
-vendor/bin/fabryq verify
+bin/fabryq verify
 ```
 
 Expected output:
