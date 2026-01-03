@@ -10,7 +10,7 @@ Requirements:
 
 Setup:
 ```bash
-composer install
+composer create-project fabryq/fabryq . -s dev
 php tools/env-check.php
 ```
 

@@ -66,10 +66,19 @@ vendor/bin/fabryq doctor
 ## Upgrade Fabryq (manual)
 Fabryq does not ship an automated upgrade command.
 
-For this repo:
+For this repo (fresh setup):
+```bash
+composer create-project fabryq/fabryq . -s dev
+```
+
+For an existing checkout:
 ```bash
 git pull
 composer install
+```
+
+Then run:
+```bash
 vendor/bin/fabryq verify
 vendor/bin/fabryq doctor
 ```
