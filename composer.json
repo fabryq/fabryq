@@ -84,5 +84,10 @@
     "env:check": "php tools/env-check.php",
     "test": "phpunit",
     "lint": "php tools/lint.php"
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.0"
+    }
   }
 }
