@@ -30,10 +30,10 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "@php bin/console fabryq assets:install"
+      "@php bin/console fabryq:assets:install"
     ],
     "post-update-cmd": [
-      "@php bin/console fabryq assets:install"
+      "@php bin/console fabryq:assets:install"
     ]
   }
 }
