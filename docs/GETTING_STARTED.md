@@ -8,7 +8,7 @@ To install Fabryq in an existing project, run `composer require fabryq/fabryq` (
 
 ## Requirements
 
-- PHP 8.4.x
+- PHP 8.2.x
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 

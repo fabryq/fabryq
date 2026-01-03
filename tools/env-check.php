@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /**
- * Environment gate for Fabryq: PHP 8.4.x, Composer available, sqlite extensions.
+ * Environment gate for Fabryq: PHP 8.2.x, Composer available, sqlite extensions.
  */
 
 $errors = [];
 
-if (version_compare(PHP_VERSION, '8.4.0', '<') || version_compare(PHP_VERSION, '8.5.0', '>=')) {
-    $errors[] = sprintf('PHP 8.4.x required, current: %s', PHP_VERSION);
+if (version_compare(PHP_VERSION, '8.2.0', '<') || version_compare(PHP_VERSION, '8.5.0', '>=')) {
+    $errors[] = sprintf('PHP 8.2.x required, current: %s', PHP_VERSION);
 }
 
 $composerOk = true;

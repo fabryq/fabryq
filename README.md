@@ -11,7 +11,8 @@
 Fabryq is a PHP/Symfony architecture toolkit for building multiple apps inside one runtime. It combines a runtime bundle, CLI gates, and contracts so structure
 and dependencies are explicit and machine-checkable.
 
-Fabryq is aimed at backend developers, tech leads, and solo developers who value clear application boundaries, deterministic reports, and a minimum of shared abstractions.
+Fabryq is aimed at backend developers, tech leads, and solo developers who value clear application boundaries, deterministic reports, and a minimum of shared
+abstractions.
 Current line: v0.3.x (pre-release).
 
 ## Core principles
@@ -38,7 +39,7 @@ composer require fabryq/fabryq
 
 Requirements:
 
-- PHP 8.4.x
+- PHP 8.2.x
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 

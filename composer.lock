@@ -1340,7 +1340,7 @@
         "fabryq/contracts": "*",
         "fabryq/runtime": "*",
         "nikic/php-parser": "^4.18 || ^5.0",
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/console": "^6.4 || ^7.0",
         "symfony/filesystem": "^6.4 || ^7.0",
         "symfony/finder": "^6.4 || ^7.0",
@@ -1373,7 +1373,7 @@
         "reference": "f414dadf830c185314dafc985766e8994ccfd910"
       },
       "require": {
-        "php": ">=8.4"
+        "php": ">=8.2"
       },
       "type": "library",
       "autoload": {
@@ -1400,7 +1400,7 @@
       },
       "require": {
         "fabryq/contracts": "*",
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/framework-bundle": "^6.4 || ^7.0"
       },
       "type": "symfony-bundle",
@@ -1431,7 +1431,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^2.17",
         "fabryq/contracts": "*",
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/config": "^6.4 || ^7.0",
         "symfony/dependency-injection": "^6.4 || ^7.0",
         "symfony/filesystem": "^6.4 || ^7.0",
@@ -1731,7 +1731,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4"
+        "php": ">=8.2"
       },
       "require-dev": {
         "symfony/http-client": "^7.4|^8.0",
@@ -2500,7 +2500,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "psr/log": "^1|^2|^3",
         "symfony/polyfill-php85": "^1.32",
         "symfony/var-dumper": "^7.4|^8.0"
@@ -2581,7 +2581,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/event-dispatcher-contracts": "^2.5|^3"
       },
       "conflict": {
@@ -3757,7 +3757,7 @@
           "homepage": "https://symfony.com/contributors"
         }
       ],
-      "description": "Symfony polyfill backporting some PHP 8.4+ features to lower PHP versions",
+      "description": "Symfony polyfill backporting some PHP 8.2+ features to lower PHP versions",
       "homepage": "https://symfony.com",
       "keywords": [
         "compatibility",
@@ -4138,7 +4138,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/service-contracts": "^2.5|^3"
       },
       "type": "library",
@@ -4204,7 +4204,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/polyfill-ctype": "^1.8",
         "symfony/polyfill-intl-grapheme": "^1.33",
         "symfony/polyfill-intl-normalizer": "^1.0",
@@ -4376,7 +4376,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/translation-contracts": "^2.5|^3",
         "twig/twig": "^3.21"
       },
@@ -4650,7 +4650,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "symfony/polyfill-mbstring": "^1.0"
       },
       "conflict": {
@@ -4737,7 +4737,7 @@
         "shasum": ""
       },
       "require": {
-        "php": ">=8.4"
+        "php": ">=8.2"
       },
       "require-dev": {
         "symfony/property-access": "^7.4|^8.0",
