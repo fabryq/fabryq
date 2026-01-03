@@ -81,6 +81,7 @@ final class ComponentCreateCommand extends AbstractFabryqCommand
     protected function configure(): void
     {
         $this
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Plan changes without writing files.')
             ->addArgument('app', InputArgument::REQUIRED, 'Application folder name (PascalCase).')
             ->addArgument('component', InputArgument::REQUIRED, 'Component name (PascalCase).')
             ->addOption('with-public', null, InputOption::VALUE_NONE, 'Add Resources/public directory.')
@@ -98,6 +99,7 @@ final class ComponentCreateCommand extends AbstractFabryqCommand
         $io = new SymfonyStyle($input, $output);
         $appName = (string) $input->getArgument('app');
         $componentName = (string) $input->getArgument('component');
+        $dryRun = (bool) $input->getOption('dry-run');
 
         if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $componentName)) {
             throw new UserError(sprintf('Invalid component name "%s".', $componentName));
@@ -139,6 +141,13 @@ final class ComponentCreateCommand extends AbstractFabryqCommand
         foreach ($resourceDirs as $dir) {
             $planned[] = $dir;
             $planned[] = $dir.'/.keep';
+        }
+
+        if ($dryRun) {
+            $io->title('Dry-run: fabryq:component:create');
+            $io->listing($planned);
+            $io->success('No files were written.');
+            return CliExitCode::SUCCESS;
         }
 
         $this->writeLock->acquire();

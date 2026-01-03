@@ -81,6 +81,7 @@ final class AppCreateCommand extends AbstractFabryqCommand
     protected function configure(): void
     {
         $this
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Plan changes without writing files.')
             ->addArgument('name', InputArgument::REQUIRED, 'Application name (PascalCase folder name).')
             ->addOption('app-id', null, InputOption::VALUE_REQUIRED, 'App id (defaults to slug of name).')
             ->addOption('mount', null, InputOption::VALUE_REQUIRED, 'Mountpoint starting with "/" (optional).')
@@ -95,6 +96,7 @@ final class AppCreateCommand extends AbstractFabryqCommand
     {
         $io = new SymfonyStyle($input, $output);
         $name = (string) $input->getArgument('name');
+        $dryRun = (bool) $input->getOption('dry-run');
 
         if ($name === '' || str_contains($name, '/') || str_contains($name, '\\')) {
             throw new UserError('Invalid app name.');
@@ -145,6 +147,19 @@ final class AppCreateCommand extends AbstractFabryqCommand
         ];
 
         $manifestPath = $appPath.'/manifest.php';
+
+        $planned = [$appPath, $manifestPath];
+        foreach ($resourceDirs as $dir) {
+            $planned[] = $dir;
+            $planned[] = $dir.'/.keep';
+        }
+
+        if ($dryRun) {
+            $io->title('Dry-run: fabryq:app:create');
+            $io->listing($planned);
+            $io->success('No files were written.');
+            return CliExitCode::SUCCESS;
+        }
 
         $this->writeLock->acquire();
 

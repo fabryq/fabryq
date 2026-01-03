@@ -107,7 +107,7 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(GraphBuilder::class), service(Filesystem::class), '%kernel.project_dir%']);
 
     $services->set(AssetsInstallCommand::class)
-        ->args([service(AssetInstaller::class), service(AssetManifestWriter::class), service(WriteLock::class)]);
+        ->args([service(AssetInstaller::class), service(AssetManifestWriter::class), service(AssetScanner::class), service(WriteLock::class)]);
 
     $services->set(FixCommand::class)
         ->args([service(Verifier::class), service(FindingIdGenerator::class), '%kernel.project_dir%']);
