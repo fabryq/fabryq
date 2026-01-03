@@ -15,6 +15,7 @@ use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Fix\FixMode;
 use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Fix\FixSelection;
+use Fabryq\Cli\Fix\ImportPruner;
 use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
@@ -48,6 +49,20 @@ use Symfony\Component\Filesystem\Filesystem;
 )]
 final class FixCrossingCommand extends Command
 {
+    /**
+     * Whether to prune unresolvable imports.
+     *
+     * @var bool
+     */
+    private bool $pruneUnresolvableImports = false;
+
+    /**
+     * Import pruner instance.
+     *
+     * @var ImportPruner|null
+     */
+    private ?ImportPruner $importPruner = null;
+
     /**
      * @param Verifier           $verifier    Verification analyzer.
      * @param AppRegistry        $appRegistry Application registry.
@@ -122,6 +137,7 @@ final class FixCrossingCommand extends Command
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Filter by file path.')
             ->addOption('symbol', null, InputOption::VALUE_REQUIRED, 'Filter by symbol.')
             ->addOption('finding', null, InputOption::VALUE_REQUIRED, 'Filter by finding id.')
+            ->addOption('prune-unresolvable-imports', null, InputOption::VALUE_NONE, 'Remove unresolvable imports (requires vendor/autoload.php).')
             ->setDescription('Fix cross-app references by generating bridges.');
     }
 
@@ -133,6 +149,8 @@ final class FixCrossingCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $mode = $this->resolveMode($input, $io);
+
+        $this->initImportPruner($input);
         if ($mode === null) {
             return Command::FAILURE;
         }
@@ -1714,6 +1732,7 @@ final class FixCrossingCommand extends Command
         }
 
         $stmts = $this->replaceNewExpressions($stmts);
+        $stmts = $this->pruneImports($stmts);
         $printer = new Standard();
         // FIX: Verwende $tokens Variable statt $lexer->getTokens()
         $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $tokens);
@@ -1862,5 +1881,37 @@ final class FixCrossingCommand extends Command
         $this->filesystem->dumpFile($manifestPath, $content);
 
         return null;
+    }
+    /**
+     * Initialize the import pruner based on input flags.
+     *
+     * @param InputInterface $input Console input.
+     */
+    private function initImportPruner(InputInterface $input): void
+    {
+        $this->pruneUnresolvableImports = (bool) $input->getOption('prune-unresolvable-imports');
+        $autoloadAvailable = is_file($this->projectDir . '/vendor/autoload.php');
+
+        if ($this->pruneUnresolvableImports && $autoloadAvailable) {
+            require_once $this->projectDir . '/vendor/autoload.php';
+        }
+
+        $this->importPruner = new ImportPruner($autoloadAvailable);
+    }
+
+    /**
+     * Apply import pruning to updated statements.
+     *
+     * @param array<int, Node\Stmt> $stmts
+     *
+     * @return array<int, Node\Stmt>
+     */
+    private function pruneImports(array $stmts): array
+    {
+        if ($this->importPruner === null) {
+            $this->importPruner = new ImportPruner(false);
+        }
+
+        return $this->importPruner->prune($stmts, $this->pruneUnresolvableImports);
     }
 }
