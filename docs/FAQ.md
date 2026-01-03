@@ -19,7 +19,7 @@ In `src/Apps/<App>/manifest.php`.
 Under `state/`, for example `state/reports/verify/latest.json`.
 
 ## How do I publish assets?
-Place them under `Resources/public` and run `bin/fabryq assets:install`.
+Place them under `Resources/public` and run `bin/console fabryq:assets:install`.
 
 ## Can I inject the service container?
 No. Container typehints and `container->get()` calls are blocked. Use explicit dependencies or `FabryqContext`.

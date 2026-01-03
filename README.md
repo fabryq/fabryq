@@ -52,15 +52,15 @@ composer create-project fabryq/fabryq . -s dev
 Run:
 
 ```bash
-bin/fabryq verify
+bin/console fabryq:verify
 ```
 
 ## First success (minimal)
 
 ```bash
-bin/fabryq app:create Billing --mount=/billing
-bin/fabryq component:create Billing Payments
-bin/fabryq verify
+bin/console fabryq:app:create Billing --mount=/billing
+bin/console fabryq:component:create Billing Payments
+bin/console fabryq:verify
 ```
 
 Expected output (verify):

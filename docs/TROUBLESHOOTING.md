@@ -1,11 +1,11 @@
 # Troubleshooting
 
-## Wrapper cannot find the project root
+## CLI cannot find the project root
 Symptoms:
 - `Unable to locate project root (composer.json + bin/console).`
 
 Fix:
-- Run `bin/fabryq` from inside a Symfony project that contains `composer.json` and `bin/console`.
+- Run `bin/console fabryq:verify` from inside a Symfony project that contains `composer.json` and `bin/console`.
 - If you are inside a subdirectory, run the command from the project root.
 
 ## `FABRYQ.MANIFEST.INVALID`

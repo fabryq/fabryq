@@ -44,9 +44,9 @@ composer lint
 - Fabryq gates:
 
 ```bash
-bin/fabryq verify
-bin/fabryq review
-bin/fabryq doctor
+bin/console fabryq:verify
+bin/console fabryq:review
+bin/console fabryq:doctor
 ```
 
 ## PR checklist

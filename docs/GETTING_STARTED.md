@@ -4,8 +4,6 @@ This guide walks you through a minimal, working Fabryq setup from the repo.
 
 Docs index: [INDEX](INDEX.md).
 
-To install Fabryq in an existing project, run `composer require fabryq/fabryq` (https://packagist.org/packages/fabryq/fabryq).
-
 ## Requirements
 
 - PHP 8.2.x
@@ -33,8 +31,8 @@ Environment gate passed.
 ## Create a first app and component
 
 ```bash
-bin/fabryq app:create Billing --mount=/billing
-bin/fabryq component:create Billing Payments
+bin/console fabryq:app:create Billing --mount=/billing
+bin/console fabryq:component:create Billing Payments
 ```
 
 Expected output:
@@ -47,7 +45,7 @@ Component "Payments" created in app billing.
 ## Run the verification gate
 
 ```bash
-bin/fabryq verify
+bin/console fabryq:verify
 ```
 
 Expected output:
@@ -69,15 +67,4 @@ Verification writes artifacts to:
 - Learn the architecture vocabulary: [Concepts](CONCEPTS.md)
 - Understand enforced rules: [Guardrails](GUARDRAILS.md)
 - Use the CLI effectively: [CLI](CLI.md)
-- Follow end-to-end tasks: [Workflows](WORKFLOWS.md)
-
-## Optional: start from the skeleton
-
-The `skeleton/` directory is a project template. You can copy it into a new directory and run `composer install`. If you have access to a Composer package feed
-that contains `fabryq/skeleton`, you can also use:
-
-```bash
-composer create-project fabryq/skeleton my-project
-```
-
-Note: the demo project in `examples/demo` contains intentional rule violations for testing, so `fabryq verify` is expected to report blockers there.
+- Follow end-to-end tasks: [Workflows](WORKFLOWS.md) 

@@ -2,7 +2,7 @@
 
 ## Create an app
 ```bash
-bin/fabryq app:create Billing --mount=/billing
+bin/console fabryq:app:create Billing --mount=/billing
 ```
 
 What it does:
@@ -13,7 +13,7 @@ Next step: add a component.
 
 ## Add a component
 ```bash
-bin/fabryq component:create Billing Payments --with-templates --with-public
+bin/console fabryq:component:create Billing Payments --with-templates --with-public
 ```
 
 What it does:
@@ -40,8 +40,8 @@ final class StockServiceAdapter implements StockServiceInterface
 
 Run:
 ```bash
-bin/fabryq verify
-bin/fabryq doctor
+bin/console fabryq:verify
+bin/console fabryq:doctor
 ```
 
 ## Remove an app
@@ -54,13 +54,13 @@ rm -rf src/Apps/Billing
 
 3) Re-publish assets to remove stale targets:
 ```bash
-bin/fabryq assets:install
+bin/console fabryq:assets:install
 ```
 
 4) Re-run gates:
 ```bash
-bin/fabryq verify
-bin/fabryq doctor
+bin/console fabryq:verify
+bin/console fabryq:doctor
 ```
 
 ## Upgrade Fabryq (manual)
@@ -79,8 +79,8 @@ composer install
 
 Then run:
 ```bash
-bin/fabryq verify
-bin/fabryq doctor
+bin/console fabryq:verify
+bin/console fabryq:doctor
 ```
 
 For a project using Fabryq packages:
