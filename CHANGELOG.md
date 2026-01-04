@@ -22,7 +22,7 @@ Added:
 Changed:
 
 - Demo: add StockService import to the Test HelloWorld controller.
-- Demo: remove Billing, Dump, Faults, and Inventory sample app content.
+- Demo: remove Billing, Dump, Faults, and Inventory sample app content so gates pass cleanly.
 - Ignore top-level `AGENTS.md` in git.
 - Docs: update install instructions and CLI documentation for v0.4.0.
 - Install instructions updated to use `composer create-project fabryq/fabryq:0.4.0`.

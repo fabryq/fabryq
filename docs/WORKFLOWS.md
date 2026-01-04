@@ -129,8 +129,7 @@ For a project using Fabryq packages:
 The repository ships a dedicated workflow to validate that the CLI commands execute in the demo project.
 
 Expectations:
-- `fabryq:verify` exits with code `3` because the demo intentionally contains blockers.
-- `fabryq:doctor` and `fabryq:graph` must succeed.
+- `fabryq:verify`, `fabryq:doctor`, and `fabryq:graph` must succeed on the demo project.
 
 Workflow file: `.github/workflows/fabryq-cli.yml`.
 

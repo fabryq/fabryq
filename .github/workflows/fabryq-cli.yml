@@ -32,11 +32,6 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p var
-          VERIFY_EXIT=0
-          php bin/console fabryq:verify || VERIFY_EXIT=$?
-          if [ "$VERIFY_EXIT" -ne 3 ]; then
-            echo "Expected fabryq:verify to exit 3, got $VERIFY_EXIT"
-            exit 1
-          fi
+          php bin/console fabryq:verify
           php bin/console fabryq:doctor
           php bin/console fabryq:graph
