@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Command;
 
+use Fabryq\Cli\Config\ProjectConfig;
 use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Error\ProjectStateError;
 use Fabryq\Cli\Error\UserError;
@@ -38,6 +39,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
      * @param Filesystem    $filesystem Filesystem abstraction.
      * @param AppRegistry   $appRegistry App registry.
      * @param ComponentSlugger $slugger Slug generator for resource routes.
+     * @param ProjectConfig $config     Project config defaults.
      * @param string        $projectDir Project directory.
      * @param WriteLock     $writeLock  Write lock guard.
      */
@@ -45,6 +47,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
         private readonly Filesystem       $filesystem,
         private readonly AppRegistry      $appRegistry,
         private readonly ComponentSlugger $slugger,
+        private readonly ProjectConfig    $config,
         private readonly string           $projectDir,
         private readonly WriteLock        $writeLock,
     ) {
@@ -81,7 +84,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
         $componentPath = $this->projectDir . '/src/Apps/' . $appFolder . '/' . $resourceName;
 
         $resourceSlug = $this->slugger->slug($resourceName);
-        $controllerConfig = $this->defaultControllerConfig();
+        $controllerConfig = $this->config->controller();
 
         $targets = $this->buildTargets($appFolder, $resourceName, $resourceSlug, $controllerConfig, $componentPath);
 
@@ -335,32 +338,6 @@ final class CrudCreateCommand extends AbstractFabryqCommand
             "    }\n\n".
             implode("\n\n", $methods).
             "\n}\n";
-    }
-
-    /**
-     * Default controller configuration used when no project config is applied.
-     *
-     * @return array<string, mixed>
-     */
-    private function defaultControllerConfig(): array
-    {
-        return [
-            'route_prefix' => '',
-            'route_name_prefix' => '',
-            'default_format' => 'json',
-            'security' => [
-                'enabled' => false,
-                'attribute' => '',
-            ],
-            'templates' => [
-                'enabled' => false,
-                'namespace' => '',
-            ],
-            'translations' => [
-                'enabled' => false,
-                'domain' => 'messages',
-            ],
-        ];
     }
 
     /**

@@ -65,10 +65,10 @@ return static function (ContainerConfigurator $configurator): void {
     $services->set(FindingIdGenerator::class)
         ->args(['%kernel.project_dir%']);
 
-    $services->set(CliErrorSubscriber::class);
-
     $services->set(ProjectConfig::class)
         ->args(['%kernel.project_dir%']);
+
+    $services->set(CliErrorSubscriber::class);
 
     $services->set(WriteLock::class)
         ->args(['%kernel.project_dir%']);
@@ -127,25 +127,26 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(AssetScanner::class), service(AssetManifestWriter::class), service(Filesystem::class), service(FixRunLogger::class), service(FindingIdGenerator::class), service(WriteLock::class)]);
 
     $services->set(FixCrossingCommand::class)
-        ->args([service(Verifier::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(FixRunLogger::class), service(FindingIdGenerator::class), service(Filesystem::class), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Verifier::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service(FixRunLogger::class), service(FindingIdGenerator::class), service(Filesystem::class), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(AppCreateCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
-
-    $services->set(AppRemoveCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentCreateCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+
+    $services->set(AppRemoveCommand::class)
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentRemoveCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentAddTemplatesCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentAddTranslationsCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
+
     $services->set(CrudCreateCommand::class)
-        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+        ->args([service(Filesystem::class), service('Fabryq\\Runtime\\Registry\\AppRegistry'), service('Fabryq\\Runtime\\Util\\ComponentSlugger'), service(ProjectConfig::class), '%kernel.project_dir%', service(WriteLock::class)]);
 };
