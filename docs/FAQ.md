@@ -25,7 +25,7 @@ Place them under `Resources/public` and run `bin/console fabryq:assets:install`.
 No. Container typehints and `container->get()` calls are blocked. Use explicit dependencies or `FabryqContext`.
 
 ## Is Fabryq stable?
-v0.3.x is pre-release. Breaking changes are possible.
+v0.4.x is pre-release. Breaking changes are possible.
 
 ## Related docs
 - [Docs Index](INDEX.md)

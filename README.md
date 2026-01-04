@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/v0.3.x-blue?label=Status" alt="Fabryq version">
+  <img src="https://img.shields.io/badge/v0.4.x-blue?label=Status" alt="Fabryq version">
   <img src="https://img.shields.io/github/license/fabryq/fabryq" alt="Fabryq license">
   <img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq version">
   <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq size">
@@ -13,7 +13,7 @@ and dependencies are explicit and machine-checkable.
 
 Fabryq is aimed at backend developers, tech leads, and solo developers who value clear application boundaries, deterministic reports, and a minimum of shared
 abstractions.
-Current line: v0.3.x (pre-release).
+Current line: v0.4.x (pre-release).
 
 ## Core principles
 
@@ -36,13 +36,13 @@ Requirements:
 - Composer
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
-Fabryq v0.3.0 is distributed as a `composer create-project` template only.
-`composer create-project fabryq/fabryq:0.3.0` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
+Fabryq v0.4.0 is distributed as a `composer create-project` template only.
+`composer create-project fabryq/fabryq:0.4.0` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
 
 Install:
 
 ```bash
-composer create-project fabryq/fabryq:0.3.0 fabryq-project
+composer create-project fabryq/fabryq:0.4.0 fabryq-project
 cd fabryq-project
 bin/console fabryq:verify
 ```
@@ -50,7 +50,7 @@ bin/console fabryq:verify
 Development branch (bleeding edge):
 
 ```bash
-composer create-project fabryq/fabryq:dev-v0.3.x-dev fabryq-project
+composer create-project fabryq/fabryq:dev-v0.4.x-dev fabryq-project
 ```
 
 ## First success (minimal)
@@ -80,7 +80,7 @@ No issues found.
 
 ## Versioning and stability
 
-Fabryq v0.3.x is pre-release. Breaking changes are possible, and there is no compatibility guarantee between pre-release tags. Treat rule keys, report schemas,
+Fabryq v0.4.x is pre-release. Breaking changes are possible, and there is no compatibility guarantee between pre-release tags. Treat rule keys, report schemas,
 and CLI output as subject to change.
 
 ## Documentation

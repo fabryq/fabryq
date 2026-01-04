@@ -7,11 +7,48 @@ Fabryq ships Symfony console commands (`fabryq:*`). Use them via `bin/console` f
 bin/console fabryq:<command> [args...]
 ```
 
+## Global options
+- `--debug`: show a stack trace on errors.
+
+## Project configuration (`fabryq.yaml`)
+Fabryq reads optional config from `fabryq.yaml` in the project root. If the file is missing, defaults apply.
+
+Example:
+```yaml
+controller:
+  route_prefix: ''
+  route_name_prefix: ''
+  default_format: 'json'
+  security:
+    enabled: false
+    attribute: ''
+  templates:
+    enabled: false
+    namespace: ''
+  translations:
+    enabled: false
+    domain: 'messages'
+reports:
+  links:
+    enabled: true
+    scheme: 'phpstorm'
+```
+
+`reports.links.scheme` accepts `phpstorm`, `file`, or `none`.
+
+## Exit codes
+- `0`: success
+- `2`: user error (invalid input)
+- `3`: project state error (blockers, missing project files, or invalid config)
+- `1`: internal error (unexpected)
+
+Commands may return additional non-zero codes as documented below.
+
 ## Gate flow (high level)
 ```mermaid
 flowchart TD
   Verify[verify] --> VerifyReports[state/reports/verify]
-  Verify -->|blockers| VerifyFail[exit 1]
+  Verify -->|blockers| VerifyFail[exit 3]
   Verify -->|no blockers| VerifyOk[exit 0]
   Verify --> Fix[fix]
   Fix --> Fixers[fix:assets / fix:crossing]
@@ -36,7 +73,7 @@ Outputs:
 
 Exit codes:
 - `0`: no blockers (warnings allowed)
-- `1`: blockers present
+- `3`: blockers present
 
 ### review
 Run verification and generate a review report grouped by rule key.
@@ -51,7 +88,7 @@ Output:
 
 Exit codes:
 - `0`: no blockers
-- `1`: blockers present
+- `3`: blockers present
 
 ### doctor
 Evaluate consumed capabilities against resolver winners and app status.
@@ -67,9 +104,7 @@ Outputs:
 
 Exit codes:
 - `0`: healthy
-- `10`: degraded (winner priority `-1000`)
-- `20`: blockers or unhealthy apps
-- `30`: unexpected error
+- `3`: blockers or unhealthy/degraded apps
 
 ### graph
 Export the capability graph showing consumes, provider candidates, and winners.
@@ -89,16 +124,18 @@ Outputs:
 
 Exit codes:
 - `0`: no missing winners and no degraded winners
-- `10`: degraded winners
-- `20`: missing winners
+- `3`: missing or degraded winners
 
 ### assets:install
 Publish app and component assets to `public/fabryq`.
 
 Syntax:
 ```bash
-bin/console fabryq:assets:install
+bin/console fabryq:assets:install [--dry-run]
 ```
+
+Options:
+- `--dry-run`: plan changes without writing files.
 
 Outputs:
 - `state/assets/manifest.json`
@@ -106,7 +143,7 @@ Outputs:
 
 Exit codes:
 - `0`: success
-- `1`: asset collisions detected
+- `3`: asset collisions detected
 
 ### app:create
 Create a new app skeleton.
@@ -119,6 +156,7 @@ bin/console fabryq:app:create <AppPascal> [--app-id=<kebab>] [--mount=/<path>]
 Options:
 - `--app-id`: override the app id (defaults to kebab-case slug of name)
 - `--mount`: mountpoint path (must start with `/`; no trailing `/` unless it is `/`; no `//`)
+- `--dry-run`: plan changes without writing files
 
 Outputs:
 - `src/Apps/<AppPascal>/manifest.php`
@@ -126,7 +164,8 @@ Outputs:
 
 Exit codes:
 - `0`: success
-- `1`: invalid name, invalid app id, mountpoint collision, or existing app
+- `2`: invalid name or invalid app id
+- `3`: mountpoint collision or existing app
 
 ### component:create
 Create a new component within an app.
@@ -140,13 +179,106 @@ Options:
 - `--with-public`: add `Resources/public`
 - `--with-templates`: add `Resources/templates`
 - `--with-translations`: add `Resources/translations`
+- `--dry-run`: plan changes without writing files
 
 Outputs:
 - `src/Apps/<AppPascal>/<ComponentPascal>/{Controller,Service,Resources/config}`
 
 Exit codes:
 - `0`: success
-- `1`: invalid component name, app not found, or slug collision
+- `2`: invalid component name
+- `3`: app not found or slug collision
+
+### crud:create
+Create CRUD scaffolding for a resource inside an app.
+
+Syntax:
+```bash
+bin/console fabryq:crud:create <AppPascal|appId> <ResourcePascal> [--dry-run]
+```
+
+Options:
+- `--dry-run`: plan changes without writing files.
+
+Outputs:
+- `src/Apps/<AppPascal>/<ResourcePascal>/UseCase/<ResourcePascal>/<Action><ResourcePascal>UseCase.php`
+- `src/Apps/<AppPascal>/<ResourcePascal>/Dto/<ResourcePascal>/<Action><ResourcePascal>{Request,Response}.php`
+- `src/Apps/<AppPascal>/<ResourcePascal>/Controller/<ResourcePascal>Controller.php`
+
+Exit codes:
+- `0`: success
+- `2`: invalid resource name
+- `3`: app not found or existing target
+
+### component:add:templates
+Add templates scaffolding to a component.
+
+Syntax:
+```bash
+bin/console fabryq:component:add:templates <ComponentPascal> [--dry-run]
+```
+
+Options:
+- `--dry-run`: plan changes without writing files.
+
+Outputs:
+- `Resources/templates/.keep`
+
+Exit codes:
+- `0`: success
+- `2`: ambiguous component name
+- `3`: component not found
+
+### component:add:translations
+Add translations scaffolding to a component.
+
+Syntax:
+```bash
+bin/console fabryq:component:add:translations <ComponentPascal> [--dry-run]
+```
+
+Options:
+- `--dry-run`: plan changes without writing files.
+
+Outputs:
+- `Resources/translations/.keep`
+
+Exit codes:
+- `0`: success
+- `2`: ambiguous component name
+- `3`: component not found
+
+### app:remove
+Remove an application after dependency checks.
+
+Syntax:
+```bash
+bin/console fabryq:app:remove <AppPascal|appId> [--dry-run]
+```
+
+Options:
+- `--dry-run`: plan changes without writing files.
+
+Exit codes:
+- `0`: success
+- `2`: invalid input
+- `3`: blocked by existing references or app not found
+
+### component:remove
+Remove a component after dependency checks.
+
+Syntax:
+```bash
+bin/console fabryq:component:remove <ComponentPascal> [--dry-run]
+```
+
+Options:
+- `--dry-run`: plan changes without writing files.
+
+Exit codes:
+- `0`: success
+- `2`: ambiguous component name
+- `3`: blocked by existing references or component not found
 
 ### fix (dispatcher)
 Dispatch autofixers based on available findings.
@@ -163,7 +295,8 @@ Options:
 
 Exit codes:
 - `0`: success or nothing to fix
-- `1`: invalid mode or selection, or fixer failure
+- `2`: invalid mode or selection
+- `3`: fixer reported a project state error
 
 ### fix:assets
 Plan or apply asset publishing, including collision handling.
@@ -182,15 +315,19 @@ Outputs:
 
 Exit codes:
 - `0`: success
-- `1`: blocked plan, invalid selection, or apply failure
+- `2`: invalid selection
+- `3`: blocked plan or apply failure
 
 ### fix:crossing
 Generate bridge contracts and adapters for cross-app references.
 
 Syntax:
 ```bash
-bin/console fabryq:fix:crossing --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>]
+bin/console fabryq:fix:crossing --dry-run|--apply [--all|--file=<path>|--symbol=<symbol>|--finding=<id>] [--prune-unresolvable-imports]
 ```
+
+Options:
+- `--prune-unresolvable-imports`: remove unresolved imports when Composer autoload is available.
 
 Outputs:
 - Bridge component under `src/Components/Bridge<ProviderApp>/`
@@ -198,9 +335,13 @@ Outputs:
 - Updated consumer code and manifests
 - Fix plan and run logs under `state/fix/`
 
+Notes:
+- Cross-app entity type hints are replaced with contracts interfaces; missing interfaces are created under `src/Apps/<ProviderApp>/Contracts/`.
+
 Exit codes:
 - `0`: success
-- `1`: blocked plan, invalid selection, or apply failure
+- `2`: invalid selection
+- `3`: blocked plan or apply failure
 
 ## Typical workflows
 

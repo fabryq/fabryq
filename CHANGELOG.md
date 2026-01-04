@@ -22,6 +22,13 @@ Changed:
 
 - Demo: add StockService import to the Test HelloWorld controller.
 - Ignore top-level `AGENTS.md` in git.
+- Docs: update install instructions and CLI documentation for v0.4.0.
+- Install instructions updated to use `composer create-project fabryq/fabryq:0.4.0`.
+
+Notes:
+
+- Fabryq v0.4.0 is pre-1.0; breaking changes remain possible.
+- The monorepo stays intact for v0.4.x; packages will split to separate repos in v1.
 
 ## v0.3.0 - 2026-01-03
 

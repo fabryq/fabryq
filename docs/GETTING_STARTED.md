@@ -13,14 +13,14 @@ Docs index: [INDEX](INDEX.md).
 ## Install
 
 ```bash
-composer create-project fabryq/fabryq:0.3.0 fabryq-project
+composer create-project fabryq/fabryq:0.4.0 fabryq-project
 cd fabryq-project
 ```
 
 Development branch (bleeding edge):
 
 ```bash
-composer create-project fabryq/fabryq:dev-v0.3.x-dev fabryq-project
+composer create-project fabryq/fabryq:dev-v0.4.x-dev fabryq-project
 ```
 
 Optional environment gate:
@@ -80,4 +80,4 @@ Verification writes artifacts to:
 - Learn the architecture vocabulary: [Concepts](CONCEPTS.md)
 - Understand enforced rules: [Guardrails](GUARDRAILS.md)
 - Use the CLI effectively: [CLI](CLI.md)
-- Follow end-to-end tasks: [Workflows](WORKFLOWS.md) 
+- Follow end-to-end tasks: [Workflows](WORKFLOWS.md)

@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is pre-release (v0.3.x). Contributions should stay consistent with existing structure and guardrails.
+This repository is pre-release (v0.4.x). Contributions should stay consistent with existing structure and guardrails.
 
 ## Dev setup
 
@@ -13,7 +13,8 @@ Requirements:
 Setup:
 
 ```bash
-composer create-project fabryq/fabryq . -s dev
+composer create-project fabryq/fabryq:dev-v0.4.x-dev fabryq-project
+cd fabryq-project
 php tools/env-check.php
 ```
 

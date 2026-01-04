@@ -2,7 +2,7 @@
 
 This roadmap is intentionally short and factual. Items under Next and Later are planned and not yet implemented.
 
-## Now (v0.3.x, implemented)
+## Now (v0.4.x, implemented)
 - Runtime discovery of apps, components, and manifests.
 - CLI gates: `verify`, `review`, `doctor`, `graph`.
 - Cross-app reference detection and automated bridge generation.

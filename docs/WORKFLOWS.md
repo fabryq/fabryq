@@ -20,6 +20,23 @@ What it does:
 - Creates `Controller/`, `Service/`, and `Resources/config` under the component.
 - Adds optional `Resources/templates` and `Resources/public`.
 
+Add templates/translations later:
+```bash
+bin/console fabryq:component:add:templates Payments
+bin/console fabryq:component:add:translations Payments
+```
+
+If multiple apps share the same component name, the command is ambiguous; rename or remove duplicates first.
+
+## Generate CRUD scaffolding
+```bash
+bin/console fabryq:crud:create Billing Invoice
+```
+
+What it does:
+- Creates `UseCase`, `Dto`, and `Controller` scaffolding for the resource inside the app.
+- Applies `fabryq.yaml` controller defaults (route prefixes, security attributes, templates, translations).
+
 ## Add a capability provider (example)
 1) Define a contract (interface) in a shared location (for cross-app usage, a global component is typical).
 2) Implement it in a provider class and tag it with `#[FabryqProvider]`.
@@ -45,30 +62,48 @@ bin/console fabryq:doctor
 ```
 
 ## Remove an app
-1) Delete the app directory, for example:
+Plan the removal:
 ```bash
-rm -rf src/Apps/Billing
+bin/console fabryq:app:remove Billing --dry-run
 ```
 
-2) Update any other app manifests that consume capabilities provided by the removed app. Otherwise, `FABRYQ.CONSUME.REQUIRED.MISSING_PROVIDER` will be a blocker.
+Remove the app:
+```bash
+bin/console fabryq:app:remove Billing
+```
 
-3) Re-publish assets to remove stale targets:
+If other apps reference the target app, removal is blocked until references are removed.
+
+If the app published assets, re-run:
 ```bash
 bin/console fabryq:assets:install
 ```
 
-4) Re-run gates:
+Re-run gates:
 ```bash
 bin/console fabryq:verify
 bin/console fabryq:doctor
 ```
+
+## Remove a component
+Plan the removal:
+```bash
+bin/console fabryq:component:remove Payments --dry-run
+```
+
+Remove the component:
+```bash
+bin/console fabryq:component:remove Payments
+```
+
+If other apps/components reference the target component, removal is blocked until references are removed.
 
 ## Upgrade Fabryq (manual)
 Fabryq does not ship an automated upgrade command.
 
 For this repo (fresh setup):
 ```bash
-composer create-project fabryq/fabryq:0.3.0 fabryq-project
+composer create-project fabryq/fabryq:0.4.0 fabryq-project
 cd fabryq-project
 ```
 
