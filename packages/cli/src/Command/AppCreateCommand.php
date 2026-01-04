@@ -98,8 +98,11 @@ final class AppCreateCommand extends AbstractFabryqCommand
         $name = (string) $input->getArgument('name');
         $dryRun = (bool) $input->getOption('dry-run');
 
-        if ($name === '' || str_contains($name, '/') || str_contains($name, '\\')) {
-            throw new UserError('Invalid app name.');
+        if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
+            throw new UserError(sprintf(
+                'Invalid app name "%s". Use PascalCase (pattern: /^[A-Z][A-Za-z0-9]*$/).',
+                $name
+            ));
         }
 
         $appId = (string)($input->getOption('app-id') ?? '');
