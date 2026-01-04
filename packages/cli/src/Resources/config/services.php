@@ -24,6 +24,7 @@ use Fabryq\Cli\Command\AssetsInstallCommand;
 use Fabryq\Cli\Command\AppCreateCommand;
 use Fabryq\Cli\Command\AppRemoveCommand;
 use Fabryq\Cli\Command\ComponentAddTemplatesCommand;
+use Fabryq\Cli\Command\ComponentAddTranslationsCommand;
 use Fabryq\Cli\Command\ComponentCreateCommand;
 use Fabryq\Cli\Command\ComponentRemoveCommand;
 use Fabryq\Cli\Command\DoctorCommand;
@@ -140,5 +141,8 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentAddTemplatesCommand::class)
+        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
+
+    $services->set(ComponentAddTranslationsCommand::class)
         ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), '%kernel.project_dir%', service(WriteLock::class)]);
 };
