@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/v0.4.x-blue?label=Status" alt="Fabryq version">
+  <img src="https://img.shields.io/badge/v0.4.x-blue?label=Status" alt="Fabryq status">
+  <img src="https://github.com/fabryq/fabryq/actions/workflows/ci.yml/badge.svg?branche=v0.4.x-dev" alt="Fabryq CI status">
+  <a href="https://packagist.org/packages/fabryq/fabryq" target="_blank"><img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq packagnist version"></a>
   <img src="https://img.shields.io/github/license/fabryq/fabryq" alt="Fabryq license">
-  <img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq version">
-  <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq size">
+  <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq code size">
+
   <p align="center">
     <img src="https://raw.githubusercontent.com/fabryq/.github/main/fabryq-schriftzug-github.jpg" alt="Fabryq logo" width="400">
   </p>
@@ -37,7 +39,8 @@ Requirements:
 - For tests and fixtures: `pdo_sqlite` and `sqlite3`
 
 Fabryq v0.4.0 is distributed as a `composer create-project` template only.
-`composer create-project fabryq/fabryq:0.4.0` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under `packages/skeleton/`).
+`composer create-project fabryq/fabryq:0.4.0` gives you the monorepo template. A slimmer template lives at `fabryq/skeleton` (currently under
+`packages/skeleton/`).
 
 Install:
 
