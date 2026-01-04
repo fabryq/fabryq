@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -125,7 +126,7 @@ final class CrossAppReferenceScanner
 
                     $findings[] = new Finding(
                         'FABRYQ.APP.CROSSING',
-                        'BLOCKER',
+                        Severity::BLOCKER,
                         sprintf('App %s references %s.', $context['app'], $fqcn),
                         new FindingLocation($path, $nameNode->getLine(), $fqcn),
                         ['primary' => $fqcn.'|'.$referenceKind],
@@ -136,7 +137,7 @@ final class CrossAppReferenceScanner
                 } else {
                     $findings[] = new Finding(
                         'FABRYQ.GLOBAL_COMPONENT.REFERENCES_APP',
-                        'BLOCKER',
+                        Severity::BLOCKER,
                         sprintf('Global component references %s.', $fqcn),
                         new FindingLocation($path, $nameNode->getLine(), $fqcn),
                         ['primary' => $fqcn]

@@ -14,6 +14,7 @@ namespace Fabryq\Cli\Command;
 use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Report\ReviewWriter;
+use Fabryq\Cli\Report\Severity;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -79,7 +80,7 @@ final class ReviewCommand extends AbstractFabryqCommand
             $this->projectDir.'/state/reports/review/latest.md'
         );
 
-        $blockers = array_filter($findings, static fn ($finding) => $finding->severity === 'BLOCKER');
+        $blockers = array_filter($findings, static fn ($finding) => $finding->severity === Severity::BLOCKER);
 
         return $blockers === [] ? CliExitCode::SUCCESS : CliExitCode::PROJECT_STATE_ERROR;
     }

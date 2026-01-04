@@ -14,6 +14,7 @@ namespace Fabryq\Tests;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use PHPUnit\Framework\TestCase;
 
 final class FindingIdTest extends TestCase
@@ -28,7 +29,7 @@ final class FindingIdTest extends TestCase
 
         $findingA = new Finding(
             'FABRYQ.TEST.DET',
-            'BLOCKER',
+            Severity::BLOCKER,
             'Deterministic test.',
             $locationA,
             ['primary' => 'Foo|typehint']
@@ -36,7 +37,7 @@ final class FindingIdTest extends TestCase
 
         $findingB = new Finding(
             'FABRYQ.TEST.DET',
-            'BLOCKER',
+            Severity::BLOCKER,
             'Deterministic test.',
             $locationB,
             ['primary' => 'Foo|typehint']

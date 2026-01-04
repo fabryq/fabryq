@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -106,7 +107,7 @@ final class EntityBaseScanner
                 if ($implementsInterface && $usesTrait) {
                     $findings[] = new Finding(
                         'FABRYQ.ENTITY.BASE_REQUIRED',
-                        'WARNING',
+                        Severity::WARNING,
                         sprintf('Doctrine entity "%s" uses trait-based base; prefer AbstractFabryqEntity.', $className),
                         new FindingLocation($path, $line, $className),
                         ['primary' => $className . '|trait-exception'],
@@ -117,7 +118,7 @@ final class EntityBaseScanner
 
                 $findings[] = new Finding(
                     'FABRYQ.ENTITY.BASE_REQUIRED',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Doctrine entity "%s" must extend AbstractFabryqEntity.', $className),
                     new FindingLocation($path, $line, $className),
                     ['primary' => $className . '|missing-base'],

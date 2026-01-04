@@ -24,6 +24,7 @@ use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingIdGenerator;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -271,7 +272,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
                     fn (string $source) => $this->idGenerator->normalizePath($source),
                     $collision['sources']
                 );
-                $lines[] = sprintf('- [BLOCKER] %s (sources: %s)', $target, implode(', ', $sources));
+                $lines[] = sprintf('- [%s] %s (sources: %s)', Severity::BLOCKER, $target, implode(', ', $sources));
             }
         }
         $lines[] = '';
@@ -296,7 +297,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
 
         return new Finding(
             'FABRYQ.PUBLIC.COLLISION',
-            'BLOCKER',
+            Severity::BLOCKER,
             sprintf('Asset target "%s" has multiple sources: %s', $target, implode(', ', $sources)),
             new FindingLocation($target, null, implode(', ', $sources)),
             ['primary' => $target]

@@ -85,7 +85,7 @@ No issues found.
 ## Versioning and stability
 
 Fabryq v0.4.x is pre-release. Breaking changes are possible, and there is no compatibility guarantee between pre-release tags. Treat rule keys, report schemas,
-and CLI output as subject to change.
+and CLI output as subject to change. JSON reports expose `header.report_schema_version` for schema tracking.
 
 ## Documentation
 

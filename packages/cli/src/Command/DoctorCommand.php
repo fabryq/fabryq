@@ -14,6 +14,7 @@ namespace Fabryq\Cli\Command;
 use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Doctor;
 use Fabryq\Cli\Report\ReportWriter;
+use Fabryq\Cli\Report\Severity;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -85,7 +86,7 @@ final class DoctorCommand extends AbstractFabryqCommand
             $markdownAppendix
         );
 
-        $hasBlockers = array_filter($result->findings, static fn ($finding) => $finding->severity === 'BLOCKER');
+        $hasBlockers = array_filter($result->findings, static fn ($finding) => $finding->severity === Severity::BLOCKER);
         $hasUnhealthy = array_filter(
             $result->appStatuses,
             static fn (array $status) => $status['status'] === 'UNHEALTHY'

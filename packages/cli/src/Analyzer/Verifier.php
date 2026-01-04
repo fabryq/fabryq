@@ -15,6 +15,7 @@ use Fabryq\Cli\Assets\AssetScanner;
 use Fabryq\Cli\Gate\DoctrineGate;
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
@@ -103,7 +104,7 @@ final readonly class Verifier
         foreach ($this->appRegistry->getIssues() as $issue) {
             $findings[] = new Finding(
                 $issue->ruleKey,
-                'BLOCKER',
+                Severity::BLOCKER,
                 $issue->message,
                 new FindingLocation($issue->file, $issue->line, $issue->symbol)
             );
@@ -143,7 +144,7 @@ final readonly class Verifier
 
             $findings[] = new Finding(
                 'FABRYQ.PUBLIC.COLLISION',
-                'BLOCKER',
+                Severity::BLOCKER,
                 sprintf('Asset target "%s" has multiple sources: %s', $target, implode(', ', $sources)),
                 new FindingLocation($target, null, implode(', ', $sources)),
                 ['primary' => $target]
@@ -190,7 +191,7 @@ final readonly class Verifier
 
                 $findings[] = new Finding(
                     'FABRYQ.CAPABILITY.ID.INVALID',
-                    'WARNING',
+                    Severity::WARNING,
                     sprintf('Capability id "%s" must be namespaced (example: fabryq.bridge.core.http-client).', $consume->capabilityId),
                     new FindingLocation($app->manifestPath, null, $consume->capabilityId)
                 );
@@ -204,7 +205,7 @@ final readonly class Verifier
 
             $findings[] = new Finding(
                 'FABRYQ.CAPABILITY.ID.INVALID',
-                'WARNING',
+                Severity::WARNING,
                 sprintf('Capability id "%s" must be namespaced (example: fabryq.bridge.core.http-client).', $provider->capability),
                 new FindingLocation(null, null, $provider->className)
             );
@@ -229,7 +230,7 @@ final readonly class Verifier
                 if ($slug === '' || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
                     $findings[] = new Finding(
                         'FABRYQ.COMPONENT.SLUG.INVALID',
-                        'BLOCKER',
+                        Severity::BLOCKER,
                         sprintf('Component "%s" has invalid slug "%s".', $component->name, $slug),
                         new FindingLocation($component->path, null, $component->slug)
                     );
@@ -242,7 +243,7 @@ final readonly class Verifier
                 if (count($paths) > 1) {
                     $findings[] = new Finding(
                         'FABRYQ.COMPONENT.SLUG.COLLISION',
-                        'BLOCKER',
+                        Severity::BLOCKER,
                         sprintf('Component slug "%s" is used multiple times in app %s.', $slug, $app->manifest->appId),
                         new FindingLocation($app->manifestPath, null, $slug)
                     );
@@ -275,7 +276,7 @@ final readonly class Verifier
             if ($slug === '' || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
                 $findings[] = new Finding(
                     'FABRYQ.COMPONENT.SLUG.INVALID',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Component \"%s\" has invalid slug \"%s\".', $name, $slug),
                     new FindingLocation($componentPath, null, $slug)
                 );
@@ -287,7 +288,7 @@ final readonly class Verifier
             if (count($paths) > 1) {
                 $findings[] = new Finding(
                     'FABRYQ.COMPONENT.SLUG.COLLISION',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Component slug \"%s\" is used multiple times in global components.', $slug),
                     new FindingLocation($componentsDir, null, $slug)
                 );
@@ -309,7 +310,7 @@ final readonly class Verifier
         foreach ($this->providerRegistry->getIssues() as $issue) {
             $findings[] = new Finding(
                 $issue->ruleKey,
-                'BLOCKER',
+                Severity::BLOCKER,
                 $issue->message,
                 new FindingLocation($issue->file, $issue->line, $issue->symbol)
             );
@@ -327,7 +328,7 @@ final readonly class Verifier
 
                 $findings[] = new Finding(
                     'FABRYQ.CONSUME.REQUIRED.MISSING_PROVIDER',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Required capability "%s" has no provider.', $consume->capabilityId),
                     new FindingLocation($app->manifestPath, null, $consume->capabilityId)
                 );

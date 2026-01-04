@@ -59,7 +59,7 @@ final readonly class ReviewWriter
 
         foreach ($findings as $finding) {
             $normalized = $this->normalizeFinding($finding);
-            if ($normalized['severity'] === 'BLOCKER') {
+            if ($normalized['severity'] === Severity::BLOCKER) {
                 $blockers[] = $normalized;
             } else {
                 $warnings[] = $normalized;

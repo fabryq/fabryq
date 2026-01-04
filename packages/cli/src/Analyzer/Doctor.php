@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use Fabryq\Runtime\Attribute\FabryqProvider;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
@@ -42,7 +43,7 @@ final readonly class Doctor
         foreach ($this->providerRegistry->getIssues() as $issue) {
             $findings[] = new Finding(
                 $issue->ruleKey,
-                'BLOCKER',
+                Severity::BLOCKER,
                 $issue->message,
                 new FindingLocation($issue->file, $issue->line, $issue->symbol)
             );
@@ -51,7 +52,7 @@ final readonly class Doctor
         if ($this->capabilityMap === [] && $this->appRegistry->getApps() !== []) {
             $findings[] = new Finding(
                 'FABRYQ.CAPABILITY.MAP.MISSING',
-                'BLOCKER',
+                Severity::BLOCKER,
                 'Capability resolver map is missing.',
                 null
             );
@@ -71,7 +72,7 @@ final readonly class Doctor
                         $missingRequired[] = $consume->capabilityId;
                         $findings[] = new Finding(
                             'FABRYQ.CONSUME.REQUIRED.MISSING_PROVIDER',
-                            'BLOCKER',
+                            Severity::BLOCKER,
                             sprintf('Required capability "%s" has no provider.', $consume->capabilityId),
                             new FindingLocation($app->manifestPath, null, $consume->capabilityId)
                         );
@@ -79,7 +80,7 @@ final readonly class Doctor
                         $missingOptional[] = $consume->capabilityId;
                         $findings[] = new Finding(
                             'FABRYQ.CONSUME.OPTIONAL.MISSING_PROVIDER',
-                            'WARNING',
+                            Severity::WARNING,
                             sprintf('Optional capability "%s" has no provider.', $consume->capabilityId),
                             new FindingLocation($app->manifestPath, null, $consume->capabilityId)
                         );

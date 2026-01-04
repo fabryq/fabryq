@@ -116,6 +116,8 @@ Gates emit findings and write reports under `state/`. Key artifacts:
 - `state/reports/doctor/latest.json` and `.md`
 - `state/graph/latest.md` (and `.json` with `--json`)
 
+JSON report headers include `report_schema_version` to track compatibility.
+
 ## Related docs
 - [Docs Index](INDEX.md)
 - [Project Structure](PROJECT_STRUCTURE.md)

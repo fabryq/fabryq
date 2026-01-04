@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Fabryq\Tests;
 
 use Fabryq\Cli\Error\CliExitCode;
+use Fabryq\Cli\Report\Severity;
 use Fabryq\Tests\Support\FixtureProject;
 use PHPUnit\Framework\TestCase;
 
@@ -57,9 +58,10 @@ PHP;
         $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
-        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
+        $this->assertSame('0.4', $report['header']['report_schema_version'] ?? null);
+        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', Severity::BLOCKER);
         $counts = $this->countFindings($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN');
-        $this->assertSame(1, $counts['BLOCKER']);
+        $this->assertSame(1, $counts[Severity::BLOCKER]);
     }
 
     public function testServiceLocatorMethodCallForbidden(): void
@@ -91,7 +93,7 @@ PHP;
         $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
-        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
+        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', Severity::BLOCKER);
     }
 
     public function testServiceLocatorStaticCallForbidden(): void
@@ -121,7 +123,7 @@ PHP;
         $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
-        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', 'BLOCKER');
+        $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', Severity::BLOCKER);
     }
 
     public function testEntityBaseRequired(): void
@@ -199,11 +201,11 @@ PHP;
         $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
-        $this->assertHasFinding($report, 'FABRYQ.ENTITY.BASE_REQUIRED', 'BLOCKER');
-        $this->assertHasFinding($report, 'FABRYQ.ENTITY.BASE_REQUIRED', 'WARNING');
+        $this->assertHasFinding($report, 'FABRYQ.ENTITY.BASE_REQUIRED', Severity::BLOCKER);
+        $this->assertHasFinding($report, 'FABRYQ.ENTITY.BASE_REQUIRED', Severity::WARNING);
         $counts = $this->countFindings($report, 'FABRYQ.ENTITY.BASE_REQUIRED');
-        $this->assertSame(1, $counts['BLOCKER']);
-        $this->assertSame(1, $counts['WARNING']);
+        $this->assertSame(1, $counts[Severity::BLOCKER]);
+        $this->assertSame(1, $counts[Severity::WARNING]);
     }
 
     /**
@@ -263,7 +265,7 @@ PHP;
      */
     private function countFindings(array $report, string $ruleKey): array
     {
-        $counts = ['BLOCKER' => 0, 'WARNING' => 0];
+        $counts = [Severity::BLOCKER => 0, Severity::WARNING => 0];
         $findings = $report['findings'] ?? [];
         foreach ($findings as $finding) {
             if (($finding['ruleKey'] ?? '') !== $ruleKey) {

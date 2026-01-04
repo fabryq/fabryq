@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Gate;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use PhpParser\Node;
@@ -88,7 +89,7 @@ final readonly class DoctrineGate
             if (!str_starts_with($table, $expectedPrefix)) {
                 $findings[] = new Finding(
                     'FABRYQ.DOCTRINE.TABLE_PREFIX',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Entity table "%s" must be prefixed with "%s".', $table, $expectedPrefix),
                     new FindingLocation($path, 1, $table)
                 );

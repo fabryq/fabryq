@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Cli\Report\Severity;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -96,7 +97,7 @@ final class ServiceLocatorScanner
 
                 $findings[] = new Finding(
                     'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     sprintf('Service locator type "%s" is forbidden.', $fqcn),
                     new FindingLocation($path, $nameNode->getLine(), $fqcn),
                     ['primary' => 'typehint|' . $fqcn],
@@ -114,7 +115,7 @@ final class ServiceLocatorScanner
 
                 $findings[] = new Finding(
                     'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     'Service locator access via container->get() is forbidden.',
                     new FindingLocation($path, $call->getLine(), 'container->get'),
                     ['primary' => 'method-call|get'],
@@ -129,7 +130,7 @@ final class ServiceLocatorScanner
 
                 $findings[] = new Finding(
                     'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN',
-                    'BLOCKER',
+                    Severity::BLOCKER,
                     'Static getContainer() usage is forbidden.',
                     new FindingLocation($path, $call->getLine(), 'static::getContainer'),
                     ['primary' => 'static-call|getContainer'],
