@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: ["v0.3.x-dev", "v0.4.x-dev"]
   pull_request:
 
 jobs:
