@@ -125,6 +125,15 @@ For a project using Fabryq packages:
 3) Re-run `verify`, `doctor`, and tests.
 4) Review `CHANGELOG.md` for manual steps.
 
+## CI smoke workflow
+The repository ships a dedicated workflow to validate that the CLI commands execute in the demo project.
+
+Expectations:
+- `fabryq:verify` exits with code `3` because the demo intentionally contains blockers.
+- `fabryq:doctor` and `fabryq:graph` must succeed.
+
+Workflow file: `.github/workflows/fabryq-cli.yml`.
+
 ## Related docs
 - [Docs Index](INDEX.md)
 - [Getting Started](GETTING_STARTED.md)

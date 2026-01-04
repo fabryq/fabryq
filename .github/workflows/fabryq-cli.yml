@@ -1,0 +1,42 @@
+name: Fabryq CLI Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: ["v0.4.x-dev"]
+
+jobs:
+  cli-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer
+
+      - name: Install demo dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: examples/demo
+
+      - name: Run Fabryq CLI smoke checks
+        working-directory: examples/demo
+        env:
+          APP_ENV: test
+          APP_DEBUG: 0
+          DATABASE_URL: sqlite:///./var/data.db
+        run: |
+          set -euo pipefail
+          mkdir -p var
+          VERIFY_EXIT=0
+          php bin/console fabryq:verify || VERIFY_EXIT=$?
+          if [ "$VERIFY_EXIT" -ne 3 ]; then
+            echo "Expected fabryq:verify to exit 3, got $VERIFY_EXIT"
+            exit 1
+          fi
+          php bin/console fabryq:doctor
+          php bin/console fabryq:graph

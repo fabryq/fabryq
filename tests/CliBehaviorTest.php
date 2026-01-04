@@ -81,6 +81,13 @@ final class CliBehaviorTest extends TestCase
         $this->assertStringContainsString('Specify exactly one of --dry-run or --apply.', $result['output']);
     }
 
+    public function testFixRejectsBothModes(): void
+    {
+        $result = FixtureProject::runFabryq($this->projectDir, ['fix', '--dry-run', '--apply']);
+        $this->assertSame(CliExitCode::USER_ERROR, $result['exitCode'], $result['output']);
+        $this->assertStringContainsString('Specify exactly one of --dry-run or --apply.', $result['output']);
+    }
+
     public function testFixRejectsMultipleSelectionFlags(): void
     {
         $result = FixtureProject::runFabryq($this->projectDir, [

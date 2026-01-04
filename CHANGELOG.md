@@ -17,6 +17,7 @@ Added:
 - Component scaffolding commands for templates/translations.
 - CLI hardening: error classes, exit codes, global handler, dry-run, and write locking.
 - CI: run `fabryq:verify`, `fabryq:doctor`, and `fabryq:graph` on the demo project.
+- CI: add a dedicated Fabryq CLI smoke workflow.
 
 Changed:
 

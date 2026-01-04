@@ -50,6 +50,11 @@ bin/console fabryq:review
 bin/console fabryq:doctor
 ```
 
+## CI workflows
+
+- `CI` runs composer validation, lint, tests, and demo CLI checks.
+- `Fabryq CLI Smoke` executes demo CLI commands and asserts expected exit codes.
+
 ## Test coverage notes
 
 - Fixture-based CLI tests exercise dry-run, locking, remove/scaffold, CRUD, and config error handling.
