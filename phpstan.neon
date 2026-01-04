@@ -1,0 +1,26 @@
+includes:
+  - phpstan-baseline.neon
+
+parameters:
+  level: 6
+  bootstrapFiles:
+    - tools/phpstan/bootstrap.php
+  paths:
+    - packages
+    - src
+    - tests
+  parallel:
+    maximumNumberOfProcesses: 0
+  excludePaths:
+    - .git/*
+    - .git/**/*
+    - node_modules/*
+    - node_modules/**/*
+    - vendor/*
+    - vendor/**/*
+    - examples/*
+    - examples/**/*
+    - var/*
+    - var/**/*
+    - examples/demo/var/*
+    - examples/demo/var/**/*

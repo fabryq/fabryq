@@ -86,7 +86,7 @@
     "env:check": "php tools/env-check.php",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
-    "stan": "phpstan analyse -c phpstan.neon --no-progress",
+    "stan": "phpstan analyse -c phpstan.neon --no-progress --debug --memory-limit=1G",
     "test": "phpunit",
     "lint": "php tools/lint.php"
   },
