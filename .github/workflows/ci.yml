@@ -27,6 +27,11 @@ jobs:
       - name: Lint
         run: composer lint
 
+      - name: PHPStan
+        run: composer stan
+
+      - name: CS check
+        run: composer cs:check
       - name: PHPUnit
         run: composer test
 

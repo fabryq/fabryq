@@ -21,6 +21,8 @@
     "symfony/yaml": "^7.0"
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.60",
+    "phpstan/phpstan": "^1.11",
     "phpunit/phpunit": "^10.5",
     "symfony/process": "^7.0"
   },
@@ -82,6 +84,9 @@
   },
   "scripts": {
     "env:check": "php tools/env-check.php",
+    "cs:check": "php-cs-fixer fix --dry-run --diff",
+    "cs:fix": "php-cs-fixer fix",
+    "stan": "phpstan analyse -c phpstan.neon --no-progress",
     "test": "phpunit",
     "lint": "php tools/lint.php"
   },
