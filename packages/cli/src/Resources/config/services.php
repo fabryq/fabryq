@@ -13,6 +13,7 @@ use Fabryq\Cli\Analyzer\CrossAppReferenceScanner;
 use Fabryq\Cli\Analyzer\Doctor;
 use Fabryq\Cli\Analyzer\EntityBaseScanner;
 use Fabryq\Cli\Analyzer\GraphBuilder;
+use Fabryq\Cli\Analyzer\ReferenceScanner;
 use Fabryq\Cli\Analyzer\ServiceLocatorScanner;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Assets\AssetInstaller;
@@ -21,6 +22,7 @@ use Fabryq\Cli\Assets\AssetScanner;
 use Fabryq\Cli\Config\ProjectConfig;
 use Fabryq\Cli\Command\AssetsInstallCommand;
 use Fabryq\Cli\Command\AppCreateCommand;
+use Fabryq\Cli\Command\AppRemoveCommand;
 use Fabryq\Cli\Command\ComponentCreateCommand;
 use Fabryq\Cli\Command\DoctorCommand;
 use Fabryq\Cli\Command\FixCommand;
@@ -77,6 +79,7 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([service(Filesystem::class), service(FindingIdGenerator::class), service(ReportLinkBuilder::class)]);
 
     $services->set(CrossAppReferenceScanner::class);
+    $services->set(ReferenceScanner::class);
     $services->set(ServiceLocatorScanner::class);
     $services->set(EntityBaseScanner::class);
     $services->set(DoctrineGate::class);
@@ -124,6 +127,9 @@ return static function (ContainerConfigurator $configurator): void {
 
     $services->set(AppCreateCommand::class)
         ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+
+    $services->set(AppRemoveCommand::class)
+        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
 
     $services->set(ComponentCreateCommand::class)
         ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);

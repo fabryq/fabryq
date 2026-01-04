@@ -124,6 +124,7 @@ final class FixtureProject
             'graph' => 'fabryq:graph',
             'assets:install' => 'fabryq:assets:install',
             'app:create' => 'fabryq:app:create',
+            'app:remove' => 'fabryq:app:remove',
             'component:create' => 'fabryq:component:create',
             'fix' => 'fabryq:fix',
         ];
