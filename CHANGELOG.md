@@ -4,6 +4,25 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
+## v0.4.0 - 2026-01-03
+
+Added:
+
+- Project-level `fabryq.yaml` defaults for controller generation and report links.
+- CRUD generator (`fabryq:crud:create`) with use case-first scaffolding and controller defaults.
+- Optional pruning of unresolvable imports after `fix:crossing`.
+- Cross-app entity type replacement to contracts interfaces with auto-created interfaces.
+- Markdown report links for PhpStorm/file schemes.
+- Remove commands for apps/components with dependency blocking.
+- Component scaffolding commands for templates/translations.
+- CLI hardening: error classes, exit codes, global handler, dry-run, and write locking.
+- CI: run `fabryq:verify`, `fabryq:doctor`, and `fabryq:graph` on the demo project.
+
+Changed:
+
+- Demo: add StockService import to the Test HelloWorld controller.
+- Ignore top-level `AGENTS.md` in git.
+
 ## v0.3.0 - 2026-01-03
 
 Added:
