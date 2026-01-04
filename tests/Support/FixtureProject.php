@@ -126,6 +126,7 @@ final class FixtureProject
             'app:create' => 'fabryq:app:create',
             'app:remove' => 'fabryq:app:remove',
             'component:create' => 'fabryq:component:create',
+            'component:add:templates' => 'fabryq:component:add:templates',
             'component:remove' => 'fabryq:component:remove',
             'fix' => 'fabryq:fix',
         ];
