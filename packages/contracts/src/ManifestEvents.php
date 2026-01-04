@@ -50,8 +50,17 @@ final readonly class ManifestEvents
      */
     public static function fromArray(array $data): self
     {
-        $publishes = array_values(array_filter($data['publishes'] ?? [], 'is_string'));
-        $subscribes = array_values(array_filter($data['subscribes'] ?? [], 'is_string'));
+        $publishesRaw = $data['publishes'] ?? [];
+        if (!is_array($publishesRaw)) {
+            $publishesRaw = [];
+        }
+        $publishes = array_values(array_filter($publishesRaw, 'is_string'));
+
+        $subscribesRaw = $data['subscribes'] ?? [];
+        if (!is_array($subscribesRaw)) {
+            $subscribesRaw = [];
+        }
+        $subscribes = array_values(array_filter($subscribesRaw, 'is_string'));
 
         return new self($publishes, $subscribes);
     }

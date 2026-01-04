@@ -13,6 +13,16 @@ namespace Fabryq\Cli\Report;
 
 /**
  * Immutable representation of a single finding.
+ *
+ * @phpstan-type FindingArray array{
+ *   id: string,
+ *   ruleKey: string,
+ *   severity: string,
+ *   message: string,
+ *   location: array{file: string|null, line: int|null, symbol: string|null},
+ *   details: array<string, mixed>,
+ *   autofix: array{available: bool, fixer?: string}
+ * }
  */
 final readonly class Finding
 {
@@ -87,7 +97,7 @@ final readonly class Finding
     /**
      * Convert the finding to a serializable array.
      *
-     * @return array<string, mixed>
+     * @return FindingArray
      */
     public function toArray(FindingIdGenerator $idGenerator): array
     {

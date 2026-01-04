@@ -57,7 +57,10 @@ final class FabryqRuntimeExtension extends Extension
             }
         );
 
-        $projectDir = (string)$container->getParameter('kernel.project_dir');
+        $projectDir = $container->getParameter('kernel.project_dir');
+        if (!is_string($projectDir) || $projectDir === '') {
+            throw new \RuntimeException('Invalid kernel.project_dir parameter.');
+        }
         $slugger = new ComponentSlugger();
         $manifestDiscovery = new ManifestDiscovery();
         $componentDiscovery = new ComponentDiscovery($slugger);

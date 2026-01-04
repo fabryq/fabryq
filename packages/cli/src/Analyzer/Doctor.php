@@ -20,9 +20,14 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 
 /**
  * Evaluates provider wiring and emits findings with per-app status.
+ *
+ * @phpstan-import-type CapabilityMapEntry from \Fabryq\Runtime\DependencyInjection\Compiler\CapabilityProviderPass
  */
 final readonly class Doctor
 {
+    /**
+     * @param array<string, CapabilityMapEntry> $capabilityMap Capability resolver map.
+     */
     public function __construct(
         private AppRegistry                $appRegistry,
         private CapabilityProviderRegistry $providerRegistry,
@@ -65,7 +70,7 @@ final readonly class Doctor
 
             foreach ($app->manifest->consumes as $consume) {
                 $entry = $this->capabilityMap[$consume->capabilityId] ?? null;
-                $winner = is_array($entry) ? ($entry['winner'] ?? null) : null;
+                $winner = $entry === null ? null : $entry['winner'];
 
                 if ($winner === null) {
                     if ($consume->required) {
@@ -88,7 +93,7 @@ final readonly class Doctor
                     continue;
                 }
 
-                if (is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED) {
+                if ($winner !== null && $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED) {
                     $degraded[] = $consume->capabilityId;
                 }
             }

@@ -98,6 +98,9 @@ PHP;
         $this->assertSame(CliExitCode::SUCCESS, $result['exitCode'], $result['output']);
 
         $updated = file_get_contents($consumerPath);
+        if ($updated === false) {
+            self::fail('Unable to read updated consumer file.');
+        }
         $this->assertStringNotContainsString('App\\Inventory\\Stock\\Entity\\User', $updated);
         $this->assertStringContainsString('App\\Inventory\\Stock\\Contracts\\UserInterface', $updated);
 

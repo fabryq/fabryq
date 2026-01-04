@@ -44,13 +44,9 @@ final readonly class FixSelection
     public static function fromInput(InputInterface $input): self
     {
         $all = (bool) $input->getOption('all');
-        $file = $input->getOption('file');
-        $symbol = $input->getOption('symbol');
-        $finding = $input->getOption('finding');
-
-        $file = $file === null || $file === '' ? null : (string) $file;
-        $symbol = $symbol === null || $symbol === '' ? null : (string) $symbol;
-        $finding = $finding === null || $finding === '' ? null : (string) $finding;
+        $file = self::optionalStringOption($input, 'file');
+        $symbol = self::optionalStringOption($input, 'symbol');
+        $finding = self::optionalStringOption($input, 'finding');
 
         $set = array_filter([
             'all' => $all ? '1' : null,
@@ -68,6 +64,19 @@ final readonly class FixSelection
         }
 
         return new self($all, $file, $symbol, $finding);
+    }
+
+    private static function optionalStringOption(InputInterface $input, string $name): ?string
+    {
+        $value = $input->getOption($name);
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException(sprintf('Option "%s" must be a string.', $name));
+        }
+
+        return $value;
     }
 
     /**

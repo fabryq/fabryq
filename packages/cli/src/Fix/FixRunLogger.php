@@ -41,14 +41,14 @@ final readonly class FixRunLogger
     /**
      * Finalize a fix run with change logs and latest pointers.
      *
-     * @param FixRunContext                     $context           Run context.
-     * @param string                            $fixer             Fixer key.
-     * @param string                            $mode              Fix mode.
-     * @param string                            $result            Result label.
-     * @param array<int, string>                $changedFiles      Changed file paths.
-     * @param int                               $blockers          Blocker count.
-     * @param int                               $warnings          Warning count.
-     * @param array<int, array<string, string>> $createdInterfaces Created interfaces payload.
+     * @param FixRunContext                                     $context           Run context.
+     * @param string                                            $fixer             Fixer key.
+     * @param string                                            $mode              Fix mode.
+     * @param string                                            $result            Result label.
+     * @param list<string>                                      $changedFiles      Changed file paths.
+     * @param int                                               $blockers          Blocker count.
+     * @param int                                               $warnings          Warning count.
+     * @param list<array{path: string, fqcn: string, ruleKey: string}> $createdInterfaces Created interfaces payload.
      */
     public function finish(
         FixRunContext $context,
@@ -61,6 +61,7 @@ final readonly class FixRunLogger
         array         $createdInterfaces = [],
     ): void {
         $changesPath = $context->runDir . '/changes.json';
+        /** @var array{changedFiles: list<string>, createdInterfaces: list<array{path: string, fqcn: string, ruleKey: string}>} $changes */
         $changes = [
             'changedFiles' => array_values(array_unique($changedFiles)),
             'createdInterfaces' => $createdInterfaces,
@@ -68,6 +69,7 @@ final readonly class FixRunLogger
 
         file_put_contents($changesPath, json_encode($changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
+        /** @var array{runId: string, startedAt: string, finishedAt: string, mode: string, fixer: string, result: string, counts: array{changedFiles: int, createdInterfaces: int, blockers: int, warnings: int}, path: string} $latestPayload */
         $latestPayload = [
             'runId' => $context->runId,
             'startedAt' => $context->startedAt,
@@ -142,7 +144,11 @@ final readonly class FixRunLogger
             'plan' => $planMarkdown,
         ];
 
-        $hash = sha1(json_encode($payload, JSON_UNESCAPED_SLASHES));
+        $encoded = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        if ($encoded === false) {
+            throw new \RuntimeException('Unable to encode fix run payload.');
+        }
+        $hash = sha1($encoded);
 
         return substr($hash, 0, 12);
     }
@@ -150,7 +156,7 @@ final readonly class FixRunLogger
     /**
      * Render the latest Markdown summary.
      *
-     * @param array<string, mixed> $payload Latest payload data.
+     * @param array{runId: string, fixer: string, mode: string, result: string, path: string, counts: array{changedFiles: int, createdInterfaces: int, blockers: int, warnings: int}} $payload Latest payload data.
      *
      * @return string Markdown content.
      */

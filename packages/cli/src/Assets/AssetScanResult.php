@@ -13,24 +13,33 @@ namespace Fabryq\Cli\Assets;
 
 /**
  * Captures asset scan entries and detected target collisions.
+ *
+ * @phpstan-type AssetEntry array{
+ *   type: string,
+ *   appId: string,
+ *   componentSlug: string,
+ *   source: string,
+ *   target: string
+ * }
+ * @phpstan-type AssetCollision array{target: string, sources: list<string>}
  */
 final readonly class AssetScanResult
 {
     /**
-     * @param array<int, array<string, string>> $entries    Asset entries discovered during the scan.
-     * @param array<int, array<string, mixed>>  $collisions Target collisions keyed by destination.
+     * @param list<AssetEntry>     $entries    Asset entries discovered during the scan.
+     * @param list<AssetCollision> $collisions Target collisions keyed by destination.
      */
     public function __construct(
         /**
          * Asset entries with source/target metadata.
          *
-         * @var array<int, array<string, string>>
+         * @var list<AssetEntry>
          */
         public array $entries,
         /**
          * Collision details when multiple sources map to the same target.
          *
-         * @var array<int, array<string, mixed>>
+         * @var list<AssetCollision>
          */
         public array $collisions,
     ) {

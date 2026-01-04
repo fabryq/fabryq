@@ -136,6 +136,9 @@ final readonly class DoctrineGate
     private function extractTableName(string $path): ?string
     {
         $code = file_get_contents($path);
+        if ($code === false) {
+            return null;
+        }
 
         // Use createForNewestSupportedVersion() to support modern syntax.
         $parser = (new ParserFactory())->createForNewestSupportedVersion();

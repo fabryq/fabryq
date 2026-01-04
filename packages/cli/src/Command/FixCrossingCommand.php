@@ -45,6 +45,86 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Fixes cross-app references by introducing bridge contracts and providers.
+ *
+ * @phpstan-type TypeDescriptor array{type: string, fqcn: string, isBuiltin: bool, nullable: bool}
+ * @phpstan-type ParamSpec array{
+ *   name: string,
+ *   type: TypeDescriptor|null,
+ *   byRef: bool,
+ *   variadic: bool,
+ *   default: Node\Expr|null
+ * }
+ * @phpstan-type MappedParamSpec array{
+ *   name: string,
+ *   type: TypeDescriptor|null,
+ *   byRef: bool,
+ *   variadic: bool,
+ *   default: Node\Expr|null,
+ *   contractType: TypeDescriptor|null,
+ *   dto: DtoSpec|null
+ * }
+ * @phpstan-type SignatureSpec array{
+ *   name: string,
+ *   params: list<ParamSpec>,
+ *   returnType: TypeDescriptor|null
+ * }
+ * @phpstan-type MappedSignatureSpec array{
+ *   name: string,
+ *   params: list<MappedParamSpec>,
+ *   returnType: TypeDescriptor|null,
+ *   contractReturnType: TypeDescriptor|null,
+ *   returnDto: DtoSpec|null
+ * }
+ * @phpstan-type DtoProperty array{name: string, type: TypeDescriptor}
+ * @phpstan-type DtoSpec array{
+ *   sourceFqcn: string,
+ *   className: string,
+ *   fqcn: string,
+ *   properties: list<DtoProperty>
+ * }
+ * @phpstan-type EntityInterfaceTarget array{
+ *   type: 'entity_to_interface',
+ *   findingId: string,
+ *   finding: Finding,
+ *   consumerFile: string,
+ *   consumerApp: AppDefinition,
+ *   providerApp: AppDefinition,
+ *   entityFqcn: string,
+ *   entityShort: string,
+ *   interfaceFqcn: string,
+ *   interfacePath: string
+ * }
+ * @phpstan-type BridgeTarget array{
+ *   findingId: string,
+ *   finding: Finding,
+ *   consumerFile: string,
+ *   consumerApp: AppDefinition,
+ *   providerApp: AppDefinition,
+ *   providerFqcn: string,
+ *   providerClassFile: string,
+ *   contractName: string,
+ *   contractFqcn: string,
+ *   contractSlug: string,
+ *   capability: string,
+ *   signatures: list<MappedSignatureSpec>,
+ *   dtoPlan: list<DtoSpec>
+ * }
+ * @phpstan-type FixTarget BridgeTarget|EntityInterfaceTarget
+ * @phpstan-type FixablePlanItem array{
+ *   id: string,
+ *   fixable: true,
+ *   summary: string,
+ *   ruleKey?: string,
+ *   target: FixTarget,
+ *   finding: Finding
+ * }
+ * @phpstan-type BlockedPlanItem array{
+ *   id: string,
+ *   fixable: false,
+ *   reason: string,
+ *   finding: Finding
+ * }
+ * @phpstan-type PlanItem FixablePlanItem|BlockedPlanItem
  */
 #[AsCommand(
     name: 'fabryq:fix:crossing',
@@ -177,12 +257,15 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             throw new UserError('Finding selection did not resolve to exactly one crossing.');
         }
 
+        /** @var list<FixTarget> $targets */
         $targets = [];
+        /** @var list<PlanItem> $planItems */
         $planItems = [];
         $blockers = 0;
         $warnings = 0;
 
         foreach ($selected as $finding) {
+            /** @var PlanItem $plan */
             $plan = $this->buildPlanItem($finding);
             $planItems[] = $plan;
             if (!$plan['fixable']) {
@@ -243,17 +326,20 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Apply a fix target and update changed files.
      *
-     * @param array<string, mixed> $target       Fix target payload.
-     * @param array<int, string>   $changedFiles List of changed files.
+     * @param FixTarget                                      $target            Fix target payload.
+     * @param list<string>                                   $changedFiles      List of changed files.
+     * @param list<array{path: string, fqcn: string, ruleKey: string}> $createdInterfaces Created interfaces metadata.
      *
-     * @return array<string, mixed>|null Blocker plan item when apply fails.
+     * @return BlockedPlanItem|null Blocker plan item when apply fails.
      */
     private function applyTarget(array $target, array &$changedFiles, array &$createdInterfaces): ?array
     {
         if (($target['type'] ?? null) === 'entity_to_interface') {
+            /** @var EntityInterfaceTarget $target */
             return $this->applyEntityToInterface($target, $changedFiles, $createdInterfaces);
         }
 
+        /** @var BridgeTarget $target */
         $providerApp = $target['providerApp'];
         $consumerApp = $target['consumerApp'];
         $providerAppPascal = basename($providerApp->path);
@@ -331,13 +417,13 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Build a blocked plan entry.
      *
-     * @param string        $findingId Finding id.
-     * @param Finding|array $finding   Finding data.
-     * @param string        $reason    Blocker reason.
+     * @param string  $findingId Finding id.
+     * @param Finding $finding   Finding data.
+     * @param string  $reason    Blocker reason.
      *
-     * @return array<string, mixed>
+     * @return BlockedPlanItem
      */
-    private function blockedPlan(string $findingId, Finding|array $finding, string $reason): array
+    private function blockedPlan(string $findingId, Finding $finding, string $reason): array
     {
         return [
             'id' => $findingId,
@@ -385,13 +471,14 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @param Finding $finding Crossing finding.
      *
-     * @return array<string, mixed> Plan item data.
+     * @return PlanItem Plan item data.
      */
     private function buildPlanItem(Finding $finding): array
     {
         $findingId = $this->idGenerator->generate($finding);
         $details = $finding->details['primary'] ?? '';
-        [$fqcn, $kind] = array_pad(explode('|', (string)$details, 2), 2, null);
+        $detailsText = is_string($details) ? $details : '';
+        [$fqcn, $kind] = array_pad(explode('|', $detailsText, 2), 2, null);
         $kind = $kind ?? 'unknown';
 
         if ($fqcn === '' || $kind === null) {
@@ -432,6 +519,20 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             $interfaceFqcn = $entityInfo['baseNamespace'] . '\\Contracts\\' . $interfaceName;
             $interfacePath = $this->buildClassPath($interfaceFqcn, $entityInfo['appFolder']);
 
+            /** @var EntityInterfaceTarget $target */
+            $target = [
+                'type' => 'entity_to_interface',
+                'findingId' => $findingId,
+                'finding' => $finding,
+                'consumerFile' => $consumerFile,
+                'consumerApp' => $consumerApp,
+                'providerApp' => $providerApp,
+                'entityFqcn' => $fqcn,
+                'entityShort' => $entityInfo['entity'],
+                'interfaceFqcn' => $interfaceFqcn,
+                'interfacePath' => $interfacePath,
+            ];
+
             return [
                 'id' => $findingId,
                 'fixable' => true,
@@ -442,18 +543,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                     $interfaceFqcn,
                     self::ENTITY_TO_INTERFACE_RULE
                 ),
-                'target' => [
-                    'type' => 'entity_to_interface',
-                    'findingId' => $findingId,
-                    'finding' => $finding,
-                    'consumerFile' => $consumerFile,
-                    'consumerApp' => $consumerApp,
-                    'providerApp' => $providerApp,
-                    'entityFqcn' => $fqcn,
-                    'entityShort' => $entityInfo['entity'],
-                    'interfaceFqcn' => $interfaceFqcn,
-                    'interfacePath' => $interfacePath,
-                ],
+                'finding' => $finding,
+                'target' => $target,
             ];
         }
 
@@ -479,32 +570,36 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             return $this->blockedPlan($findingId, $finding, $reason ?? 'Unsupported types in provider contract.');
         }
 
+        /** @var BridgeTarget $target */
+        $target = [
+            'findingId' => $findingId,
+            'finding' => $finding,
+            'consumerFile' => $consumerFile,
+            'consumerApp' => $consumerApp,
+            'providerApp' => $providerApp,
+            'providerFqcn' => $fqcn,
+            'providerClassFile' => $providerClassFile,
+            'contractName' => $contractName,
+            'contractFqcn' => $contractFqcn,
+            'contractSlug' => $contractSlug,
+            'capability' => $capability,
+            'signatures' => $mapped,
+            'dtoPlan' => $dtoPlan,
+        ];
+
         return [
             'id' => $findingId,
             'fixable' => true,
             'summary' => sprintf('%s -> %s (%s)', $this->normalizePath($consumerFile), $contractFqcn, $capability),
-            'target' => [
-                'findingId' => $findingId,
-                'finding' => $finding,
-                'consumerFile' => $consumerFile,
-                'consumerApp' => $consumerApp,
-                'providerApp' => $providerApp,
-                'providerFqcn' => $fqcn,
-                'providerClassFile' => $providerClassFile,
-                'contractName' => $contractName,
-                'contractFqcn' => $contractFqcn,
-                'contractSlug' => $contractSlug,
-                'capability' => $capability,
-                'signatures' => $mapped,
-                'dtoPlan' => $dtoPlan,
-            ],
+            'finding' => $finding,
+            'target' => $target,
         ];
     }
 
     /**
      * Provide default return values for NoOp providers.
      *
-     * @param array<string, mixed>|null $type Type descriptor.
+     * @param TypeDescriptor|null $type Type descriptor.
      *
      * @return string|null Default return expression.
      */
@@ -514,7 +609,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             return null;
         }
 
-        $name = $type['type'] ?? '';
+        $name = $type['type'];
         if ($type['nullable']) {
             return 'null';
         }
@@ -539,14 +634,14 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      * @param string           $contractFqcn Contract FQCN.
      * @param string           $propertyName Property name.
      *
-     * @return array<string, mixed>|null
+     * @return void
      */
-    private function ensureConstructorInjection(Node\Stmt\Class_ $classNode, string $contractFqcn, string $propertyName): ?array
+    private function ensureConstructorInjection(Node\Stmt\Class_ $classNode, string $contractFqcn, string $propertyName): void
     {
         foreach ($classNode->getProperties() as $property) {
             foreach ($property->props as $prop) {
                 if ($prop->name->toString() === $propertyName) {
-                    return null;
+                    return;
                 }
             }
         }
@@ -577,7 +672,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         if ($constructor instanceof Node\Stmt\ClassMethod) {
             $constructor->params[] = $param;
             $constructor->stmts[] = $assign;
-            return null;
+            return;
         }
 
         $constructor = new Node\Stmt\ClassMethod(
@@ -590,8 +685,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         );
 
         $classNode->stmts[] = $constructor;
-
-        return null;
+        return;
     }
 
     /**
@@ -622,8 +716,15 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     private function extractConsumerMethodCalls(string $consumerFile, string $providerFqcn): array
     {
         $code = file_get_contents($consumerFile);
+        if ($code === false) {
+            return [];
+        }
         $parser = (new ParserFactory())->createForNewestSupportedVersion();
-        $ast = $parser->parse($code);
+        try {
+            $ast = $parser->parse($code);
+        } catch (\Throwable) {
+            return [];
+        }
         if ($ast === null) {
             return [];
         }
@@ -648,7 +749,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         foreach ($nodeFinder->findInstanceOf($ast, Node\Param::class) as $param) {
             $type = $this->resolveTypeDescriptor($param->type);
-            if ($type !== null && $type['fqcn'] === $providerFqcn && $param->var instanceof Node\Expr\Variable) {
+            if ($type !== null && $type['fqcn'] === $providerFqcn && $param->var instanceof Node\Expr\Variable && is_string($param->var->name)) {
                 $variableNames[] = $param->var->name;
             }
         }
@@ -658,7 +759,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                 continue;
             }
             $newType = $this->resolveTypeDescriptor($assign->expr->class);
-            if ($newType !== null && $newType['fqcn'] === $providerFqcn && $assign->var instanceof Node\Expr\Variable) {
+            if ($newType !== null && $newType['fqcn'] === $providerFqcn && $assign->var instanceof Node\Expr\Variable && is_string($assign->var->name)) {
                 $variableNames[] = $assign->var->name;
             }
         }
@@ -679,7 +780,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                 }
             }
 
-            if ($call->var instanceof Node\Expr\Variable && in_array($call->var->name, $variableNames, true)) {
+            if ($call->var instanceof Node\Expr\Variable && is_string($call->var->name) && in_array($call->var->name, $variableNames, true)) {
                 $methods[] = $methodName;
             }
 
@@ -700,13 +801,20 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      * @param string   $providerClassFile Provider class file.
      * @param string[] $methodNames       Method names to include.
      *
-     * @return array<int, array<string, mixed>>|null
+     * @return list<SignatureSpec>|null
      */
     private function extractProviderSignatures(string $providerClassFile, array $methodNames): ?array
     {
         $code = file_get_contents($providerClassFile);
+        if ($code === false) {
+            return null;
+        }
         $parser = (new ParserFactory())->createForNewestSupportedVersion();
-        $ast = $parser->parse($code);
+        try {
+            $ast = $parser->parse($code);
+        } catch (\Throwable) {
+            return null;
+        }
         if ($ast === null) {
             return null;
         }
@@ -740,8 +848,12 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                 if ($type === null && $param->type !== null) {
                     return null;
                 }
+                $paramName = 'param';
+                if ($param->var instanceof Node\Expr\Variable && is_string($param->var->name)) {
+                    $paramName = $param->var->name;
+                }
                 $params[] = [
-                    'name' => $param->var instanceof Node\Expr\Variable ? $param->var->name : 'param',
+                    'name' => $paramName,
                     'type' => $type,
                     'byRef' => $param->byRef,
                     'variadic' => $param->variadic,
@@ -785,7 +897,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Format type descriptor into a PHP type string.
      *
-     * @param array<string, mixed>|null $type Type descriptor.
+     * @param TypeDescriptor|null $type Type descriptor.
      *
      * @return string
      */
@@ -795,7 +907,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             return '';
         }
 
-        $name = $type['fqcn'] ?? $type['type'];
+        $name = $type['fqcn'];
         $name = ltrim($name, '\\');
         $name = $type['isBuiltin'] ? $type['type'] : '\\' . $name;
 
@@ -851,21 +963,25 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Map provider signatures to contract signatures and DTO plan.
      *
-     * @param array<int, array<string, mixed>> $signatures        Provider signatures.
-     * @param string                           $providerAppPascal Provider app folder.
-     * @param array<int, array<string, mixed>> $dtoPlan           Output DTO plan.
-     * @param string|null                      $reason            Output reason when not fixable.
+     * @param list<SignatureSpec> $signatures        Provider signatures.
+     * @param string              $providerAppPascal Provider app folder.
+     * @param list<DtoSpec>       $dtoPlan           Output DTO plan.
+     * @param string|null         $reason            Output reason when not fixable.
      *
-     * @return array<int, array<string, mixed>>|null
+     * @return list<MappedSignatureSpec>|null
      */
     private function mapSignatures(array $signatures, string $providerAppPascal, array &$dtoPlan, ?string &$reason): ?array
     {
+        /** @var array<string, DtoSpec> $dtoIndex */
         $dtoIndex = [];
+        /** @var list<MappedSignatureSpec> $mapped */
         $mapped = [];
 
         foreach ($signatures as $signature) {
+            /** @var SignatureSpec $signature */
             $mappedParams = [];
             foreach ($signature['params'] as $param) {
+                /** @var ParamSpec $param */
                 if ($param['type'] === null) {
                     $mappedParams[] = $param + ['contractType' => null, 'dto' => null];
                     continue;
@@ -917,13 +1033,15 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      */
     private function normalizePath(string $path): string
     {
-        return (string)$this->idGenerator->normalizePath($path);
+        $normalized = $this->idGenerator->normalizePath($path);
+
+        return $normalized ?? $path;
     }
 
     /**
      * Render adapter source.
      *
-     * @param array<string, mixed> $target Fix target.
+     * @param BridgeTarget $target Fix target.
      *
      * @return string
      */
@@ -946,6 +1064,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = 'use ' . $contractFqcn . ';';
         $lines[] = 'use ' . $providerFqcn . ';';
         foreach ($target['dtoPlan'] as $dtoSpec) {
+            /** @var DtoSpec $dtoSpec */
             $lines[] = 'use ' . $dtoSpec['fqcn'] . ';';
         }
         $lines[] = '';
@@ -962,11 +1081,13 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = '';
 
         foreach ($target['signatures'] as $signature) {
+            /** @var MappedSignatureSpec $signature */
             $lines[] = $this->renderMethodSignature($signature, false, $target);
             $lines[] = '';
         }
 
         foreach ($target['dtoPlan'] as $dtoSpec) {
+            /** @var DtoSpec $dtoSpec */
             $lines[] = $this->renderDtoMapper($dtoSpec, $target);
             $lines[] = '';
         }
@@ -1016,13 +1137,17 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             return 'null';
         }
 
-        return (string)$value;
+        if (is_scalar($value) || $value instanceof \Stringable) {
+            return (string) $value;
+        }
+
+        return 'null';
     }
 
     /**
      * Render contract interface source.
      *
-     * @param array<string, mixed> $target Fix target.
+     * @param BridgeTarget $target Fix target.
      *
      * @return string
      */
@@ -1040,6 +1165,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = '{';
 
         foreach ($target['signatures'] as $signature) {
+            /** @var MappedSignatureSpec $signature */
             $lines[] = $this->renderMethodSignature($signature, true);
         }
 
@@ -1052,8 +1178,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render DTO class source.
      *
-     * @param array<string, mixed> $target  Fix target.
-     * @param array<string, mixed> $dtoSpec DTO specification.
+     * @param BridgeTarget $target  Fix target.
+     * @param DtoSpec      $dtoSpec DTO specification.
      *
      * @return string
      */
@@ -1074,6 +1200,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = '    public function __construct(';
         $props = [];
         foreach ($dtoSpec['properties'] as $property) {
+            /** @var DtoProperty $property */
             $type = $this->formatType($property['type']);
             $props[] = sprintf('        public %s $%s', $type, $property['name']);
         }
@@ -1089,8 +1216,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render DTO mapper methods.
      *
-     * @param array<string, mixed> $dtoSpec DTO specification.
-     * @param array<string, mixed> $target  Fix target.
+     * @param DtoSpec      $dtoSpec DTO specification.
+     * @param BridgeTarget $target  Fix target.
      *
      * @return string
      */
@@ -1110,6 +1237,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = sprintf('        return new %s(', $dtoShort);
         $props = [];
         foreach ($dtoSpec['properties'] as $property) {
+            /** @var DtoProperty $property */
             $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
         }
         $lines[] = implode(",\n", $props);
@@ -1124,6 +1252,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = sprintf('        return new %s(', $domainShort);
         $props = [];
         foreach ($dtoSpec['properties'] as $property) {
+            /** @var DtoProperty $property */
             $props[] = sprintf('            %s: $value->%s', $property['name'], $property['name']);
         }
         $lines[] = implode(",\n", $props);
@@ -1156,9 +1285,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render a method signature for contract or adapter.
      *
-     * @param array<string, mixed>      $signature Signature data.
-     * @param bool                      $interface True when generating interface.
-     * @param array<string, mixed>|null $target    Fix target.
+     * @param MappedSignatureSpec $signature Signature data.
+     * @param bool                $interface True when generating interface.
+     * @param BridgeTarget|null   $target    Fix target.
      *
      * @return string
      */
@@ -1166,6 +1295,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     {
         $params = [];
         foreach ($signature['params'] as $param) {
+            /** @var MappedParamSpec $param */
             $type = $param['contractType'] ?? $param['type'];
             $typeString = $type ? $this->formatType($type) : null;
             $paramString = ($typeString ? $typeString . ' ' : '') . '$' . $param['name'];
@@ -1185,6 +1315,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         $callArgs = [];
         foreach ($signature['params'] as $param) {
+            /** @var MappedParamSpec $param */
             $callArgs[] = '$' . $param['name'];
         }
 
@@ -1209,7 +1340,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render NoOp provider source.
      *
-     * @param array<string, mixed> $target Fix target.
+     * @param BridgeTarget $target Fix target.
      *
      * @return string
      */
@@ -1232,6 +1363,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = 'use ' . FabryqProvider::class . ';';
         $lines[] = 'use ' . $contractFqcn . ';';
         foreach ($target['dtoPlan'] as $dtoSpec) {
+            /** @var DtoSpec $dtoSpec */
             $lines[] = 'use ' . $dtoSpec['fqcn'] . ';';
         }
         $lines[] = '';
@@ -1244,6 +1376,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $lines[] = '{';
 
         foreach ($target['signatures'] as $signature) {
+            /** @var MappedSignatureSpec $signature */
             $lines[] = $this->renderNoOpMethod($signature);
         }
 
@@ -1256,7 +1389,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render NoOp method implementation.
      *
-     * @param array<string, mixed> $signature Signature data.
+     * @param MappedSignatureSpec $signature Signature data.
      *
      * @return string
      */
@@ -1264,6 +1397,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     {
         $params = [];
         foreach ($signature['params'] as $param) {
+            /** @var MappedParamSpec $param */
             $type = $param['contractType'] ?? $param['type'];
             $typeString = $type ? $this->formatType($type) : null;
             $params[] = ($typeString ? $typeString . ' ' : '') . '$' . $param['name'];
@@ -1288,11 +1422,11 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Render plan Markdown output.
      *
-     * @param string                           $mode      Fix mode.
-     * @param FixSelection                     $selection Selection payload.
-     * @param array<int, array<string, mixed>> $items     Plan items.
-     * @param int                              $blockers  Blocker count.
-     * @param int                              $warnings  Warning count.
+     * @param string        $mode      Fix mode.
+     * @param FixSelection  $selection Selection payload.
+     * @param list<PlanItem> $items     Plan items.
+     * @param int           $blockers  Blocker count.
+     * @param int           $warnings  Warning count.
      *
      * @return string Markdown content.
      */
@@ -1348,6 +1482,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      * Replace new expressions marked for replacement.
      *
      * @param array<int, Node\Stmt> $stmts Statements.
+     *
+     * @return array<int, Node\Stmt>
      */
     private function replaceNewExpressions(array $stmts): array
     {
@@ -1369,7 +1505,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             }
         );
 
-        return $traverser->traverse($stmts);
+        $updatedStmts = $traverser->traverse($stmts);
+        /** @var array<int, Node\Stmt> $updatedStmts */
+        return $updatedStmts;
     }
 
     /**
@@ -1443,13 +1581,13 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Resolve DTO spec for a domain class.
      *
-     * @param string                              $fqcn              Domain class.
-     * @param string                              $providerAppPascal Provider app folder.
-     * @param array<int, array<string, mixed>>    $dtoPlan           DTO plan output.
-     * @param array<string, array<string, mixed>> $dtoIndex          DTO cache.
-     * @param string|null                         $reason            Failure reason.
+     * @param string               $fqcn              Domain class.
+     * @param string               $providerAppPascal Provider app folder.
+     * @param list<DtoSpec>        $dtoPlan           DTO plan output.
+     * @param array<string, DtoSpec> $dtoIndex        DTO cache.
+     * @param string|null          $reason            Failure reason.
      *
-     * @return array<string, mixed>|null
+     * @return DtoSpec|null
      */
     private function resolveDtoSpec(string $fqcn, string $providerAppPascal, array &$dtoPlan, array &$dtoIndex, ?string &$reason): ?array
     {
@@ -1469,8 +1607,17 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
 
         $code = file_get_contents($classFile);
+        if ($code === false) {
+            $reason = 'DTO source class could not be read.';
+            return null;
+        }
         $parser = (new ParserFactory())->createForNewestSupportedVersion();
-        $ast = $parser->parse($code);
+        try {
+            $ast = $parser->parse($code);
+        } catch (\Throwable) {
+            $reason = 'DTO source class parse failed.';
+            return null;
+        }
         if ($ast === null) {
             $reason = 'DTO source class parse failed.';
             return null;
@@ -1528,7 +1675,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         $paramNames = [];
         foreach ($constructor->params as $param) {
-            if ($param->var instanceof Node\Expr\Variable) {
+            if ($param->var instanceof Node\Expr\Variable && is_string($param->var->name)) {
                 $paramNames[] = $param->var->name;
             }
         }
@@ -1587,7 +1734,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @param Node|null $type Node type.
      *
-     * @return array<string, mixed>|null
+     * @return TypeDescriptor|null
      */
     private function resolveTypeDescriptor(?Node $type): ?array
     {
@@ -1645,13 +1792,16 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     /**
      * Rewrite consumer file to use contract injection.
      *
-     * @param array<string, mixed> $target Fix target.
+     * @param BridgeTarget $target Fix target.
      *
-     * @return array<string, mixed>|null Blocker plan item.
+     * @return BlockedPlanItem|null Blocker plan item.
      */
     private function rewriteConsumer(array $target): ?array
     {
         $code = file_get_contents($target['consumerFile']);
+        if ($code === false) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file could not be read.');
+        }
 
         // FIX: nikic/php-parser v5 compatibility
         $lexer = new Emulative(null);
@@ -1749,6 +1899,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $replacerTraverser = new NodeTraverser();
         $replacerTraverser->addVisitor($nameReplacer);
         $stmts = $replacerTraverser->traverse($stmts);
+        /** @var array<int, Node\Stmt> $stmts */
 
         if ($nameReplacer->updated) {
             $updated = true;
@@ -1759,10 +1910,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
 
         if ($needsInjection) {
-            $blocker = $this->ensureConstructorInjection($classNode, $contractFqcn, $propertyName);
-            if ($blocker !== null) {
-                return $blocker;
-            }
+            $this->ensureConstructorInjection($classNode, $contractFqcn, $propertyName);
         }
 
         $stmts = $this->replaceNewExpressions($stmts);
@@ -1791,9 +1939,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      * Update consumer manifest with consumes entry.
      *
      * @param string               $manifestPath Manifest path.
-     * @param array<string, mixed> $target       Fix target.
+     * @param BridgeTarget         $target       Fix target.
      *
-     * @return array<string, mixed>|null
+     * @return BlockedPlanItem|null
      */
     private function updateManifestConsumes(string $manifestPath, array $target): ?array
     {
@@ -1803,6 +1951,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
 
         $consumes = $data['consumes'] ?? [];
+        if (!is_array($consumes)) {
+            $consumes = [];
+        }
         foreach ($consumes as &$entry) {
             if (is_string($entry) && $entry === $target['capability']) {
                 $entry = [
@@ -1811,7 +1962,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                     'contract' => $target['contractFqcn'],
                 ];
                 $data['consumes'] = $consumes;
-                return $this->writeManifest($manifestPath, $data, $target);
+                $this->writeManifest($manifestPath, $data);
+                return null;
             }
             if (is_array($entry) && ($entry['capabilityId'] ?? null) === $target['capability']) {
                 if (isset($entry['contract']) && $entry['contract'] !== $target['contractFqcn']) {
@@ -1819,7 +1971,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                 }
                 $entry['contract'] = $target['contractFqcn'];
                 $data['consumes'] = $consumes;
-                return $this->writeManifest($manifestPath, $data, $target);
+                $this->writeManifest($manifestPath, $data);
+                return null;
             }
         }
         unset($entry);
@@ -1831,16 +1984,17 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         ];
         $data['consumes'] = $consumes;
 
-        return $this->writeManifest($manifestPath, $data, $target);
+        $this->writeManifest($manifestPath, $data);
+        return null;
     }
 
     /**
      * Update provider manifest with provides entry.
      *
      * @param string               $manifestPath Manifest path.
-     * @param array<string, mixed> $target       Fix target.
+     * @param BridgeTarget         $target       Fix target.
      *
-     * @return array<string, mixed>|null
+     * @return BlockedPlanItem|null
      */
     private function updateManifestProvides(string $manifestPath, array $target): ?array
     {
@@ -1850,6 +2004,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
 
         $provides = $data['provides'] ?? [];
+        if (!is_array($provides)) {
+            $provides = [];
+        }
         foreach ($provides as &$entry) {
             if (is_string($entry) && $entry === $target['capability']) {
                 $entry = [
@@ -1857,13 +2014,15 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                     'contract' => $target['contractFqcn'],
                 ];
                 $data['provides'] = $provides;
-                return $this->writeManifest($manifestPath, $data, $target);
+                $this->writeManifest($manifestPath, $data);
+                return null;
             }
             if (is_array($entry) && ($entry['capabilityId'] ?? null) === $target['capability']) {
                 if (($entry['contract'] ?? null) !== $target['contractFqcn']) {
                     return $this->blockedPlan($target['findingId'], $target['finding'], 'Provider manifest provides incompatible contract.');
                 }
-                return $this->writeManifest($manifestPath, $data, $target);
+                $this->writeManifest($manifestPath, $data);
+                return null;
             }
         }
         unset($entry);
@@ -1874,7 +2033,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         ];
         $data['provides'] = $provides;
 
-        return $this->writeManifest($manifestPath, $data, $target);
+        $this->writeManifest($manifestPath, $data);
+        return null;
     }
 
     /**
@@ -1882,14 +2042,17 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @param string               $path    File path.
      * @param string               $content Expected content.
-     * @param array<string, mixed> $target  Fix target.
+     * @param BridgeTarget         $target  Fix target.
      *
-     * @return array<string, mixed>|null
+     * @return BlockedPlanItem|null
      */
     private function writeFileIfCompatible(string $path, string $content, array $target): ?array
     {
         if ($this->filesystem->exists($path)) {
-            $existing = (string)file_get_contents($path);
+            $existing = file_get_contents($path);
+            if ($existing === false) {
+                return $this->blockedPlan($target['findingId'], $target['finding'], sprintf('File %s could not be read.', $this->normalizePath($path)));
+            }
             if (trim($existing) !== trim($content)) {
                 return $this->blockedPlan($target['findingId'], $target['finding'], sprintf('File %s already exists with different content.', $this->normalizePath($path)));
             }
@@ -1905,26 +2068,23 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @param string               $manifestPath Manifest path.
      * @param array<string, mixed> $data         Manifest data.
-     * @param array<string, mixed> $target       Fix target.
      *
-     * @return array<string, mixed>|null
+     * @return void
      */
-    private function writeManifest(string $manifestPath, array $data, array $target): ?array
+    private function writeManifest(string $manifestPath, array $data): void
     {
         $content = $this->renderManifest($data);
         $this->filesystem->dumpFile($manifestPath, $content);
-
-        return null;
     }
 
     /**
      * Apply entity-to-interface replacements in a consumer file.
      *
-     * @param array<string, mixed> $target
-     * @param array<int, string>   $changedFiles
-     * @param array<int, array<string, string>> $createdInterfaces
+     * @param EntityInterfaceTarget $target
+     * @param list<string>          $changedFiles
+     * @param list<array{path: string, fqcn: string, ruleKey: string}> $createdInterfaces
      *
-     * @return array<string, mixed>|null
+     * @return BlockedPlanItem|null
      */
     private function applyEntityToInterface(array $target, array &$changedFiles, array &$createdInterfaces): ?array
     {
@@ -1935,6 +2095,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $interfacePath = $target['interfacePath'];
 
         $code = file_get_contents($consumerFile);
+        if ($code === false) {
+            return $this->blockedPlan($target['findingId'], $target['finding'], 'Consumer file could not be read.');
+        }
 
         $lexer = new Emulative(null);
         $parser = new \PhpParser\Parser\Php8($lexer);
@@ -1957,15 +2120,18 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         $updated = false;
 
-        $typeReplacer = new class ($entityFqcn, $interfaceFqcn, $updated) extends NodeVisitorAbstract {
-            private bool $updated;
+        $typeReplacer = new class ($entityFqcn, $interfaceFqcn) extends NodeVisitorAbstract {
+            private bool $updated = false;
 
             public function __construct(
                 private readonly string $entityFqcn,
-                private readonly string $interfaceFqcn,
-                bool &$updated
+                private readonly string $interfaceFqcn
             ) {
-                $this->updated = &$updated;
+            }
+
+            public function didUpdate(): bool
+            {
+                return $this->updated;
             }
 
             public function enterNode(Node $node): ?Node
@@ -2014,16 +2180,19 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             }
         };
 
-        $docReplacer = new class ($entityFqcn, $interfaceFqcn, $entityShort, $updated) extends NodeVisitorAbstract {
-            private bool $updated;
+        $docReplacer = new class ($entityFqcn, $interfaceFqcn, $entityShort) extends NodeVisitorAbstract {
+            private bool $updated = false;
 
             public function __construct(
                 private readonly string $entityFqcn,
                 private readonly string $interfaceFqcn,
-                private readonly string $entityShort,
-                bool &$updated
+                private readonly string $entityShort
             ) {
-                $this->updated = &$updated;
+            }
+
+            public function didUpdate(): bool
+            {
+                return $this->updated;
             }
 
             public function enterNode(Node $node): ?Node
@@ -2081,7 +2250,9 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $traverser->addVisitor($typeReplacer);
         $traverser->addVisitor($docReplacer);
         $stmts = $traverser->traverse($stmts);
+        /** @var array<int, Node\Stmt> $stmts */
 
+        $updated = $typeReplacer->didUpdate() || $docReplacer->didUpdate();
         if ($updated && !$this->filesystem->exists($interfacePath)) {
             $interfaceDir = dirname($interfacePath);
             $this->filesystem->mkdir($interfaceDir);

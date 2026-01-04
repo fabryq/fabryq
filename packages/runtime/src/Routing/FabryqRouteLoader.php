@@ -82,6 +82,9 @@ final class FabryqRouteLoader extends Loader
                 }
 
                 $routes = $this->attributeDirectoryLoader->load($controllerDir, 'attribute');
+                if (!$routes instanceof RouteCollection) {
+                    continue;
+                }
                 $routes->addPrefix($mountpoint);
                 $routes->addNamePrefix($app->manifest->appId . '.' . $component->slug . '.');
 

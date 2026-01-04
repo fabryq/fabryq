@@ -15,6 +15,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Writes asset manifests to JSON and Markdown files.
+ *
+ * @phpstan-import-type AssetInstallEntry from AssetInstallResult
+ * @phpstan-import-type AssetCollision from AssetScanResult
  */
 final readonly class AssetManifestWriter
 {
@@ -50,6 +53,7 @@ final readonly class AssetManifestWriter
      */
     public function write(AssetInstallResult $result): void
     {
+        /** @var array{generatedAt: string, entries: list<AssetInstallEntry>, collisions: list<AssetCollision>} $payload */
         $payload = [
             'generatedAt' => date('c'),
             'entries' => $result->entries,
@@ -69,7 +73,7 @@ final readonly class AssetManifestWriter
     /**
      * Render a Markdown document for the asset manifest payload.
      *
-     * @param array<string, mixed> $payload Manifest payload data.
+     * @param array{generatedAt: string, entries: list<AssetInstallEntry>, collisions: list<AssetCollision>} $payload Manifest payload data.
      *
      * @return string Markdown document contents.
      */

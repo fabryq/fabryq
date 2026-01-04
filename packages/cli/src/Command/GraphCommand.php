@@ -21,6 +21,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Builds and writes the capability graph to disk.
+ *
+ * @phpstan-import-type GraphPayload from GraphBuilder
  */
 #[AsCommand(
     name: 'fabryq:graph',
@@ -77,6 +79,7 @@ final class GraphCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $graph = $this->graphBuilder->build();
+        /** @var array{apps: GraphPayload} $payload */
         $payload = [
             'apps' => $graph,
         ];
@@ -121,7 +124,7 @@ final class GraphCommand extends AbstractFabryqCommand
     /**
      * Render a Markdown document for the graph payload.
      *
-     * @param array<string, mixed> $payload
+     * @param array{apps: GraphPayload} $payload
      *
      * @return string Markdown document contents.
      */

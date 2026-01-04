@@ -97,8 +97,8 @@ final class ComponentCreateCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $appName = (string) $input->getArgument('app');
-        $componentName = (string) $input->getArgument('component');
+        $appName = $this->requireStringArgument($input, 'app');
+        $componentName = $this->requireStringArgument($input, 'component');
         $dryRun = (bool) $input->getOption('dry-run');
 
         if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $componentName)) {

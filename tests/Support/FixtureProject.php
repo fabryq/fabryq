@@ -38,6 +38,9 @@ final class FixtureProject
         );
 
         foreach ($iterator as $fileInfo) {
+            if (!$fileInfo instanceof \SplFileInfo) {
+                continue;
+            }
             if ($fileInfo->isDir()) {
                 rmdir($fileInfo->getPathname());
             } else {
@@ -99,7 +102,11 @@ final class FixtureProject
             throw new RuntimeException('Verify report missing at ' . $path . "\nMaybe verifying failed?");
         }
 
-        $data = json_decode(file_get_contents($path), true);
+        $contents = file_get_contents($path);
+        if ($contents === false) {
+            throw new RuntimeException('Verify report could not be read.');
+        }
+        $data = json_decode($contents, true);
         if (!is_array($data)) {
             throw new RuntimeException('Verify report is invalid JSON.');
         }
@@ -178,6 +185,9 @@ final class FixtureProject
         );
 
         foreach ($iterator as $fileInfo) {
+            if (!$fileInfo instanceof \SplFileInfo) {
+                continue;
+            }
             $destPath = $target . '/' . $iterator->getSubPathName();
             if ($fileInfo->isDir()) {
                 if (!is_dir($destPath)) {

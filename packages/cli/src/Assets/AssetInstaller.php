@@ -54,8 +54,14 @@ final readonly class AssetInstaller
         $entries = [];
 
         foreach ($scanResult->entries as $entry) {
-            $entry['method'] = 'pending';
-            $entries[] = $entry;
+            $entries[] = [
+                'type' => $entry['type'],
+                'appId' => $entry['appId'],
+                'componentSlug' => $entry['componentSlug'],
+                'source' => $entry['source'],
+                'target' => $entry['target'],
+                'method' => 'pending',
+            ];
         }
 
         if ($scanResult->collisions === []) {

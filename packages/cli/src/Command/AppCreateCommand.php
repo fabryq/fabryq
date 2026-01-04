@@ -64,7 +64,7 @@ final class AppCreateCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $name = (string) $input->getArgument('name');
+        $name = $this->requireStringArgument($input, 'name');
         $dryRun = (bool) $input->getOption('dry-run');
 
         if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
@@ -74,8 +74,8 @@ final class AppCreateCommand extends AbstractFabryqCommand
             ));
         }
 
-        $appId = (string)($input->getOption('app-id') ?? '');
-        if ($appId === '') {
+        $appId = $this->optionalStringOption($input, 'app-id');
+        if ($appId === null) {
             $appId = $this->slugger->slug($name);
         }
 
@@ -83,8 +83,7 @@ final class AppCreateCommand extends AbstractFabryqCommand
             throw new UserError(sprintf('Invalid appId "%s".', $appId));
         }
 
-        $mount = $input->getOption('mount');
-        $mountpoint = $mount === null || $mount === '' ? null : (string) $mount;
+        $mountpoint = $this->optionalStringOption($input, 'mount');
         if ($mountpoint !== null) {
             $valid = str_starts_with($mountpoint, '/')
                 && ($mountpoint === '/' || !str_ends_with($mountpoint, '/'))

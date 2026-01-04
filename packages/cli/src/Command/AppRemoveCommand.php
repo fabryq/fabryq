@@ -63,12 +63,8 @@ final class AppRemoveCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $appName = (string) $input->getArgument('app');
+        $appName = $this->requireStringArgument($input, 'app');
         $dryRun = (bool) $input->getOption('dry-run');
-
-        if ($appName === '') {
-            throw new UserError('App name is required.');
-        }
 
         $app = $this->findApp($appName);
         if ($app === null) {

@@ -13,24 +13,35 @@ namespace Fabryq\Cli\Assets;
 
 /**
  * Holds published asset entries and detected collisions.
+ *
+ * @phpstan-import-type AssetEntry from AssetScanResult
+ * @phpstan-import-type AssetCollision from AssetScanResult
+ * @phpstan-type AssetInstallEntry array{
+ *   type: string,
+ *   appId: string,
+ *   componentSlug: string,
+ *   source: string,
+ *   target: string,
+ *   method: string
+ * }
  */
 final readonly class AssetInstallResult
 {
     /**
-     * @param array<int, array<string, string>> $entries    Published asset entries.
-     * @param array<int, array<string, mixed>>  $collisions Collisions keyed by target.
+     * @param list<AssetInstallEntry> $entries    Published asset entries.
+     * @param list<AssetCollision>    $collisions Collisions keyed by target.
      */
     public function __construct(
         /**
          * Published asset entries.
          *
-         * @var array<int, array<string, string>>
+         * @var list<AssetInstallEntry>
          */
         public array $entries,
         /**
          * Collision details when multiple sources map to the same target.
          *
-         * @var array<int, array<string, mixed>>
+         * @var list<AssetCollision>
          */
         public array $collisions,
     ) {

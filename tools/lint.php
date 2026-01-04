@@ -23,6 +23,9 @@ $iterator = new RecursiveIteratorIterator(
 );
 
 foreach ($iterator as $fileInfo) {
+    if (!$fileInfo instanceof SplFileInfo) {
+        continue;
+    }
     if (!$fileInfo->isFile()) {
         continue;
     }

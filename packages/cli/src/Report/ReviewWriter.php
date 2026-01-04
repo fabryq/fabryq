@@ -15,6 +15,18 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Writes review reports grouped by rule key.
+ *
+ * @phpstan-type ReviewFinding array{
+ *   id: string,
+ *   ruleKey: string,
+ *   severity: string,
+ *   message: string,
+ *   hint: string,
+ *   file: string|null,
+ *   line: int|null,
+ *   symbol: string|null,
+ *   autofix: array{available: bool, fixer: string|null}
+ * }
  */
 final readonly class ReviewWriter
 {
@@ -53,8 +65,11 @@ final readonly class ReviewWriter
      */
     public function write(array $findings, string $mdPath): void
     {
+        /** @var list<ReviewFinding> $blockers */
         $blockers = [];
+        /** @var list<ReviewFinding> $warnings */
         $warnings = [];
+        /** @var array<string, list<ReviewFinding>> $groups */
         $groups = [];
 
         foreach ($findings as $finding) {
@@ -135,7 +150,7 @@ final readonly class ReviewWriter
      *
      * @param Finding $finding Finding to normalize.
      *
-     * @return array<string, mixed>
+     * @return ReviewFinding
      */
     private function normalizeFinding(Finding $finding): array
     {

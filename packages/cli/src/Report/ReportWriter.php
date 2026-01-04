@@ -15,6 +15,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Writes findings to disk in multiple formats.
+ *
+ * @phpstan-import-type FindingArray from Finding
  */
 final readonly class ReportWriter
 {
@@ -78,6 +80,7 @@ final readonly class ReportWriter
         }
 
         $result = $blockers > 0 ? 'blocked' : 'ok';
+        /** @var array{header: array{tool: string, version: string, report_schema_version: string, generatedAt: string, result: string, summary: array{blockers: int, warnings: int}}, findings: list<FindingArray>} $payload */
         $payload = array_merge(
             [
                 'header' => [
@@ -107,7 +110,7 @@ final readonly class ReportWriter
      * Render a Markdown report from the payload data.
      *
      * @param string               $tool             Tool name displayed in the report.
-     * @param array<string, mixed> $payload          Normalized report payload.
+     * @param array{header: array{tool: string, version: string, report_schema_version: string, generatedAt: string, result: string, summary: array{blockers: int, warnings: int}}, findings: list<FindingArray>} $payload Normalized report payload.
      * @param string|null          $markdownAppendix [Optional] Additional Markdown appended to the report.
      *
      * @return string Markdown document contents.
@@ -145,7 +148,7 @@ final readonly class ReportWriter
             );
             $lines[] = sprintf(
                 '| %s | %s | %s | %s | %s |',
-                $finding['id'] ?? '',
+                $finding['id'],
                 $finding['severity'],
                 $finding['ruleKey'],
                 str_replace("|", "\\|", (string)$finding['message']),

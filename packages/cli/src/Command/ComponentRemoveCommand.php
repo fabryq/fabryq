@@ -63,12 +63,8 @@ final class ComponentRemoveCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $componentName = (string) $input->getArgument('component');
+        $componentName = $this->requireStringArgument($input, 'component');
         $dryRun = (bool) $input->getOption('dry-run');
-
-        if ($componentName === '') {
-            throw new UserError('Component name is required.');
-        }
 
         $matches = [];
         foreach ($this->appRegistry->getApps() as $app) {

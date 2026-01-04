@@ -119,6 +119,9 @@ YAML;
         );
 
         foreach ($iterator as $fileInfo) {
+            if (!$fileInfo instanceof \SplFileInfo) {
+                continue;
+            }
             if ($fileInfo->isDir()) {
                 rmdir($fileInfo->getPathname());
             } else {

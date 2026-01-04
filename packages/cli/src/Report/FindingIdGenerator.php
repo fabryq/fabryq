@@ -41,7 +41,10 @@ final readonly class FindingIdGenerator
     public function generate(Finding $finding): string
     {
         $location = $this->normalizeLocation($finding->location);
-        $primary = (string)($finding->details['primary'] ?? '');
+        $primary = '';
+        if (isset($finding->details['primary']) && is_string($finding->details['primary'])) {
+            $primary = $finding->details['primary'];
+        }
         $parts = [
             $finding->ruleKey,
             $location['file'] ?? '',

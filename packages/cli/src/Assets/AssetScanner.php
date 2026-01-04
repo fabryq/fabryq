@@ -20,6 +20,9 @@ use Fabryq\Runtime\Util\ComponentSlugger;
  * Responsibilities:
  * - Build a list of asset sources and their target publish locations.
  * - Detect collisions where multiple sources map to the same target.
+ *
+ * @phpstan-import-type AssetEntry from AssetScanResult
+ * @phpstan-import-type AssetCollision from AssetScanResult
  */
 final readonly class AssetScanner
 {
@@ -60,8 +63,11 @@ final readonly class AssetScanner
      */
     public function scan(): AssetScanResult
     {
+        /** @var list<AssetEntry> $entries */
         $entries = [];
+        /** @var list<AssetCollision> $collisions */
         $collisions = [];
+        /** @var array<string, list<string>> $targets */
         $targets = [];
 
         foreach ($this->appRegistry->getApps() as $app) {
@@ -121,7 +127,7 @@ final readonly class AssetScanner
      * @param string      $source        Absolute source directory path.
      * @param string      $target        Absolute target directory path.
      *
-     * @return array<string, string> Asset entry payload.
+     * @return AssetEntry Asset entry payload.
      */
     private function buildEntry(string $type, ?string $appId, ?string $componentSlug, string $source, string $target): array
     {

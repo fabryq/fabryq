@@ -58,7 +58,11 @@ PHP;
         $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
 
         $report = FixtureProject::readVerifyReport($this->projectDir);
-        $this->assertSame('0.4', $report['header']['report_schema_version'] ?? null);
+        $header = $report['header'] ?? null;
+        if (!is_array($header)) {
+            $this->fail('Verify report header is missing.');
+        }
+        $this->assertSame('0.4', $header['report_schema_version'] ?? null);
         $this->assertHasFinding($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN', Severity::BLOCKER);
         $counts = $this->countFindings($report, 'FABRYQ.RUNTIME.SERVICE_LOCATOR_FORBIDDEN');
         $this->assertSame(1, $counts[Severity::BLOCKER]);
@@ -245,9 +249,15 @@ PHP;
     private function assertHasFinding(array $report, string $ruleKey, string $severity): void
     {
         $findings = $report['findings'] ?? [];
+        if (!is_array($findings)) {
+            $this->fail('Verify report findings are missing.');
+        }
         foreach ($findings as $finding) {
+            if (!is_array($finding)) {
+                continue;
+            }
             if (($finding['ruleKey'] ?? '') === $ruleKey && ($finding['severity'] ?? '') === $severity) {
-                $this->assertMatchesRegularExpression('/^F-[0-9A-HJKMNP-TV-Z]{8}$/', (string)$finding['id']);
+                $this->assertMatchesRegularExpression('/^F-[0-9A-HJKMNP-TV-Z]{8}$/', (string) ($finding['id'] ?? ''));
                 return;
             }
         }
@@ -267,7 +277,13 @@ PHP;
     {
         $counts = [Severity::BLOCKER => 0, Severity::WARNING => 0];
         $findings = $report['findings'] ?? [];
+        if (!is_array($findings)) {
+            return $counts;
+        }
         foreach ($findings as $finding) {
+            if (!is_array($finding)) {
+                continue;
+            }
             if (($finding['ruleKey'] ?? '') !== $ruleKey) {
                 continue;
             }

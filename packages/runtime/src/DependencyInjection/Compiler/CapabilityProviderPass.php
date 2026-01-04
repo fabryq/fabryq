@@ -19,6 +19,33 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * Side effects:
  * - Adds or replaces container parameters for providers, issues, and maps.
+ *
+ * @phpstan-type CapabilityProviderInput array{
+ *   capability: string,
+ *   contract: class-string,
+ *   priority: int,
+ *   serviceId: string,
+ *   className: class-string
+ * }
+ * @phpstan-type CapabilityProviderMapEntry array{
+ *   serviceId: string,
+ *   className: class-string,
+ *   priority: int,
+ *   capability: string,
+ *   winner: bool
+ * }
+ * @phpstan-type CapabilityWinner array{
+ *   serviceId: string,
+ *   className: class-string,
+ *   priority: int,
+ *   capability: string
+ * }
+ * @phpstan-type CapabilityMapEntry array{
+ *   capability: string,
+ *   contract: class-string,
+ *   providers: list<CapabilityProviderMapEntry>,
+ *   winner: CapabilityWinner|null
+ * }
  */
 final class CapabilityProviderPass implements CompilerPassInterface
 {
@@ -32,6 +59,7 @@ final class CapabilityProviderPass implements CompilerPassInterface
         $tagged = $container->findTaggedServiceIds('fabryq.capability_provider');
         $providers = [];
         $issues = [];
+        /** @var array<string, list<CapabilityProviderInput>> $providersByContract */
         $providersByContract = [];
 
         foreach ($tagged as $serviceId => $tags) {
@@ -43,7 +71,7 @@ final class CapabilityProviderPass implements CompilerPassInterface
                 $contract = $tag['contract'] ?? null;
                 $priority = (int) ($tag['priority'] ?? 0);
 
-                if (!$capability || !$contract) {
+                if (!is_string($capability) || $capability === '' || !is_string($contract) || $contract === '') {
                     $issues[] = [
                         'ruleKey' => 'FABRYQ.PROVIDER.INVALID',
                         'message' => sprintf('Provider %s is missing capability or contract.', $serviceId),
@@ -87,6 +115,11 @@ final class CapabilityProviderPass implements CompilerPassInterface
                     continue;
                 }
 
+                /** @var class-string $contract */
+                $contract = $contract;
+                /** @var class-string $className */
+                $className = $className;
+
                 $providers[] = [
                     'capability' => (string) $capability,
                     'contract' => (string) $contract,
@@ -112,7 +145,7 @@ final class CapabilityProviderPass implements CompilerPassInterface
         $container->setParameter('fabryq.capabilities.map', $capabilityMap);
 
         foreach ($capabilityMap as $entry) {
-            if (!isset($entry['winner']['serviceId'], $entry['contract'])) {
+            if ($entry['winner'] === null) {
                 continue;
             }
 
@@ -124,15 +157,17 @@ final class CapabilityProviderPass implements CompilerPassInterface
     /**
      * Build a capability diagnostic map with winners per contract.
      *
-     * @param array<string, array<int, array<string, mixed>>> $providersByContract
+     * @param array<string, list<CapabilityProviderInput>> $providersByContract
      *
-     * @return array<string, array<string, mixed>>
+     * @return array<string, CapabilityMapEntry>
      */
     private function buildCapabilityMap(array $providersByContract): array
     {
         $map = [];
 
         foreach ($providersByContract as $contract => $providers) {
+            /** @var class-string $contract */
+            $contract = $contract;
             usort($providers, static function (array $a, array $b): int {
                 if ($a['priority'] === $b['priority']) {
                     return $a['serviceId'] <=> $b['serviceId'];

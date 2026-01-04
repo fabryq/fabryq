@@ -1,68 +1,12 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Fabryq\\\\Cli\\\\Analyzer\\\\Doctor\\:\\:__construct\\(\\) has parameter \\$capabilityMap with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Analyzer/Doctor.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixAssetsCommand\\:\\:renderPlan\\(\\) has parameter \\$collisions with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixAssetsCommand.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixAssetsCommand\\:\\:renderPlan\\(\\) has parameter \\$entries with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixAssetsCommand.php
-			reportUnmatched: false
-
-		-
 			message: "#^Access to an undefined property PhpParser\\\\Node\\\\FunctionLike\\:\\:\\$returnType\\.$#"
 			count: 1
 			path: packages/cli/src/Command/FixCrossingCommand.php
 
 		-
 			message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:applyTarget\\(\\) has parameter \\$createdInterfaces with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:blockedPlan\\(\\) has parameter \\$finding with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:ensureConstructorInjection\\(\\) never returns array\\<string, mixed\\> so it can be removed from the return type\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:replaceNewExpressions\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:writeManifest\\(\\) never returns array\\<string, mixed\\> so it can be removed from the return type\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Parameter \\#1 \\$stmts of method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:pruneImports\\(\\) expects array\\<int, PhpParser\\\\Node\\\\Stmt\\>, array\\<PhpParser\\\\Node\\> given\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Parameter \\#1 \\$stmts of method Fabryq\\\\Cli\\\\Command\\\\FixCrossingCommand\\:\\:replaceNewExpressions\\(\\) expects array\\<int, PhpParser\\\\Node\\\\Stmt\\>, array\\<PhpParser\\\\Node\\> given\\.$#"
 			count: 1
 			path: packages/cli/src/Command/FixCrossingCommand.php
 
@@ -83,16 +27,6 @@ parameters:
 
 		-
 			message: "#^Property PhpParser\\\\Node\\\\UnionType\\:\\:\\$types \\(array\\<PhpParser\\\\Node\\\\Identifier\\|PhpParser\\\\Node\\\\IntersectionType\\|PhpParser\\\\Node\\\\Name\\>\\) does not accept array\\<PhpParser\\\\Node\\|null\\>\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Property class@anonymous/packages/cli/src/Command/FixCrossingCommand\\.php\\:1960\\:\\:\\$updated is never read, only written\\.$#"
-			count: 1
-			path: packages/cli/src/Command/FixCrossingCommand.php
-
-		-
-			message: "#^Property class@anonymous/packages/cli/src/Command/FixCrossingCommand\\.php\\:2017\\:\\:\\$updated is never read, only written\\.$#"
 			count: 1
 			path: packages/cli/src/Command/FixCrossingCommand.php
 
@@ -160,57 +94,3 @@ parameters:
 			message: "#^Readonly property Fabryq\\\\Runtime\\\\Context\\\\FabryqContext\\:\\:\\$logger is assigned outside of its declaring class\\.$#"
 			count: 1
 			path: tests/RuntimeContextTest.php
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:alert\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:critical\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:debug\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:emergency\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:error\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:info\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:log\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:notice\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false
-
-		-
-			message: "#^Method Fabryq\\\\Tests\\\\Support\\\\TestLogger\\:\\:warning\\(\\) has parameter \\$message with no type specified\\.$#"
-			count: 1
-			path: tests/Support/TestLogger.php
-			reportUnmatched: false

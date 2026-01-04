@@ -34,6 +34,10 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Publishes asset directories with dry-run/apply support.
+ *
+ * @phpstan-import-type AssetEntry from \Fabryq\Cli\Assets\AssetScanResult
+ * @phpstan-import-type AssetCollision from \Fabryq\Cli\Assets\AssetScanResult
+ * @phpstan-import-type AssetInstallEntry from AssetInstallResult
  */
 #[AsCommand(
     name: 'fabryq:fix:assets',
@@ -125,12 +129,20 @@ final class FixAssetsCommand extends AbstractFabryqCommand
         }
 
         $scanResult = $this->scanner->scan();
+        /** @var list<AssetInstallEntry> $entries */
         $entries = [];
         foreach ($scanResult->entries as $entry) {
-            $entry['method'] = 'pending';
-            $entries[] = $entry;
+            $entries[] = [
+                'type' => $entry['type'],
+                'appId' => $entry['appId'],
+                'componentSlug' => $entry['componentSlug'],
+                'source' => $entry['source'],
+                'target' => $entry['target'],
+                'method' => 'pending',
+            ];
         }
 
+        /** @var list<AssetInstallEntry> $selectedEntries */
         $selectedEntries = [];
         if ($selection->findingId === null) {
             foreach ($entries as $entry) {
@@ -140,6 +152,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
             }
         }
 
+        /** @var list<AssetCollision> $selectedCollisions */
         $selectedCollisions = [];
         foreach ($scanResult->collisions as $collision) {
             $finding = $this->buildCollisionFinding($collision);
@@ -172,6 +185,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
 
         $this->writeLock->acquire();
 
+        /** @var list<string> $changedFiles */
         $changedFiles = [];
         $appliedEntries = [];
         try {
@@ -183,7 +197,8 @@ final class FixAssetsCommand extends AbstractFabryqCommand
                 }
 
                 $entry['method'] = $this->publish($entry['source'], $entry['target']);
-                $changedFiles[] = $this->idGenerator->normalizePath($entry['target']);
+                $normalizedTarget = $this->idGenerator->normalizePath($entry['target']);
+                $changedFiles[] = $normalizedTarget ?? $entry['target'];
                 $appliedEntries[] = $entry;
             }
 
@@ -220,12 +235,12 @@ final class FixAssetsCommand extends AbstractFabryqCommand
     /**
      * Render the plan Markdown output.
      *
-     * @param string       $mode              Fix mode.
-     * @param FixSelection $selection         Selection criteria.
-     * @param array        $entries           Selected entries.
-     * @param array        $collisions        Selected collisions.
-     * @param int          $blockers          Blocker count output.
-     * @param int          $warnings          Warning count output.
+     * @param string               $mode       Fix mode.
+     * @param FixSelection         $selection  Selection criteria.
+     * @param list<AssetInstallEntry> $entries    Selected entries.
+     * @param list<AssetCollision> $collisions Selected collisions.
+     * @param int                  $blockers   Blocker count output.
+     * @param int                  $warnings   Warning count output.
      *
      * @return string Plan Markdown.
      */
@@ -269,7 +284,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
                 $blockers++;
                 $target = $this->idGenerator->normalizePath((string) $collision['target']);
                 $sources = array_map(
-                    fn (string $source) => $this->idGenerator->normalizePath($source),
+                    fn (string $source) => $this->idGenerator->normalizePath($source) ?? $source,
                     $collision['sources']
                 );
                 $lines[] = sprintf('- [%s] %s (sources: %s)', Severity::BLOCKER, $target, implode(', ', $sources));
@@ -283,15 +298,15 @@ final class FixAssetsCommand extends AbstractFabryqCommand
     /**
      * Build a collision finding for selection matching.
      *
-     * @param array<string, mixed> $collision Collision data.
+     * @param AssetCollision $collision Collision data.
      *
      * @return Finding Finding object.
      */
     private function buildCollisionFinding(array $collision): Finding
     {
-        $target = $this->idGenerator->normalizePath((string) $collision['target']);
+        $target = $this->idGenerator->normalizePath($collision['target']) ?? $collision['target'];
         $sources = array_map(
-            fn (string $source) => $this->idGenerator->normalizePath($source),
+            fn (string $source) => $this->idGenerator->normalizePath($source) ?? $source,
             $collision['sources']
         );
 

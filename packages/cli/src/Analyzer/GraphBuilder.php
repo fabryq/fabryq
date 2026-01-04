@@ -16,12 +16,37 @@ use Fabryq\Runtime\Registry\AppRegistry;
 
 /**
  * Builds a graph of consumed and provided capabilities per app.
+ *
+ * @phpstan-import-type CapabilityMapEntry from \Fabryq\Runtime\DependencyInjection\Compiler\CapabilityProviderPass
+ * @phpstan-type GraphProvider array{
+ *   serviceId: string,
+ *   className: class-string,
+ *   priority: int,
+ *   capability: string,
+ *   winner: bool
+ * }
+ * @phpstan-type GraphWinner array{
+ *   serviceId: string,
+ *   className: class-string,
+ *   priority: int,
+ *   capability: string
+ * }
+ * @phpstan-type GraphConsume array{
+ *   capabilityId: string,
+ *   required: bool,
+ *   contract: string|null,
+ *   providers: list<GraphProvider>,
+ *   winner: GraphWinner|null,
+ *   degraded: bool
+ * }
+ * @phpstan-type GraphApp array{consumes: list<GraphConsume>}
+ * @phpstan-type GraphPayload array<string, GraphApp>
  */
 final readonly class GraphBuilder
 {
     /**
      * @param AppRegistry          $appRegistry   Registry of discovered apps.
-     * @param array<string, mixed> $capabilityMap Capability resolver map.
+     * @param array<string, CapabilityMapEntry> $capabilityMap Capability resolver map.
      */
     public function __construct(
         /**
@@ -33,7 +58,7 @@ final readonly class GraphBuilder
         /**
          * Capability resolver map.
          *
-         * @var array<string, mixed>
+         * @var array<string, CapabilityMapEntry>
          */
         private array                $capabilityMap,
     ) {
@@ -42,7 +67,7 @@ final readonly class GraphBuilder
     /**
      * Build a capability graph for all discovered apps.
      *
-     * @return array<string, array<string, mixed>>
+     * @return GraphPayload
      */
     public function build(): array
     {
@@ -52,10 +77,16 @@ final readonly class GraphBuilder
             $consumes = [];
             foreach ($app->manifest->consumes as $consume) {
                 $entry = $this->capabilityMap[$consume->capabilityId] ?? null;
-                $winner = is_array($entry) ? ($entry['winner'] ?? null) : null;
-                $providers = is_array($entry) ? ($entry['providers'] ?? []) : [];
-                $contract = $consume->contract ?? ($entry['contract'] ?? null);
-                $degraded = is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED;
+                if ($entry === null) {
+                    $winner = null;
+                    $providers = [];
+                    $contract = $consume->contract;
+                } else {
+                    $winner = $entry['winner'];
+                    $providers = $entry['providers'];
+                    $contract = $consume->contract ?? $entry['contract'];
+                }
+                $degraded = $winner !== null && $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED;
                 $consumes[] = [
                     'capabilityId' => $consume->capabilityId,
                     'required' => $consume->required,

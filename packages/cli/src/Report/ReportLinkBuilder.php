@@ -19,7 +19,7 @@ use Fabryq\Cli\Config\ProjectConfig;
 final class ReportLinkBuilder
 {
     /**
-     * @var array<string, mixed>
+     * @var array{enabled: bool, scheme: string}
      */
     private array $linkConfig;
 
@@ -32,7 +32,7 @@ final class ReportLinkBuilder
         private readonly string $projectDir,
     ) {
         $reports = $config->reports();
-        $this->linkConfig = is_array($reports['links'] ?? null) ? $reports['links'] : [];
+        $this->linkConfig = $reports['links'];
     }
 
     /**
@@ -54,8 +54,8 @@ final class ReportLinkBuilder
             $location .= ':' . $line;
         }
 
-        $enabled = (bool) ($this->linkConfig['enabled'] ?? false);
-        $scheme = (string) ($this->linkConfig['scheme'] ?? 'none');
+        $enabled = $this->linkConfig['enabled'];
+        $scheme = $this->linkConfig['scheme'];
         if (!$enabled || $scheme === 'none') {
             return $location;
         }

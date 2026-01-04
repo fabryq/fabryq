@@ -21,6 +21,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Evaluates provider wiring and writes doctor reports.
+ *
+ * @phpstan-import-type AppStatus from \Fabryq\Cli\Analyzer\DoctorResult
  */
 #[AsCommand(
     name: 'fabryq:doctor',
@@ -110,7 +112,7 @@ final class DoctorCommand extends AbstractFabryqCommand
     /**
      * Render a Markdown table summarizing app statuses.
      *
-     * @param array<string, array<string, mixed>> $appStatuses
+     * @param array<string, AppStatus> $appStatuses
      *
      * @return string Markdown table output.
      */
@@ -134,7 +136,7 @@ final class DoctorCommand extends AbstractFabryqCommand
                 $status['status'],
                 implode(', ', $status['missingRequired']),
                 implode(', ', $status['missingOptional']),
-                implode(', ', $status['degraded'] ?? [])
+                implode(', ', $status['degraded'])
             );
         }
         $lines[] = '';

@@ -60,6 +60,9 @@ YAML;
         }
 
         $controller = file_get_contents($base . '/Controller/OrderController.php');
+        if ($controller === false) {
+            self::fail('Unable to read generated controller.');
+        }
         $this->assertStringContainsString("Route('/api/order'", $controller);
         $this->assertStringContainsString("name: 'api.order.list'", $controller);
         $this->assertStringContainsString("format: 'json'", $controller);
@@ -68,6 +71,9 @@ YAML;
         $this->assertStringContainsString("trans('order.list', [], 'fabryq')", $controller);
 
         $useCase = file_get_contents($base . '/UseCase/Order/ListOrderUseCase.php');
+        if ($useCase === false) {
+            self::fail('Unable to read generated use case.');
+        }
         $this->assertStringContainsString('TODO: implement list Order use case.', $useCase);
     }
 

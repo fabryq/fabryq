@@ -28,6 +28,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Generates CRUD use cases, DTOs, and a thin controller.
+ *
+ * @phpstan-import-type ControllerConfig from ProjectConfig
  */
 #[AsCommand(
     name: 'fabryq:crud:create',
@@ -67,8 +69,8 @@ final class CrudCreateCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $appName = (string) $input->getArgument('app');
-        $resourceName = (string) $input->getArgument('resource');
+        $appName = $this->requireStringArgument($input, 'app');
+        $resourceName = $this->requireStringArgument($input, 'resource');
         $dryRun = (bool) $input->getOption('dry-run');
 
         if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $resourceName)) {
@@ -122,7 +124,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
      * @param string               $appFolder App folder name.
      * @param string               $resourceName Resource name.
      * @param string               $resourceSlug Resource slug.
-     * @param array<string, mixed> $controllerConfig Controller defaults.
+     * @param ControllerConfig $controllerConfig Controller defaults.
      * @param string               $componentPath Component base path.
      *
      * @return array{dirs: string[], files: array<string, string>}
@@ -159,7 +161,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
      * @param string               $appFolder App folder.
      * @param string               $resourceName Resource name.
      * @param string               $resourceSlug Resource slug.
-     * @param array<string, mixed> $config Controller config.
+     * @param ControllerConfig $config Controller config.
      *
      * @return string
      */
@@ -169,21 +171,21 @@ final class CrudCreateCommand extends AbstractFabryqCommand
         $dtoNamespace = sprintf('App\\%s\\%s\\Dto\\%s', $appFolder, $resourceName, $resourceName);
         $useCaseNamespace = sprintf('App\\%s\\%s\\UseCase\\%s', $appFolder, $resourceName, $resourceName);
 
-        $routePrefix = (string) ($config['route_prefix'] ?? '');
-        $routeNamePrefix = (string) ($config['route_name_prefix'] ?? '');
-        $defaultFormat = (string) ($config['default_format'] ?? 'json');
+        $routePrefix = $config['route_prefix'];
+        $routeNamePrefix = $config['route_name_prefix'];
+        $defaultFormat = $config['default_format'];
 
-        $security = $config['security'] ?? [];
-        $securityEnabled = (bool) ($security['enabled'] ?? false);
-        $securityAttribute = (string) ($security['attribute'] ?? '');
+        $security = $config['security'];
+        $securityEnabled = $security['enabled'];
+        $securityAttribute = $security['attribute'];
 
-        $templates = $config['templates'] ?? [];
-        $templatesEnabled = (bool) ($templates['enabled'] ?? false);
-        $templateNamespace = (string) ($templates['namespace'] ?? '');
+        $templates = $config['templates'];
+        $templatesEnabled = $templates['enabled'];
+        $templateNamespace = $templates['namespace'];
 
-        $translations = $config['translations'] ?? [];
-        $translationsEnabled = (bool) ($translations['enabled'] ?? false);
-        $translationDomain = (string) ($translations['domain'] ?? 'messages');
+        $translations = $config['translations'];
+        $translationsEnabled = $translations['enabled'];
+        $translationDomain = $translations['domain'];
 
         $templatePrefix = $templateNamespace === '' ? '' : '@' . trim($templateNamespace, '@') . '/';
 

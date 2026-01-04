@@ -111,10 +111,25 @@ final readonly class Manifest
             $events = ManifestEvents::fromArray($data['events']);
         }
 
+        $appId = $data['appId'];
+        if (!is_string($appId) || $appId === '') {
+            throw new InvalidManifestException('Manifest "appId" must be a non-empty string.');
+        }
+
+        $name = $data['name'];
+        if (!is_string($name) || $name === '') {
+            throw new InvalidManifestException('Manifest "name" must be a non-empty string.');
+        }
+
+        $mountpoint = $data['mountpoint'];
+        if ($mountpoint !== null && !is_string($mountpoint)) {
+            throw new InvalidManifestException('Manifest "mountpoint" must be a string or null.');
+        }
+
         return new self(
-            (string)$data['appId'],
-            (string)$data['name'],
-            $data['mountpoint'] === null ? null : (string)$data['mountpoint'],
+            $appId,
+            $name,
+            $mountpoint,
             $provides,
             $consumes,
             $events,

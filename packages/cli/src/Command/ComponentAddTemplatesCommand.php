@@ -54,12 +54,8 @@ final class ComponentAddTemplatesCommand extends AbstractFabryqCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $componentName = (string) $input->getArgument('component');
+        $componentName = $this->requireStringArgument($input, 'component');
         $dryRun = (bool) $input->getOption('dry-run');
-
-        if ($componentName === '') {
-            throw new UserError('Component name is required.');
-        }
 
         $component = $this->findComponent($componentName);
         if ($component === null) {
