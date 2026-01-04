@@ -2,7 +2,6 @@
   "name": "fabryq/fabryq",
   "description": "PHP/Symfony architecture toolkit for multi-app runtimes.",
   "license": "MIT",
-  "version": "0.4.0",
   "type": "project",
   "require": {
     "php": ">=8.2",
