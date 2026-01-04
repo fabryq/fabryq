@@ -3,13 +3,13 @@
   "description": "Fabryq demo project",
   "type": "project",
   "license": "MIT",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "require": {
     "php": ">=8.2",
-    "fabryq/contracts": "^0.3",
-    "fabryq/runtime": "^0.3",
-    "fabryq/cli": "^0.3",
-    "fabryq/provider-http-client": "^0.3",
+    "fabryq/contracts": "^0.4",
+    "fabryq/runtime": "^0.4",
+    "fabryq/cli": "^0.4",
+    "fabryq/provider-http-client": "^0.4",
     "doctrine/doctrine-bundle": "^2.11",
     "doctrine/doctrine-migrations-bundle": "^3.3",
     "doctrine/orm": "^2.17",
@@ -27,7 +27,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/contracts": "0.3.0"
+          "fabryq/contracts": "0.4.0"
         }
       }
     },
@@ -37,7 +37,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/runtime": "0.3.0"
+          "fabryq/runtime": "0.4.0"
         }
       }
     },
@@ -47,7 +47,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/cli": "0.3.0"
+          "fabryq/cli": "0.4.0"
         }
       }
     },
@@ -57,7 +57,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/provider-http-client": "0.3.0"
+          "fabryq/provider-http-client": "0.4.0"
         }
       }
     },
@@ -67,7 +67,7 @@
       "options": {
         "symlink": true,
         "versions": {
-          "fabryq/skeleton": "0.3.0"
+          "fabryq/skeleton": "0.4.0"
         }
       }
     }
@@ -83,5 +83,10 @@
   },
   "require-dev": {
     "symfony/process": "^7.0"
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.0"
+    }
   }
 }

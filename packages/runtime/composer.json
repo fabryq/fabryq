@@ -3,10 +3,10 @@
   "description": "Fabryq runtime bundle",
   "license": "MIT",
   "type": "symfony-bundle",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "require": {
     "php": ">=8.2",
-    "fabryq/contracts": "^0.3",
+    "fabryq/contracts": "^0.4",
     "symfony/framework-bundle": "^7.0",
     "symfony/config": "^7.0",
     "symfony/dependency-injection": "^7.0",
