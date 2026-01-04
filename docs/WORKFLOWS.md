@@ -133,6 +133,26 @@ Expectations:
 
 Workflow file: `.github/workflows/fabryq-cli.yml`.
 
+## Debugging a failing gate
+Start from reports and work forward; do not guess.
+
+1) Run the gates locally:
+```bash
+bin/console fabryq:verify
+bin/console fabryq:doctor
+bin/console fabryq:graph
+```
+
+2) Inspect reports under `state/reports/<gate>/latest.{json,md}`.
+
+3) Apply targeted fixes:
+```bash
+bin/console fabryq:fix:crossing --dry-run --finding=<F-ID>
+bin/console fabryq:fix:assets --dry-run --all
+```
+
+4) Re-run the gates and commit only when they pass.
+
 ## Related docs
 - [Docs Index](INDEX.md)
 - [Getting Started](GETTING_STARTED.md)
