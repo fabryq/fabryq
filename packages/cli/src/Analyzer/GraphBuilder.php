@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Fabryq\Cli\Analyzer;
 
+use Fabryq\Runtime\Attribute\FabryqProvider;
 use Fabryq\Runtime\Registry\AppRegistry;
 
 /**
@@ -53,7 +54,7 @@ final readonly class GraphBuilder
                 $winner = is_array($entry) ? ($entry['winner'] ?? null) : null;
                 $providers = is_array($entry) ? ($entry['providers'] ?? []) : [];
                 $contract = $consume->contract ?? ($entry['contract'] ?? null);
-                $degraded = is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === -1000;
+                $degraded = is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED;
                 $consumes[] = [
                     'capabilityId' => $consume->capabilityId,
                     'required' => $consume->required,

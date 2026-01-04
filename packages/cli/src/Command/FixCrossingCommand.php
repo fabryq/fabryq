@@ -1236,7 +1236,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
         $lines[] = '';
         $lines[] = sprintf(
-            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: -1000)]',
+            '#[FabryqProvider(capability: \'%s\', contract: %s::class, priority: FabryqProvider::PRIORITY_DEGRADED)]',
             $target['capability'],
             $target['contractName']
         );

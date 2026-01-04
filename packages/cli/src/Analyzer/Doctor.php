@@ -13,6 +13,7 @@ namespace Fabryq\Cli\Analyzer;
 
 use Fabryq\Cli\Report\Finding;
 use Fabryq\Cli\Report\FindingLocation;
+use Fabryq\Runtime\Attribute\FabryqProvider;
 use Fabryq\Runtime\Registry\AppRegistry;
 use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
 
@@ -105,7 +106,7 @@ final readonly class Doctor
                     continue;
                 }
 
-                if (is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === -1000) {
+                if (is_array($winner) && isset($winner['priority']) && (int) $winner['priority'] === FabryqProvider::PRIORITY_DEGRADED) {
                     $degraded[] = $consume->capabilityId;
                 }
             }

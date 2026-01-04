@@ -17,6 +17,8 @@ namespace Fabryq\Runtime\Attribute;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final readonly class FabryqProvider
 {
+    public const PRIORITY_DEGRADED = -1000;
+
     /**
      * @param string $capability Capability identifier.
      * @param string $contract   Contract interface name.
