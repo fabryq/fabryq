@@ -24,6 +24,7 @@ use Fabryq\Cli\Command\AssetsInstallCommand;
 use Fabryq\Cli\Command\AppCreateCommand;
 use Fabryq\Cli\Command\AppRemoveCommand;
 use Fabryq\Cli\Command\ComponentCreateCommand;
+use Fabryq\Cli\Command\ComponentRemoveCommand;
 use Fabryq\Cli\Command\DoctorCommand;
 use Fabryq\Cli\Command\FixCommand;
 use Fabryq\Cli\Command\FixAssetsCommand;
@@ -133,4 +134,7 @@ return static function (ContainerConfigurator $configurator): void {
 
     $services->set(ComponentCreateCommand::class)
         ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service('Fabryq\Runtime\Util\ComponentSlugger'), '%kernel.project_dir%', service(WriteLock::class)]);
+
+    $services->set(ComponentRemoveCommand::class)
+        ->args([service(Filesystem::class), service('Fabryq\Runtime\Registry\AppRegistry'), service(ReferenceScanner::class), '%kernel.project_dir%', service(WriteLock::class)]);
 };
