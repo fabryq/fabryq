@@ -34,42 +34,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class AppCreateCommand extends AbstractFabryqCommand
 {
-    /**
-     * @param Filesystem       $filesystem Filesystem abstraction for writing files.
-     * @param AppRegistry      $appRegistry Registry of discovered apps.
-     * @param ComponentSlugger $slugger     Slug generator for app ids.
-     * @param string           $projectDir  Absolute project directory.
-     */
     public function __construct(
-        /**
-         * Filesystem abstraction used for writing.
-         *
-         * @var Filesystem
-         */
         private readonly Filesystem       $filesystem,
-        /**
-         * Registry of discovered applications.
-         *
-         * @var AppRegistry
-         */
         private readonly AppRegistry      $appRegistry,
-        /**
-         * Slug generator used to normalize app ids.
-         *
-         * @var ComponentSlugger
-         */
         private readonly ComponentSlugger $slugger,
-        /**
-         * Absolute project directory.
-         *
-         * @var string
-         */
         private readonly string           $projectDir,
-        /**
-         * Write lock guard.
-         *
-         * @var WriteLock
-         */
         private readonly WriteLock        $writeLock,
     ) {
         parent::__construct();

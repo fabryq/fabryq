@@ -22,29 +22,9 @@ use Fabryq\Runtime\Registry\CapabilityProviderRegistry;
  */
 final readonly class Doctor
 {
-    /**
- * @param AppRegistry                $appRegistry      Registry of discovered apps.
- * @param CapabilityProviderRegistry $providerRegistry Registry of capability providers.
- * @param array<string, mixed>       $capabilityMap    Capability resolver map.
- */
     public function __construct(
-        /**
-         * Registry of application definitions.
-         *
-         * @var AppRegistry
-         */
         private AppRegistry                $appRegistry,
-        /**
-         * Registry of capability providers and validation issues.
-         *
-         * @var CapabilityProviderRegistry
-         */
         private CapabilityProviderRegistry $providerRegistry,
-        /**
-         * Capability resolver map from the container.
-         *
-         * @var array<string, mixed>
-         */
         private array                      $capabilityMap,
     ) {}
 
