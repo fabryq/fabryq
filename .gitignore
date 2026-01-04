@@ -7,6 +7,6 @@
 /examples/demo/state
 examples/demo/public/fabryq/
 /examples/demo/composer.lock
-/.DS_Store
+.DS_Store
 /AGENTS.md
 .php-cs-fixer.cache
