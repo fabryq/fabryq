@@ -129,6 +129,7 @@ final class FixtureProject
             'component:add:templates' => 'fabryq:component:add:templates',
             'component:add:translations' => 'fabryq:component:add:translations',
             'component:remove' => 'fabryq:component:remove',
+            'crud:create' => 'fabryq:crud:create',
             'fix' => 'fabryq:fix',
         ];
 
