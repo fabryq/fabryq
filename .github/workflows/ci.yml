@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["v0.3.x-dev"]
+    branches: ["v0.3.x-dev", "v0.4.x-dev"]
   pull_request:
 
 jobs:
@@ -29,3 +29,19 @@ jobs:
 
       - name: PHPUnit
         run: composer test
+
+      - name: Install demo dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: examples/demo
+
+      - name: Run Fabryq commands on demo
+        run: |
+          mkdir -p var
+          php bin/console fabryq:verify
+          php bin/console fabryq:doctor
+          php bin/console fabryq:graph
+        working-directory: examples/demo
+        env:
+          APP_ENV: test
+          APP_DEBUG: 0
+          DATABASE_URL: sqlite:///./var/data.db
