@@ -88,14 +88,13 @@ final class ImportPruner
 
         foreach ($nodeFinder->findInstanceOf($stmts, Node\Name::class) as $nameNode) {
             $parent = $nameNode->getAttribute('parent');
-            if ($parent instanceof Node\Stmt\UseUse || $parent instanceof Node\Stmt\GroupUse) {
+            if ($parent instanceof Node\Stmt\UseUse || $parent instanceof Node\Stmt\GroupUse || $parent instanceof Node\Stmt\Namespace_) {
                 continue;
             }
 
             $resolved = $nameNode->getAttribute('resolvedName');
-            if ($resolved instanceof Node\Name) {
-                $used[$resolved->toString()] = true;
-            }
+            $usedName = $resolved instanceof Node\Name ? $resolved->toString() : $nameNode->toString();
+            $used[$usedName] = true;
         }
 
         return $used;
@@ -113,11 +112,14 @@ final class ImportPruner
     {
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new class($shouldRemove) extends NodeVisitorAbstract {
-            public function __construct(
-                private readonly $shouldRemove,
-            ) {}
+            private readonly \Closure $shouldRemove;
 
-            public function leaveNode(Node $node): ?Node
+            public function __construct(callable $shouldRemove)
+            {
+                $this->shouldRemove = \Closure::fromCallable($shouldRemove);
+            }
+
+            public function leaveNode(Node $node)
             {
                 if ($node instanceof Node\Stmt\Use_) {
                     $node->uses = array_values(array_filter($node->uses, function (Node\Stmt\UseUse $useUse): bool {

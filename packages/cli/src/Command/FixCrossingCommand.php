@@ -2172,7 +2172,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         return $this->importPruner->prune($stmts, $this->pruneUnresolvableImports);
     }
-}
+
     /**
      * Build a class file path for the given FQCN.
      *
@@ -2216,3 +2216,4 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             "    // TODO: define shared entity contract\n".
             "}\n";
     }
+}

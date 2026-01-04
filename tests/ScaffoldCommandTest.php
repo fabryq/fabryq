@@ -54,6 +54,22 @@ final class ScaffoldCommandTest extends TestCase
         $this->assertDirectoryDoesNotExist($targetDir);
     }
 
+    public function testComponentAddTranslationsMissingComponentReturnsProjectStateError(): void
+    {
+        $result = FixtureProject::runFabryq($this->projectDir, ['component:add:translations', 'Missing']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
+    }
+
+    public function testComponentAddTemplatesRejectsAmbiguousComponent(): void
+    {
+        $this->bootstrapComponent('Billing', 'Payments');
+        $this->bootstrapComponent('Inventory', 'Payments');
+
+        $result = FixtureProject::runFabryq($this->projectDir, ['component:add:templates', 'Payments']);
+        $this->assertSame(CliExitCode::USER_ERROR, $result['exitCode'], $result['output']);
+        $this->assertStringContainsString('ambiguous', $result['output']);
+    }
+
     private function bootstrapComponent(string $app, string $component): void
     {
         $result = FixtureProject::runFabryq($this->projectDir, ['app:create', $app]);

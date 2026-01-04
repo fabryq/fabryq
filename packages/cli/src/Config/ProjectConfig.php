@@ -41,7 +41,7 @@ final class ProjectConfig
         } catch (\Symfony\Component\Yaml\Exception\ParseException $exception) {
             throw new ProjectStateError('fabryq.yaml is invalid: ' . $exception->getMessage(), previous: $exception);
         }
-        if (!is_array($parsed)) {
+        if (!is_array($parsed) || array_is_list($parsed)) {
             throw new ProjectStateError('fabryq.yaml must decode to a mapping.');
         }
 

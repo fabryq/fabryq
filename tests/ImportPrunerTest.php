@@ -41,6 +41,17 @@ final class ImportPrunerTest extends TestCase
         $this->assertNotContains('Vendor\\Missing\\Ghost', $imports);
     }
 
+    public function testPruneUnusedImports(): void
+    {
+        $stmts = $this->parseUnusedSample();
+        $pruner = new ImportPruner(false);
+        $pruned = $pruner->prune($stmts, false);
+
+        $imports = $this->collectImports($pruned);
+        $this->assertContains('DateTimeImmutable', $imports);
+        $this->assertNotContains('Vendor\\Unused\\Ghost', $imports);
+    }
+
     /**
      * @return array<int, Node\Stmt>
      */
@@ -60,6 +71,34 @@ final class Sample
 {
     private DateTimeImmutable $date;
     private Ghost $ghost;
+}
+PHP;
+
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
+        $stmts = $parser->parse($code);
+        $this->assertNotNull($stmts);
+
+        return $stmts ?? [];
+    }
+
+    /**
+     * @return array<int, Node\Stmt>
+     */
+    private function parseUnusedSample(): array
+    {
+        $code = <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace App\Billing\Payments;
+
+use DateTimeImmutable;
+use Vendor\Unused\Ghost;
+
+final class Sample
+{
+    private DateTimeImmutable $date;
 }
 PHP;
 

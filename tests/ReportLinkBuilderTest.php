@@ -56,21 +56,47 @@ final class ReportLinkBuilderTest extends TestCase
         $this->cleanup($projectDir);
     }
 
+    public function testLinksDisabledReturnPlainLocation(): void
+    {
+        [$projectDir, $builder] = $this->makeBuilder('phpstorm', false);
+
+        $path = 'src/Apps/Foo/Bar.php';
+        $formatted = $builder->format($path, 5);
+
+        $this->assertSame($path . ':5', $formatted);
+
+        $this->cleanup($projectDir);
+    }
+
+    public function testMissingFileFallsBackToPlainLocation(): void
+    {
+        [$projectDir, $builder] = $this->makeBuilder('phpstorm');
+
+        $path = 'src/Apps/Foo/Missing.php';
+        $formatted = $builder->format($path, 9);
+
+        $this->assertSame($path . ':9', $formatted);
+
+        $this->cleanup($projectDir);
+    }
+
     /**
      * @param string $scheme
+     * @param bool   $enabled
      *
      * @return array{0:string,1:ReportLinkBuilder}
      */
-    private function makeBuilder(string $scheme): array
+    private function makeBuilder(string $scheme, bool $enabled = true): array
     {
         $projectDir = sys_get_temp_dir() . '/fabryq-report-' . bin2hex(random_bytes(3));
         mkdir($projectDir . '/src/Apps/Foo', 0775, true);
         file_put_contents($projectDir . '/src/Apps/Foo/Bar.php', "<?php\n");
 
+        $enabledValue = $enabled ? 'true' : 'false';
         $yaml = <<<YAML
 reports:
   links:
-    enabled: true
+    enabled: {$enabledValue}
     scheme: '{$scheme}'
 YAML;
         file_put_contents($projectDir . '/fabryq.yaml', $yaml);

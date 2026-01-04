@@ -50,6 +50,13 @@ bin/console fabryq:review
 bin/console fabryq:doctor
 ```
 
+## Test coverage notes
+
+- Fixture-based CLI tests exercise dry-run, locking, remove/scaffold, CRUD, and config error handling.
+- Config parsing and report link rendering are covered via unit tests.
+- Import pruning and crossing entity-to-interface replacements are verified in tests.
+- CLI error-path tests cover invalid fix mode/selection, missing components/apps, and debug output.
+
 ## PR checklist
 
 - [ ] `composer test` passes

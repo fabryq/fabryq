@@ -71,6 +71,31 @@ YAML;
         $this->assertStringContainsString('TODO: implement list Order use case.', $useCase);
     }
 
+    public function testCrudCreateDryRunDoesNotWrite(): void
+    {
+        $result = FixtureProject::runFabryq($this->projectDir, ['app:create', 'Billing']);
+        $this->assertSame(CliExitCode::SUCCESS, $result['exitCode'], $result['output']);
+
+        $result = FixtureProject::runFabryq($this->projectDir, ['crud:create', 'Billing', 'Order', '--dry-run']);
+        $this->assertSame(CliExitCode::SUCCESS, $result['exitCode'], $result['output']);
+        $this->assertDirectoryDoesNotExist($this->projectDir . '/src/Apps/Billing/Order');
+    }
+
+    public function testCrudCreateInvalidNameReturnsUserError(): void
+    {
+        $result = FixtureProject::runFabryq($this->projectDir, ['app:create', 'Billing']);
+        $this->assertSame(CliExitCode::SUCCESS, $result['exitCode'], $result['output']);
+
+        $result = FixtureProject::runFabryq($this->projectDir, ['crud:create', 'Billing', 'bad-name']);
+        $this->assertSame(CliExitCode::USER_ERROR, $result['exitCode'], $result['output']);
+    }
+
+    public function testCrudCreateMissingAppReturnsProjectStateError(): void
+    {
+        $result = FixtureProject::runFabryq($this->projectDir, ['crud:create', 'Missing', 'Order']);
+        $this->assertSame(CliExitCode::PROJECT_STATE_ERROR, $result['exitCode'], $result['output']);
+    }
+
     /**
      * @param string $resource
      *
