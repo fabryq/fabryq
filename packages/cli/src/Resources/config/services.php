@@ -34,6 +34,7 @@ use Fabryq\Cli\Fix\FixRunLogger;
 use Fabryq\Cli\Gate\DoctrineGate;
 use Fabryq\Cli\Lock\WriteLock;
 use Fabryq\Cli\Report\FindingIdGenerator;
+use Fabryq\Cli\Report\ReportLinkBuilder;
 use Fabryq\Cli\Report\ReportWriter;
 use Fabryq\Cli\Report\ReviewWriter;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -66,11 +67,14 @@ return static function (ContainerConfigurator $configurator): void {
     $services->set(WriteLock::class)
         ->args(['%kernel.project_dir%']);
 
+    $services->set(ReportLinkBuilder::class)
+        ->args([service(ProjectConfig::class), '%kernel.project_dir%']);
+
     $services->set(ReportWriter::class)
-        ->args([service(Filesystem::class), service(FindingIdGenerator::class)]);
+        ->args([service(Filesystem::class), service(FindingIdGenerator::class), service(ReportLinkBuilder::class)]);
 
     $services->set(ReviewWriter::class)
-        ->args([service(Filesystem::class), service(FindingIdGenerator::class)]);
+        ->args([service(Filesystem::class), service(FindingIdGenerator::class), service(ReportLinkBuilder::class)]);
 
     $services->set(CrossAppReferenceScanner::class);
     $services->set(ServiceLocatorScanner::class);

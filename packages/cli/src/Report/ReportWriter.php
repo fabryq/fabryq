@@ -21,6 +21,7 @@ final readonly class ReportWriter
     /**
      * @param Filesystem         $filesystem   Filesystem abstraction for writing reports.
      * @param FindingIdGenerator $idGenerator  Finding ID generator.
+     * @param ReportLinkBuilder  $linkBuilder  Link builder for Markdown locations.
      * @param string             $version      [Optional] Report schema version identifier.
      */
     public function __construct(
@@ -36,6 +37,12 @@ final readonly class ReportWriter
          * @var FindingIdGenerator
          */
         private FindingIdGenerator $idGenerator,
+        /**
+         * Markdown link builder.
+         *
+         * @var ReportLinkBuilder
+         */
+        private ReportLinkBuilder  $linkBuilder,
         /**
          * Report schema version.
          *
@@ -129,10 +136,10 @@ final readonly class ReportWriter
         $lines[] = '| --- | --- | --- | --- | --- |';
 
         foreach ($payload['findings'] as $finding) {
-            $location = $finding['location']['file'] ?? '';
-            if (!empty($finding['location']['line'])) {
-                $location .= ':' . $finding['location']['line'];
-            }
+            $location = $this->linkBuilder->format(
+                $finding['location']['file'] ?? null,
+                $finding['location']['line'] ?? null
+            );
             $lines[] = sprintf(
                 '| %s | %s | %s | %s | %s |',
                 $finding['id'] ?? '',

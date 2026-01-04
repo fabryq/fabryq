@@ -21,6 +21,7 @@ final readonly class ReviewWriter
     /**
      * @param Filesystem         $filesystem  Filesystem abstraction for writing files.
      * @param FindingIdGenerator $idGenerator Finding ID generator.
+     * @param ReportLinkBuilder  $linkBuilder Link builder for Markdown locations.
      */
     public function __construct(
         /**
@@ -35,6 +36,12 @@ final readonly class ReviewWriter
          * @var FindingIdGenerator
          */
         private FindingIdGenerator $idGenerator,
+        /**
+         * Markdown link builder.
+         *
+         * @var ReportLinkBuilder
+         */
+        private ReportLinkBuilder  $linkBuilder,
     ) {}
 
     /**
@@ -104,7 +111,7 @@ final readonly class ReviewWriter
                 foreach ($groupFindings as $finding) {
                     $lines[] = sprintf('- [%s] %s %s', $finding['id'], $finding['ruleKey'], $finding['severity']);
                     if ($finding['file'] !== null && $finding['file'] !== '') {
-                        $lines[] = '  File: ' . $finding['file'];
+                        $lines[] = '  File: ' . $this->linkBuilder->format($finding['file'], $finding['line']);
                     }
                     if ($finding['symbol'] !== null && $finding['symbol'] !== '') {
                         $lines[] = '  Symbol: ' . $finding['symbol'];
@@ -141,6 +148,7 @@ final readonly class ReviewWriter
             'message' => $finding->message,
             'hint' => $finding->hint ?? $finding->message,
             'file' => $location['file'] ?? null,
+            'line' => $location['line'] ?? null,
             'symbol' => $location['symbol'] ?? null,
             'autofix' => $autofix,
         ];
