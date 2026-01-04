@@ -1,6 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/v0.4.x-blue?label=Status" alt="Fabryq status">
   <img src="https://github.com/fabryq/fabryq/actions/workflows/ci.yml/badge.svg?branche=v0.4.x-dev" alt="Fabryq CI status">
+  <img src="https://github.com/fabryq/fabryq/actions/workflows/fabryq-cli.yml/badge.svg?branche=v0.4.x-dev" alt="Fabryq Fabryq-cli status">
   <a href="https://packagist.org/packages/fabryq/fabryq" target="_blank"><img src="https://img.shields.io/packagist/v/fabryq/fabryq" alt="Fabryq packagnist version"></a>
   <img src="https://img.shields.io/github/license/fabryq/fabryq" alt="Fabryq license">
   <img src="https://img.shields.io/github/languages/code-size/fabryq/fabryq" alt="Fabryq code size">

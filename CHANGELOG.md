@@ -4,7 +4,7 @@ All notable changes to this repository will be documented in this file.
 
 ## Unreleased
 
-## v0.4.0 - 2026-01-03
+## v0.4.0 - 2026-01-04
 
 Added:
 
@@ -22,6 +22,7 @@ Added:
 Changed:
 
 - Demo: add StockService import to the Test HelloWorld controller.
+- Demo: remove Billing, Dump, Faults, and Inventory sample app content.
 - Ignore top-level `AGENTS.md` in git.
 - Docs: update install instructions and CLI documentation for v0.4.0.
 - Install instructions updated to use `composer create-project fabryq/fabryq:0.4.0`.
