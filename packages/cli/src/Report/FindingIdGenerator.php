@@ -28,7 +28,8 @@ final readonly class FindingIdGenerator
          * @var string
          */
         private string $projectDir,
-    ) {}
+    ) {
+    }
 
     /**
      * Generate a deterministic finding ID.

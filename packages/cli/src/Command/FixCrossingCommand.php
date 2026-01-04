@@ -162,14 +162,14 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $crossings = array_values(
             array_filter(
                 $findings,
-                static fn(Finding $finding) => $finding->ruleKey === 'FABRYQ.APP.CROSSING' && $finding->autofixAvailable
+                static fn (Finding $finding) => $finding->ruleKey === 'FABRYQ.APP.CROSSING' && $finding->autofixAvailable
             )
         );
 
         $selected = array_values(
             array_filter(
                 $crossings,
-                fn(Finding $finding) => $selection->matchesFinding($finding, $this->idGenerator)
+                fn (Finding $finding) => $selection->matchesFinding($finding, $this->idGenerator)
             )
         );
 
@@ -1353,7 +1353,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
     {
         $traverser = new NodeTraverser();
         $traverser->addVisitor(
-            new class extends NodeVisitorAbstract {
+            new class () extends NodeVisitorAbstract {
                 public function leaveNode(Node $node): ?Node
                 {
                     if (!$node instanceof Node\Expr\New_) {
@@ -1711,13 +1711,14 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         }
 
         // 3. Replace TypeHint Names using a NodeTraverser (FIX for missing KIND_FQ in v5)
-        $nameReplacer = new class($providerFqcn, $contractFqcn) extends NodeVisitorAbstract {
+        $nameReplacer = new class ($providerFqcn, $contractFqcn) extends NodeVisitorAbstract {
             public bool $updated = false;
 
             public function __construct(
                 private readonly string $target,
                 private readonly string $replacement
-            ) {}
+            ) {
+            }
 
             public function leaveNode(Node $node)
             {
@@ -1956,7 +1957,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
         $updated = false;
 
-        $typeReplacer = new class($entityFqcn, $interfaceFqcn, $updated) extends NodeVisitorAbstract {
+        $typeReplacer = new class ($entityFqcn, $interfaceFqcn, $updated) extends NodeVisitorAbstract {
             private bool $updated;
 
             public function __construct(
@@ -2013,7 +2014,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             }
         };
 
-        $docReplacer = new class($entityFqcn, $interfaceFqcn, $entityShort, $updated) extends NodeVisitorAbstract {
+        $docReplacer = new class ($entityFqcn, $interfaceFqcn, $entityShort, $updated) extends NodeVisitorAbstract {
             private bool $updated;
 
             public function __construct(

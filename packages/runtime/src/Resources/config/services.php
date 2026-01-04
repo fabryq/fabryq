@@ -25,6 +25,7 @@ use Fabryq\Runtime\Ulid\UlidFactory;
 use Fabryq\Runtime\Ulid\UlidFactoryInterface;
 use Fabryq\Runtime\Util\ComponentSlugger;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**

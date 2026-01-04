@@ -67,7 +67,8 @@ final readonly class Manifest
          * @var ManifestEvents|null
          */
         public ?ManifestEvents $events,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a manifest from a normalized array payload.

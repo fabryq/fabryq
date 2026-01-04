@@ -33,5 +33,6 @@ final readonly class AssetScanResult
          * @var array<int, array<string, mixed>>
          */
         public array $collisions,
-    ) {}
+    ) {
+    }
 }

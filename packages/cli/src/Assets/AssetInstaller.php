@@ -35,7 +35,8 @@ final readonly class AssetInstaller
          * @var AssetScanner
          */
         private AssetScanner $scanner,
-    ) {}
+    ) {
+    }
 
     /**
      * Install assets into the public directory.

@@ -49,5 +49,6 @@ final readonly class AppDefinition
          * @var ComponentDefinition[]
          */
         public array    $components,
-    ) {}
+    ) {
+    }
 }

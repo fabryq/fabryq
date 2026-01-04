@@ -33,7 +33,8 @@ final readonly class CapabilityProviderRegistry
          * @var ValidationIssue[]
          */
         private array $issues,
-    ) {}
+    ) {
+    }
 
     /**
      * Find a provider by capability identifier.

@@ -30,7 +30,8 @@ final readonly class HttpClientProvider implements CapabilityProviderInterface
          * @var HttpClientInterface
          */
         private HttpClientInterface $client
-    ) {}
+    ) {
+    }
 
     /**
      * {@inheritDoc}

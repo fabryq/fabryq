@@ -268,7 +268,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
                 $blockers++;
                 $target = $this->idGenerator->normalizePath((string) $collision['target']);
                 $sources = array_map(
-                    fn(string $source) => $this->idGenerator->normalizePath($source),
+                    fn (string $source) => $this->idGenerator->normalizePath($source),
                     $collision['sources']
                 );
                 $lines[] = sprintf('- [BLOCKER] %s (sources: %s)', $target, implode(', ', $sources));
@@ -290,7 +290,7 @@ final class FixAssetsCommand extends AbstractFabryqCommand
     {
         $target = $this->idGenerator->normalizePath((string) $collision['target']);
         $sources = array_map(
-            fn(string $source) => $this->idGenerator->normalizePath($source),
+            fn (string $source) => $this->idGenerator->normalizePath($source),
             $collision['sources']
         );
 

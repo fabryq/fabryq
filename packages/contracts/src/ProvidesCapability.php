@@ -35,7 +35,8 @@ final readonly class ProvidesCapability
          * @var string
          */
         public string $contract,
-    ) {}
+    ) {
+    }
 
     /**
      * Create an instance from a manifest entry.

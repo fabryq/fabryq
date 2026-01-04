@@ -24,7 +24,8 @@ final class TestUlidFactory implements UlidFactoryInterface
      */
     public function __construct(
         private string $value
-    ) {}
+    ) {
+    }
 
     /**
      * {@inheritDoc}

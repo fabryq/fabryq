@@ -35,7 +35,8 @@ final readonly class DoctrineDiscovery
          * @var string
          */
         private string      $projectDir,
-    ) {}
+    ) {
+    }
 
     /**
      * Build Doctrine ORM mapping configuration for entity directories.

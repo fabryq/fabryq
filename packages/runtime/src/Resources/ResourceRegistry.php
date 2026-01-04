@@ -42,7 +42,8 @@ final class ResourceRegistry
          * @var AppRegistry
          */
         private readonly AppRegistry $appRegistry
-    ) {}
+    ) {
+    }
 
     /**
      * Collect configuration files from app and component resource folders.

@@ -28,5 +28,6 @@ final readonly class FabryqProvider
         public string $capability,
         public string $contract,
         public int $priority = 0,
-    ) {}
+    ) {
+    }
 }

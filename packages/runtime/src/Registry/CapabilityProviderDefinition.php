@@ -54,5 +54,6 @@ final readonly class CapabilityProviderDefinition
          * @var string
          */
         public string $className,
-    ) {}
+    ) {
+    }
 }

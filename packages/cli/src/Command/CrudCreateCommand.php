@@ -326,7 +326,7 @@ final class CrudCreateCommand extends AbstractFabryqCommand
         return "<?php\n\n".
             "declare(strict_types=1);\n\n".
             "namespace ".$namespace.";\n\n".
-            implode("\n", array_map(static fn(string $import): string => 'use '.$import.';', $imports))."\n\n".
+            implode("\n", array_map(static fn (string $import): string => 'use '.$import.';', $imports))."\n\n".
             $securityAttributeLine.
             "final class ".$resourceName."Controller extends AbstractFabryqController\n".
             "{\n".

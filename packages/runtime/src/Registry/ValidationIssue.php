@@ -54,5 +54,6 @@ final readonly class ValidationIssue
          * @var string|null
          */
         public ?string $symbol = null,
-    ) {}
+    ) {
+    }
 }

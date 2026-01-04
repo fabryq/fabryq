@@ -42,7 +42,8 @@ final readonly class DoctrineGate
          * @var ComponentSlugger
          */
         private ComponentSlugger $slugger,
-    ) {}
+    ) {
+    }
 
     /**
      * Run Doctrine validation checks for the project.

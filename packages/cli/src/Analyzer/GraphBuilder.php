@@ -36,7 +36,8 @@ final readonly class GraphBuilder
          * @var array<string, mixed>
          */
         private array                $capabilityMap,
-    ) {}
+    ) {
+    }
 
     /**
      * Build a capability graph for all discovered apps.

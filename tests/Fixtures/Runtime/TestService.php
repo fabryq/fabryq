@@ -21,7 +21,8 @@ final class TestService
 {
     public function __construct(
         private FabryqContext $ctx
-    ) {}
+    ) {
+    }
 
     public function generateId(): string
     {

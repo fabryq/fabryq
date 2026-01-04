@@ -35,7 +35,8 @@ final readonly class AssetManifestWriter
          * @var string
          */
         private string     $projectDir,
-    ) {}
+    ) {
+    }
 
     /**
      * Write the asset manifest files to disk.

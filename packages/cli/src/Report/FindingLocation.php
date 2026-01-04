@@ -40,5 +40,6 @@ final readonly class FindingLocation
          * @var string|null
          */
         public ?string $symbol,
-    ) {}
+    ) {
+    }
 }

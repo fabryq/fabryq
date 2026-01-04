@@ -36,7 +36,8 @@ final readonly class ManifestEvents
          * @var string[]
          */
         public array $subscribes,
-    ) {}
+    ) {
+    }
 
     /**
      * Build an instance from a manifest array.

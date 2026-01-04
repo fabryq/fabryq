@@ -36,7 +36,8 @@ final readonly class AppRegistryFactory
          * @var ComponentDiscovery
          */
         private ComponentDiscovery $componentDiscovery,
-    ) {}
+    ) {
+    }
 
     /**
      * Build an application registry for the given project directory.

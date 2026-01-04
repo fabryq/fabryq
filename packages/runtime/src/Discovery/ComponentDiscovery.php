@@ -29,7 +29,8 @@ final readonly class ComponentDiscovery
          * @var ComponentSlugger
          */
         private ComponentSlugger $slugger
-    ) {}
+    ) {
+    }
 
     /**
      * Discover components under an application directory.

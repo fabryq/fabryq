@@ -40,5 +40,6 @@ final readonly class ComponentDefinition
          * @var string
          */
         public string $path,
-    ) {}
+    ) {
+    }
 }

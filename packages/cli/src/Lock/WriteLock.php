@@ -28,7 +28,8 @@ final class WriteLock
      */
     public function __construct(
         private readonly string $projectDir,
-    ) {}
+    ) {
+    }
 
     /**
      * Acquire the write lock.

@@ -45,7 +45,8 @@ final readonly class ConsumesCapability
          * @var string|null
          */
         public ?string $contract,
-    ) {}
+    ) {
+    }
 
     /**
      * Create an instance from a mixed manifest entry.

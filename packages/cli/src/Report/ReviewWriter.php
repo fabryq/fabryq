@@ -42,7 +42,8 @@ final readonly class ReviewWriter
          * @var ReportLinkBuilder
          */
         private ReportLinkBuilder  $linkBuilder,
-    ) {}
+    ) {
+    }
 
     /**
      * Write a review report to Markdown.

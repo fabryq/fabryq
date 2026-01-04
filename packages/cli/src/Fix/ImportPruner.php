@@ -28,7 +28,8 @@ final class ImportPruner
      */
     public function __construct(
         private readonly bool $autoloadAvailable,
-    ) {}
+    ) {
+    }
 
     /**
      * Remove unused imports and optionally unresolvable imports.
@@ -111,7 +112,7 @@ final class ImportPruner
     private function removeImports(array $stmts, callable $shouldRemove): array
     {
         $traverser = new NodeTraverser();
-        $traverser->addVisitor(new class($shouldRemove) extends NodeVisitorAbstract {
+        $traverser->addVisitor(new class ($shouldRemove) extends NodeVisitorAbstract {
             private readonly \Closure $shouldRemove;
 
             public function __construct(callable $shouldRemove)

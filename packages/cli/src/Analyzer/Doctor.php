@@ -26,7 +26,8 @@ final readonly class Doctor
         private AppRegistry                $appRegistry,
         private CapabilityProviderRegistry $providerRegistry,
         private array                      $capabilityMap,
-    ) {}
+    ) {
+    }
 
     /**
      * Run the doctor checks and aggregate findings and app status.

@@ -47,7 +47,8 @@ final readonly class AssetScanner
          * @var string
          */
         private string           $projectDir,
-    ) {}
+    ) {
+    }
 
     /**
      * Scan the project for application and component asset directories.

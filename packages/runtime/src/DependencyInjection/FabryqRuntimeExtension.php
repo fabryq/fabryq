@@ -68,7 +68,8 @@ final class FabryqRuntimeExtension extends Extension
         $entityMappings = $doctrineDiscovery->getEntityMappings();
         if ($entityMappings !== []) {
             $container->prependExtensionConfig(
-                'doctrine', [
+                'doctrine',
+                [
                 'orm' => [
                     'mappings' => $entityMappings,
                 ],
@@ -79,7 +80,8 @@ final class FabryqRuntimeExtension extends Extension
         $migrationPaths = $doctrineDiscovery->getMigrationPaths();
         if ($migrationPaths !== []) {
             $container->prependExtensionConfig(
-                'doctrine_migrations', [
+                'doctrine_migrations',
+                [
                 'migrations_paths' => $migrationPaths,
             ]
             );
@@ -90,7 +92,8 @@ final class FabryqRuntimeExtension extends Extension
         if ($templatePaths !== []) {
             $twigPaths = array_fill_keys($templatePaths, null);
             $container->prependExtensionConfig(
-                'twig', [
+                'twig',
+                [
                 'paths' => $twigPaths,
             ]
             );
@@ -99,7 +102,8 @@ final class FabryqRuntimeExtension extends Extension
         $translationPaths = $resourceRegistry->getTranslationPaths();
         if ($translationPaths !== []) {
             $container->prependExtensionConfig(
-                'framework', [
+                'framework',
+                [
                 'translator' => [
                     'paths' => $translationPaths,
                 ],

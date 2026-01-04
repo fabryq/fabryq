@@ -14,6 +14,7 @@ namespace Fabryq\Cli\Command;
 use Fabryq\Cli\Error\CliExitCode;
 use Fabryq\Cli\Analyzer\Verifier;
 use Fabryq\Cli\Report\ReportWriter;
+use Fabryq\Cli\Report\Severity;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -85,7 +86,7 @@ final class VerifyCommand extends AbstractFabryqCommand
         }
 
         foreach ($findings as $finding) {
-            $type = $finding->severity === 'BLOCKER' ? 'error' : 'warning';
+            $type = $finding->severity === Severity::BLOCKER ? 'error' : 'warning';
 
             $io->section(sprintf('[%s] %s', $finding->ruleKey, $finding->severity));
             $io->text($finding->message);
@@ -98,7 +99,7 @@ final class VerifyCommand extends AbstractFabryqCommand
             }
         }
 
-        $blockers = array_filter($findings, static fn($finding) => $finding->severity === 'BLOCKER');
+        $blockers = array_filter($findings, static fn ($finding) => $finding->severity === Severity::BLOCKER);
 
         if ($blockers !== []) {
             $io->error(sprintf('Found %d blockers.', count($blockers)));

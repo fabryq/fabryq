@@ -25,5 +25,6 @@ final readonly class FixRunContext
         public string $runId,
         public string $runDir,
         public string $startedAt,
-    ) {}
+    ) {
+    }
 }

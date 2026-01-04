@@ -45,6 +45,7 @@ use Fabryq\Cli\Report\ReportWriter;
 use Fabryq\Cli\Report\ReviewWriter;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Filesystem\Filesystem;
+
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**

@@ -48,8 +48,9 @@ final readonly class ReportWriter
          *
          * @var string
          */
-        private string             $version = '0.3'
-    ) {}
+        private string             $version = '0.4'
+    ) {
+    }
 
     /**
      * Write report data to JSON and Markdown files.
@@ -69,9 +70,9 @@ final readonly class ReportWriter
         $blockers = 0;
         $warnings = 0;
         foreach ($findings as $finding) {
-            if ($finding->severity === 'BLOCKER') {
+            if ($finding->severity === Severity::BLOCKER) {
                 $blockers++;
-            } elseif ($finding->severity === 'WARNING') {
+            } elseif ($finding->severity === Severity::WARNING) {
                 $warnings++;
             }
         }
@@ -82,6 +83,7 @@ final readonly class ReportWriter
                 'header' => [
                     'tool' => $tool,
                     'version' => $this->version,
+                    'report_schema_version' => $this->version,
                     'generatedAt' => date('c'),
                     'result' => $result,
                     'summary' => [
@@ -89,8 +91,9 @@ final readonly class ReportWriter
                         'warnings' => $warnings,
                     ],
                 ],
-                'findings' => array_map(fn(Finding $finding) => $finding->toArray($this->idGenerator), $findings),
-            ], $extra
+                'findings' => array_map(fn (Finding $finding) => $finding->toArray($this->idGenerator), $findings),
+            ],
+            $extra
         );
 
         $this->filesystem->mkdir(dirname($jsonPath));

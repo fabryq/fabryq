@@ -31,7 +31,8 @@ final readonly class FixSelection
         public ?string $file,
         public ?string $symbol,
         public ?string $findingId,
-    ) {}
+    ) {
+    }
 
     /**
      * Build selection from console input.

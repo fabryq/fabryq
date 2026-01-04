@@ -83,7 +83,8 @@ final readonly class Verifier
          * @var EntityBaseScanner|null
          */
         private ?EntityBaseScanner         $entityBaseScanner = null,
-    ) {}
+    ) {
+    }
 
     /**
      * Run all verification checks for the project.
@@ -136,7 +137,7 @@ final readonly class Verifier
         foreach ($result->collisions as $collision) {
             $target = $this->normalizePath($collision['target'], $projectDir);
             $sources = array_map(
-                fn(string $source) => $this->normalizePath($source, $projectDir),
+                fn (string $source) => $this->normalizePath($source, $projectDir),
                 $collision['sources']
             );
 

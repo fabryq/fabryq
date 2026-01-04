@@ -35,5 +35,6 @@ final readonly class DoctorResult
          * @var Finding[]
          */
         public array $findings,
-    ) {}
+    ) {
+    }
 }

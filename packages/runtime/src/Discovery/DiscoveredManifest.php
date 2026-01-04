@@ -49,5 +49,6 @@ final readonly class DiscoveredManifest
          * @var string
          */
         public string   $appFolder,
-    ) {}
+    ) {
+    }
 }

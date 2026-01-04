@@ -29,5 +29,6 @@ final readonly class FabryqContext
         public LoggerInterface $logger,
         public ClockInterface $clock,
         public UlidFactoryInterface $ulids
-    ) {}
+    ) {
+    }
 }

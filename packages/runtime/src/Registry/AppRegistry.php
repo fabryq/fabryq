@@ -33,7 +33,8 @@ final readonly class AppRegistry
          * @var ValidationIssue[]
          */
         private array $issues,
-    ) {}
+    ) {
+    }
 
     /**
      * Find an application by its manifest appId.
