@@ -215,9 +215,10 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $this->writeLock->acquire();
 
         $changedFiles = [];
+        $createdInterfaces = [];
         try {
             foreach ($targets as $target) {
-                $result = $this->applyTarget($target, $changedFiles);
+                $result = $this->applyTarget($target, $changedFiles, $createdInterfaces);
                 if ($result !== null) {
                     $blockers++;
                     $planItems[] = $result;
@@ -225,7 +226,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
             }
 
             $resultLabel = $blockers > 0 ? 'blocked' : 'ok';
-            $this->runLogger->finish($context, 'crossing', $mode, $resultLabel, $changedFiles, $blockers, $warnings);
+            $this->runLogger->finish($context, 'crossing', $mode, $resultLabel, $changedFiles, $blockers, $warnings, $createdInterfaces);
         } finally {
             $this->writeLock->release();
         }
@@ -247,10 +248,10 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @return array<string, mixed>|null Blocker plan item when apply fails.
      */
-    private function applyTarget(array $target, array &$changedFiles): ?array
+    private function applyTarget(array $target, array &$changedFiles, array &$createdInterfaces): ?array
     {
         if (($target['type'] ?? null) === 'entity_to_interface') {
-            return $this->applyEntityToInterface($target, $changedFiles);
+            return $this->applyEntityToInterface($target, $changedFiles, $createdInterfaces);
         }
 
         $providerApp = $target['providerApp'];
@@ -429,6 +430,8 @@ final class FixCrossingCommand extends AbstractFabryqCommand
 
             $interfaceName = $entityInfo['entity'] . 'Interface';
             $interfaceFqcn = $entityInfo['baseNamespace'] . '\\Contracts\\' . $interfaceName;
+            $interfacePath = $this->buildClassPath($interfaceFqcn, $entityInfo['appFolder']);
+
             return [
                 'id' => $findingId,
                 'fixable' => true,
@@ -449,6 +452,7 @@ final class FixCrossingCommand extends AbstractFabryqCommand
                     'entityFqcn' => $fqcn,
                     'entityShort' => $entityInfo['entity'],
                     'interfaceFqcn' => $interfaceFqcn,
+                    'interfacePath' => $interfacePath,
                 ],
             ];
         }
@@ -1917,14 +1921,17 @@ final class FixCrossingCommand extends AbstractFabryqCommand
      *
      * @param array<string, mixed> $target
      * @param array<int, string>   $changedFiles
+     * @param array<int, array<string, string>> $createdInterfaces
+     *
      * @return array<string, mixed>|null
      */
-    private function applyEntityToInterface(array $target, array &$changedFiles): ?array
+    private function applyEntityToInterface(array $target, array &$changedFiles, array &$createdInterfaces): ?array
     {
         $consumerFile = $target['consumerFile'];
         $entityFqcn = $target['entityFqcn'];
         $entityShort = $target['entityShort'];
         $interfaceFqcn = $target['interfaceFqcn'];
+        $interfacePath = $target['interfacePath'];
 
         $code = file_get_contents($consumerFile);
 
@@ -2074,6 +2081,18 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         $traverser->addVisitor($docReplacer);
         $stmts = $traverser->traverse($stmts);
 
+        if ($updated && !$this->filesystem->exists($interfacePath)) {
+            $interfaceDir = dirname($interfacePath);
+            $this->filesystem->mkdir($interfaceDir);
+            $this->filesystem->dumpFile($interfacePath, $this->renderEntityInterface($target['providerApp'], $interfaceFqcn));
+            $createdInterfaces[] = [
+                'path' => $this->normalizePath($interfacePath),
+                'fqcn' => $interfaceFqcn,
+                'ruleKey' => self::ENTITY_TO_INTERFACE_RULE,
+            ];
+            $changedFiles[] = $this->normalizePath($interfacePath);
+        }
+
         $stmts = $this->pruneImports($stmts);
         $printer = new Standard();
         $newCode = $printer->printFormatPreserving($stmts, $oldStmts, $tokens);
@@ -2154,3 +2173,46 @@ final class FixCrossingCommand extends AbstractFabryqCommand
         return $this->importPruner->prune($stmts, $this->pruneUnresolvableImports);
     }
 }
+    /**
+     * Build a class file path for the given FQCN.
+     *
+     * @param string $fqcn
+     * @param string $appFolder
+     *
+     * @return string
+     */
+    private function buildClassPath(string $fqcn, string $appFolder): string
+    {
+        $normalized = str_replace('\\', '/', $fqcn);
+        $relative = str_starts_with($normalized, 'App/') ? substr($normalized, 4) : $normalized;
+        $parts = explode('/', $relative);
+        $relativePath = implode('/', array_slice($parts, 1));
+
+        return $this->projectDir . '/src/Apps/' . $appFolder . '/' . $relativePath . '.php';
+    }
+
+    /**
+     * Render a contracts interface for an entity replacement.
+     *
+     * @param AppDefinition $providerApp
+     * @param string        $interfaceFqcn
+     *
+     * @return string
+     */
+    private function renderEntityInterface(AppDefinition $providerApp, string $interfaceFqcn): string
+    {
+        $namespace = dirname(str_replace('\\', '/', $interfaceFqcn));
+        $namespace = str_replace('/', '\\', $namespace);
+        $interfaceName = $this->shortName($interfaceFqcn);
+
+        return "<?php\n\n".
+            "declare(strict_types=1);\n\n".
+            "namespace ".$namespace.";\n\n".
+            "/**\n".
+            " * Contracts interface for ".$providerApp->manifest->appId." entity ".$interfaceName.".\n".
+            " */\n".
+            "interface ".$interfaceName."\n".
+            "{\n".
+            "    // TODO: define shared entity contract\n".
+            "}\n";
+    }

@@ -76,6 +76,7 @@ final readonly class FixRunLogger
      * @param array<int, string> $changedFiles Changed file paths.
      * @param int           $blockers   Blocker count.
      * @param int           $warnings   Warning count.
+     * @param array<int, array<string, string>> $createdInterfaces Created interfaces payload.
      */
     public function finish(
         FixRunContext $context,
@@ -85,10 +86,12 @@ final readonly class FixRunLogger
         array $changedFiles,
         int $blockers,
         int $warnings,
+        array $createdInterfaces = [],
     ): void {
         $changesPath = $context->runDir.'/changes.json';
         $changes = [
             'changedFiles' => array_values(array_unique($changedFiles)),
+            'createdInterfaces' => $createdInterfaces,
         ];
 
         file_put_contents($changesPath, json_encode($changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -102,6 +105,7 @@ final readonly class FixRunLogger
             'result' => $result,
             'counts' => [
                 'changedFiles' => count($changes['changedFiles']),
+                'createdInterfaces' => count($changes['createdInterfaces']),
                 'blockers' => $blockers,
                 'warnings' => $warnings,
             ],
@@ -137,6 +141,7 @@ final readonly class FixRunLogger
         $lines[] = 'Path: '.$payload['path'];
         $lines[] = '';
         $lines[] = sprintf('Changed Files: %d', $payload['counts']['changedFiles']);
+        $lines[] = sprintf('Created Interfaces: %d', $payload['counts']['createdInterfaces']);
         $lines[] = sprintf('Blockers: %d', $payload['counts']['blockers']);
         $lines[] = sprintf('Warnings: %d', $payload['counts']['warnings']);
         $lines[] = '';
