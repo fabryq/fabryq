@@ -8,3 +8,4 @@
 examples/demo/public/fabryq/
 /examples/demo/composer.lock
 /.DS_Store
+/AGENTS.md
